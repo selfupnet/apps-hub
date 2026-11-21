@@ -1,0 +1,1645 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ChronoSync - Focus & Time Suite</title>
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- FontAwesome CDN -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          colors: {
+            brand: {
+              50: '#eef2ff',
+              100: '#e0e7ff',
+              500: '#6366f1',
+              600: '#4f46e5',
+              700: '#4338ca',
+            }
+          },
+          fontFamily: {
+            mono: ['ui-monospace', 'SFMono-Regular', 'Menlo', 'Monaco', 'Consolas', 'monospace']
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Noto+Sans+JP:wght@400;500;700&display=swap');
+    body {
+      font-family: 'Plus Jakarta Sans', 'Noto Sans JP', sans-serif;
+    }
+    input[type=range]::-webkit-slider-thumb {
+      appearance: none;
+      width: 22px;
+      height: 22px;
+      border-radius: 50%;
+      background: #4f46e5;
+      border: 3px solid #ffffff;
+      box-shadow: 0 4px 10px rgba(79, 70, 229, 0.35);
+      cursor: pointer;
+    }
+    .custom-scrollbar::-webkit-scrollbar {
+      width: 6px;
+      height: 6px;
+    }
+    .custom-scrollbar::-webkit-scrollbar-track {
+      background: rgba(0, 0, 0, 0.04);
+      border-radius: 8px;
+    }
+    .dark .custom-scrollbar::-webkit-scrollbar-track {
+      background: rgba(255, 255, 255, 0.05);
+    }
+    .custom-scrollbar::-webkit-scrollbar-thumb {
+      background: rgba(100, 116, 139, 0.4);
+      border-radius: 8px;
+    }
+  </style>
+</head>
+<body class="bg-slate-50 dark:bg-slate-900 text-slate-800 dark:text-slate-100 min-h-screen flex flex-col selection:bg-indigo-500 selection:text-white transition-colors duration-200">
+
+  <!-- ヘッダー -->
+  <header class="border-b border-slate-200 dark:border-slate-800 bg-white/85 dark:bg-slate-900/85 backdrop-blur sticky top-0 z-40">
+    <div class="max-w-6xl mx-auto px-4 py-3 flex flex-col md:flex-row items-center justify-between gap-3">
+      <div class="flex items-center justify-between w-full md:w-auto">
+        <div class="flex items-center gap-3">
+          <div class="w-10 h-10 rounded-2xl bg-gradient-to-tr from-indigo-600 to-sky-400 flex items-center justify-center shadow-lg shadow-indigo-500/20 text-white text-lg">
+            <i class="fa-solid fa-clock-rotate-left"></i>
+          </div>
+          <div>
+            <h1 class="text-base font-extrabold tracking-tight text-slate-900 dark:text-white flex items-center gap-2">
+              ChronoSync
+              <span class="text-[10px] px-2 py-0.5 rounded-full font-bold bg-indigo-500/20 text-indigo-600 dark:text-indigo-300 border border-indigo-500/30">TIME & FOCUS</span>
+            </h1>
+            <p class="text-xs text-slate-500 dark:text-slate-400">時計・精密ストップウォッチ・時差計算・集中アラーム</p>
+          </div>
+        </div>
+
+        <!-- テーマ切り替えボタン (モバイル) -->
+        <button onclick="toggleTheme()" class="md:hidden p-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-amber-400 active:scale-95 transition flex items-center justify-center text-sm" title="テーマ切り替え">
+          <i id="theme-icon-mobile" class="fa-solid fa-sun"></i>
+        </button>
+      </div>
+
+      <div class="flex items-center gap-2 w-full md:w-auto justify-between md:justify-end">
+        <!-- ナビゲーション タブ -->
+        <nav class="flex items-center bg-slate-100 dark:bg-slate-800/90 p-1.5 rounded-2xl border border-slate-200 dark:border-slate-700/60 shadow-inner overflow-x-auto max-w-full">
+          <button id="nav-btn-clock" onclick="switchTab('clock')" class="px-3 sm:px-4 py-2 rounded-xl text-xs sm:text-sm font-bold transition-all flex items-center gap-1.5 bg-indigo-600 text-white shadow-md shadow-indigo-600/30 whitespace-nowrap">
+            <i class="fa-regular fa-clock"></i>
+            <span>時計・世界時計</span>
+          </button>
+          <button id="nav-btn-alarm" onclick="switchTab('alarm')" class="px-3 sm:px-4 py-2 rounded-xl text-xs sm:text-sm font-bold transition-all flex items-center gap-1.5 text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white whitespace-nowrap">
+            <i class="fa-solid fa-bullseye text-amber-500"></i>
+            <span>集中アラーム</span>
+            <span id="active-alarm-badge" class="hidden w-2 h-2 rounded-full bg-amber-400 animate-pulse"></span>
+          </button>
+          <button id="nav-btn-stopwatch" onclick="switchTab('stopwatch')" class="px-3 sm:px-4 py-2 rounded-xl text-xs sm:text-sm font-bold transition-all flex items-center gap-1.5 text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white whitespace-nowrap">
+            <i class="fa-solid fa-stopwatch"></i>
+            <span>ストップウォッチ</span>
+          </button>
+          <button id="nav-btn-planner" onclick="switchTab('planner')" class="px-3 sm:px-4 py-2 rounded-xl text-xs sm:text-sm font-bold transition-all flex items-center gap-1.5 text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white whitespace-nowrap">
+            <i class="fa-solid fa-earth-americas"></i>
+            <span>時差計算</span>
+          </button>
+          <button id="nav-btn-timer" onclick="switchTab('timer')" class="px-3 sm:px-4 py-2 rounded-xl text-xs sm:text-sm font-bold transition-all flex items-center gap-1.5 text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white whitespace-nowrap">
+            <i class="fa-solid fa-hourglass-half"></i>
+            <span>タイマー</span>
+          </button>
+        </nav>
+
+        <!-- テーマ切り替え (PC) -->
+        <button onclick="toggleTheme()" class="hidden md:flex items-center gap-1.5 px-3 py-2 rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-200 hover:border-indigo-500 transition text-xs font-bold shadow-sm whitespace-nowrap" title="ダーク/ライト切り替え">
+          <i id="theme-icon-desktop" class="fa-solid fa-sun text-amber-500"></i>
+          <span id="theme-label-desktop">ライト</span>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- メインコンテンツ -->
+  <main class="max-w-6xl mx-auto px-4 py-6 flex-1 w-full">
+
+    <!-- ======================================================== -->
+    <!-- タブ1: 時計 & 世界時計                                    -->
+    <!-- ======================================================== -->
+    <section id="tab-clock" class="space-y-6">
+      
+      <!-- メイン時計カード（アナログ ＆ デジタル統合） -->
+      <div class="relative overflow-hidden bg-white dark:bg-gradient-to-br dark:from-slate-800/90 dark:via-slate-800/50 dark:to-indigo-950/40 border border-slate-200 dark:border-slate-700/80 rounded-3xl p-6 sm:p-10 shadow-xl dark:shadow-2xl backdrop-blur">
+        <div class="absolute -right-20 -top-20 w-80 h-80 bg-indigo-600/10 rounded-full blur-3xl pointer-events-none"></div>
+
+        <div class="grid grid-cols-1 md:grid-cols-12 gap-8 items-center">
+          
+          <!-- アナログ時計 (SVG) -->
+          <div class="md:col-span-5 flex flex-col items-center justify-center">
+            <div class="relative w-56 h-56 sm:w-64 sm:h-64 flex items-center justify-center">
+              <svg id="analog-clock" viewBox="0 0 200 200" class="w-full h-full drop-shadow-[0_10px_25px_rgba(0,0,0,0.1)] dark:drop-shadow-[0_10px_25px_rgba(0,0,0,0.5)]">
+                <!-- 文字盤背景 -->
+                <circle cx="100" cy="100" r="95" class="fill-slate-100 dark:fill-slate-900 stroke-slate-300 dark:stroke-slate-700" stroke-width="3" />
+                <circle cx="100" cy="100" r="91" fill="none" class="stroke-slate-200 dark:stroke-slate-800" stroke-width="1.5" />
+                
+                <!-- 目盛り (JSで生成) -->
+                <g id="clock-ticks"></g>
+                
+                <!-- インデックス -->
+                <text x="100" y="30" text-anchor="middle" dominant-baseline="central" class="fill-slate-500 dark:fill-slate-400 font-bold" font-size="12">12</text>
+                <text x="175" y="100" text-anchor="middle" dominant-baseline="central" class="fill-slate-500 dark:fill-slate-400 font-bold" font-size="12">3</text>
+                <text x="100" y="175" text-anchor="middle" dominant-baseline="central" class="fill-slate-500 dark:fill-slate-400 font-bold" font-size="12">6</text>
+                <text x="25" y="100" text-anchor="middle" dominant-baseline="central" class="fill-slate-500 dark:fill-slate-400 font-bold" font-size="12">9</text>
+
+                <!-- 針 -->
+                <line id="hour-hand" x1="100" y1="100" x2="100" y2="52" class="stroke-slate-800 dark:stroke-white" stroke-width="5" stroke-linecap="round" />
+                <line id="minute-hand" x1="100" y1="100" x2="100" y2="35" stroke="#818cf8" stroke-width="3.5" stroke-linecap="round" />
+                <line id="second-hand" x1="100" y1="115" x2="100" y2="25" stroke="#f43f5e" stroke-width="1.5" stroke-linecap="round" />
+                
+                <!-- センターキャップ -->
+                <circle cx="100" cy="100" r="4.5" fill="#f43f5e" />
+                <circle cx="100" cy="100" r="2" fill="#ffffff" />
+              </svg>
+            </div>
+            <span class="mt-3 text-xs font-mono text-slate-500 dark:text-slate-400 tracking-wider">LOCAL TIME (JST / DEVICE)</span>
+          </div>
+
+          <!-- デジタル時計 & 日付・和暦情報 -->
+          <div class="md:col-span-7 flex flex-col justify-center text-center md:text-left space-y-4">
+            <div>
+              <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-slate-100 dark:bg-slate-800/90 border border-slate-200 dark:border-slate-700 text-xs font-semibold text-indigo-600 dark:text-indigo-300 mb-2">
+                <i class="fa-solid fa-location-dot text-rose-500"></i>
+                <span id="local-tz-name">Asia/Tokyo (現在地)</span>
+              </div>
+              <!-- メイン時刻表示 -->
+              <div class="flex items-baseline justify-center md:justify-start gap-2 font-mono">
+                <span id="digital-hms" class="text-5xl sm:text-7xl font-extrabold tracking-tight text-slate-900 dark:text-white drop-shadow-sm">00:00:00</span>
+                <span id="digital-ms" class="text-xl sm:text-3xl font-bold text-indigo-600 dark:text-indigo-400">.000</span>
+              </div>
+            </div>
+
+            <!-- 日付・曜日・和暦 -->
+            <div class="pt-3 border-t border-slate-200 dark:border-slate-700/60 grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm">
+              <div class="bg-slate-50 dark:bg-slate-900/60 p-3 rounded-2xl border border-slate-200 dark:border-slate-800 flex items-center gap-3">
+                <i class="fa-regular fa-calendar-days text-indigo-600 dark:text-indigo-400 text-lg"></i>
+                <div>
+                  <div id="full-date-display" class="font-bold text-slate-800 dark:text-slate-200">2026年 11月 4日 (水)</div>
+                  <div id="wareki-display" class="text-xs text-slate-500 dark:text-slate-400">令和8年</div>
+                </div>
+              </div>
+              <div class="bg-slate-50 dark:bg-slate-900/60 p-3 rounded-2xl border border-slate-200 dark:border-slate-800 flex items-center gap-3">
+                <i class="fa-solid fa-stopwatch-20 text-emerald-600 dark:text-emerald-400 text-lg"></i>
+                <div>
+                  <div id="day-progress-pct" class="font-bold text-slate-800 dark:text-slate-200">本日の経過: 0%</div>
+                  <div class="w-32 bg-slate-200 dark:bg-slate-800 h-1.5 rounded-full mt-1 overflow-hidden">
+                    <div id="day-progress-bar" class="bg-emerald-500 h-full rounded-full" style="width: 0%"></div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+      <!-- 世界時計セクション -->
+      <div class="space-y-4">
+        <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+          <div>
+            <h2 class="text-lg font-bold text-slate-900 dark:text-white flex items-center gap-2">
+              <i class="fa-solid fa-globe text-indigo-500 dark:text-indigo-400"></i>
+              世界時計 (World Clocks)
+            </h2>
+            <p class="text-xs text-slate-500 dark:text-slate-400">主要都市の現在時刻と日本との時差</p>
+          </div>
+
+          <!-- 都市追加セレクター -->
+          <div class="flex items-center gap-2 w-full sm:w-auto">
+            <select id="add-city-select" class="bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 text-slate-800 dark:text-slate-200 text-xs sm:text-sm rounded-xl px-3 py-2 focus:outline-none focus:border-indigo-500">
+            </select>
+            <button onclick="addSelectedCity()" class="px-4 py-2 bg-indigo-600 hover:bg-indigo-500 text-white rounded-xl text-xs sm:text-sm font-bold flex items-center gap-1.5 transition shadow-sm whitespace-nowrap active:scale-95">
+              <i class="fa-solid fa-plus"></i> 都市追加
+            </button>
+          </div>
+        </div>
+
+        <!-- 世界時計カードグリッド -->
+        <div id="world-clocks-grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+        </div>
+      </div>
+
+    </section>
+
+    <!-- ======================================================== -->
+    <!-- タブ2: 集中＆作業アラーム (PC Work & Study Focused)       -->
+    <!-- ======================================================== -->
+    <section id="tab-alarm" class="space-y-6 hidden">
+      <div class="grid grid-cols-1 md:grid-cols-12 gap-6">
+        
+        <!-- 左側：集中タイマー設定カード -->
+        <div class="md:col-span-5 bg-white dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700/80 rounded-3xl p-6 shadow-xl backdrop-blur space-y-4">
+          <div class="flex items-center gap-3">
+            <div class="w-10 h-10 rounded-2xl bg-amber-500/20 text-amber-500 dark:text-amber-400 border border-amber-500/30 flex items-center justify-center text-lg">
+              <i class="fa-solid fa-bullseye"></i>
+            </div>
+            <div>
+              <h3 class="text-base font-extrabold text-slate-900 dark:text-white">PC作業・学習 集中アラーム</h3>
+              <p class="text-xs text-slate-500 dark:text-slate-400">スマホを見ずに、ボタン1つで測って通知</p>
+            </div>
+          </div>
+
+          <!-- クイックオフセットボタン（現在時刻起点） -->
+          <div class="space-y-2 pt-2">
+            <div class="flex items-center justify-between text-xs font-bold text-slate-600 dark:text-slate-300">
+              <span class="flex items-center gap-1.5">
+                <i class="fa-solid fa-bolt text-amber-500"></i>
+                集中・クイックオフセット (現在時刻起点)
+              </span>
+              <span class="text-[10px] text-amber-600 dark:text-amber-400 font-mono">Realtime Now +</span>
+            </div>
+
+            <div class="grid grid-cols-2 sm:grid-cols-3 gap-2">
+              <button type="button" onclick="setAlarmFromNow(15, '15分休憩・集中')" class="p-2.5 rounded-xl bg-amber-50 hover:bg-amber-100 dark:bg-amber-950/40 dark:hover:bg-amber-900/60 border border-amber-300 dark:border-amber-600/30 text-xs font-bold text-amber-800 dark:text-amber-300 active:scale-95 transition flex items-center justify-center gap-1.5 shadow-sm">
+                <span>⚡ +15分</span>
+              </button>
+              <button type="button" onclick="setAlarmFromNow(30, '30分作業')" class="p-2.5 rounded-xl bg-amber-50 hover:bg-amber-100 dark:bg-amber-950/40 dark:hover:bg-amber-900/60 border border-amber-300 dark:border-amber-600/30 text-xs font-bold text-amber-800 dark:text-amber-300 active:scale-95 transition flex items-center justify-center gap-1.5 shadow-sm">
+                <span>⚡ +30分</span>
+              </button>
+              <button type="button" onclick="setAlarmFromNow(45, '45分集中セッション')" class="p-2.5 rounded-xl bg-indigo-50 hover:bg-indigo-100 dark:bg-indigo-950/50 dark:hover:bg-indigo-900/60 border border-indigo-200 dark:border-indigo-500/30 text-xs font-bold text-indigo-700 dark:text-indigo-300 active:scale-95 transition flex items-center justify-center gap-1.5 shadow-sm">
+                <span>🎯 +45分 (集中)</span>
+              </button>
+              <button type="button" onclick="setAlarmFromNow(60, '1時間作業ブロック')" class="p-2.5 rounded-xl bg-indigo-50 hover:bg-indigo-100 dark:bg-indigo-950/50 dark:hover:bg-indigo-900/60 border border-indigo-200 dark:border-indigo-500/30 text-xs font-bold text-indigo-700 dark:text-indigo-300 active:scale-95 transition flex items-center justify-center gap-1.5 shadow-sm">
+                <span>🎯 +60分 (1h)</span>
+              </button>
+              <button type="button" onclick="setAlarmFromNow(90, '90分ディープワーク')" class="p-2.5 rounded-xl bg-indigo-50 hover:bg-indigo-100 dark:bg-indigo-950/50 dark:hover:bg-indigo-900/60 border border-indigo-200 dark:border-indigo-500/30 text-xs font-bold text-indigo-700 dark:text-indigo-300 active:scale-95 transition flex items-center justify-center gap-1.5 shadow-sm">
+                <span>🎯 +90分 (1.5h)</span>
+              </button>
+              <button type="button" onclick="setAlarmFromNow(120, '120分集中ブロック')" class="p-2.5 rounded-xl bg-indigo-50 hover:bg-indigo-100 dark:bg-indigo-950/50 dark:hover:bg-indigo-900/60 border border-indigo-200 dark:border-indigo-500/30 text-xs font-bold text-indigo-700 dark:text-indigo-300 active:scale-95 transition flex items-center justify-center gap-1.5 shadow-sm">
+                <span>🎯 +120分 (2h)</span>
+              </button>
+            </div>
+          </div>
+
+          <!-- 設定時刻プレビューと微調整 -->
+          <form onsubmit="handleCreateAlarm(event)" class="space-y-4 pt-2">
+            <div>
+              <div class="flex items-center justify-between mb-1.5">
+                <label class="text-xs font-bold text-slate-500 dark:text-slate-400">終了予定時刻</label>
+                <span class="text-[11px] text-amber-600 dark:text-amber-400 font-semibold" id="alarm-target-countdown">--:-- まで</span>
+              </div>
+              <div class="flex items-center justify-center bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-2xl py-2 px-3">
+                <input type="time" id="alarm-input-time" value="07:00" required onchange="syncAlarmFromTimeInput(this.value)" class="bg-transparent text-center text-4xl sm:text-5xl font-mono font-black text-amber-600 dark:text-amber-400 focus:outline-none cursor-pointer tracking-wider">
+              </div>
+            </div>
+
+            <!-- 微調整ボタン -->
+            <div class="grid grid-cols-6 gap-1 bg-slate-50 dark:bg-slate-900/60 p-2 rounded-2xl border border-slate-200 dark:border-slate-800">
+              <button type="button" onclick="adjustAlarmTime(-60)" class="py-1 rounded-lg bg-white dark:bg-slate-800 text-xs font-mono font-bold text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700 active:scale-95 transition">-1h</button>
+              <button type="button" onclick="adjustAlarmTime(-10)" class="py-1 rounded-lg bg-white dark:bg-slate-800 text-xs font-mono font-bold text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700 active:scale-95 transition">-10m</button>
+              <button type="button" onclick="adjustAlarmTime(-5)" class="py-1 rounded-lg bg-white dark:bg-slate-800 text-xs font-mono font-bold text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700 active:scale-95 transition">-5m</button>
+              <button type="button" onclick="adjustAlarmTime(5)" class="py-1 rounded-lg bg-white dark:bg-slate-800 text-xs font-mono font-bold text-amber-700 dark:text-amber-300 border border-slate-200 dark:border-slate-700 active:scale-95 transition">+5m</button>
+              <button type="button" onclick="adjustAlarmTime(10)" class="py-1 rounded-lg bg-white dark:bg-slate-800 text-xs font-mono font-bold text-amber-700 dark:text-amber-300 border border-slate-200 dark:border-slate-700 active:scale-95 transition">+10m</button>
+              <button type="button" onclick="adjustAlarmTime(60)" class="py-1 rounded-lg bg-white dark:bg-slate-800 text-xs font-mono font-bold text-amber-700 dark:text-amber-300 border border-slate-200 dark:border-slate-700 active:scale-95 transition">+1h</button>
+            </div>
+
+            <!-- ラベル・メモ -->
+            <div>
+              <label class="block text-xs font-bold text-slate-500 dark:text-slate-400 mb-1">作業・学習メモ</label>
+              <input type="text" id="alarm-input-label" placeholder="例: レポート作成、英単語、プログラミング" class="w-full px-4 py-2 bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl text-sm font-semibold text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:border-amber-500">
+            </div>
+
+            <button type="submit" class="w-full py-3 bg-amber-500 hover:bg-amber-400 active:scale-95 text-slate-900 font-extrabold rounded-xl transition shadow-lg shadow-amber-500/20 flex items-center justify-center gap-2">
+              <i class="fa-solid fa-plus"></i>
+              <span>アラームを登録</span>
+            </button>
+          </form>
+
+          <div class="text-[11px] text-slate-500 dark:text-slate-400 bg-slate-50 dark:bg-slate-900/60 p-3 rounded-xl border border-slate-200 dark:border-slate-800 flex items-start gap-2">
+            <i class="fa-solid fa-circle-info text-amber-500 mt-0.5"></i>
+            <span>作業中、タブを開いておくかバックグラウンドにしておくと、指定時刻に内蔵シンセサイザーのチャイム音でお知らせします。</span>
+          </div>
+        </div>
+
+        <!-- 右側：進行中・登録済みアラームリスト -->
+        <div class="md:col-span-7 bg-white dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700/80 rounded-3xl p-6 shadow-xl backdrop-blur space-y-4">
+          <div class="flex items-center justify-between">
+            <h3 class="text-base font-bold text-slate-900 dark:text-white flex items-center gap-2">
+              <i class="fa-solid fa-list-check text-amber-500 dark:text-amber-400"></i>
+              登録中のアラーム / リマインダー
+            </h3>
+            <span id="alarm-count-badge" class="text-xs px-2.5 py-0.5 rounded-full bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-300 font-bold">0件</span>
+          </div>
+
+          <div id="alarm-list-container" class="space-y-3 max-h-[460px] overflow-y-auto custom-scrollbar">
+          </div>
+        </div>
+
+      </div>
+    </section>
+
+    <!-- ======================================================== -->
+    <!-- タブ3: 高精度ストップウォッチ                              -->
+    <!-- ======================================================== -->
+    <section id="tab-stopwatch" class="space-y-6 hidden">
+      
+      <div class="bg-white dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700/80 rounded-3xl p-8 sm:p-12 text-center shadow-xl relative overflow-hidden backdrop-blur">
+        <div class="flex items-center justify-center gap-2 mb-3">
+          <span class="text-xs font-mono uppercase tracking-widest text-indigo-600 dark:text-indigo-400 bg-indigo-50 dark:bg-indigo-950/60 border border-indigo-200 dark:border-indigo-800/60 px-3 py-1 rounded-full">
+            1/100 SEC PRECISION
+          </span>
+        </div>
+
+        <div class="font-mono flex items-baseline justify-center tracking-tight select-none my-4">
+          <span id="sw-main-display" class="text-6xl sm:text-8xl font-black text-slate-900 dark:text-white">00:00.00</span>
+          <span id="sw-ms-display" class="text-2xl sm:text-4xl font-bold text-slate-400 ml-1">0</span>
+        </div>
+
+        <div class="flex flex-wrap items-center justify-center gap-4 mt-8">
+          <button id="sw-btn-toggle" onclick="toggleStopwatch()" class="w-36 py-3.5 bg-emerald-600 hover:bg-emerald-500 active:scale-95 text-white font-bold rounded-2xl transition shadow-lg shadow-emerald-600/30 flex items-center justify-center gap-2">
+            <i class="fa-solid fa-play"></i>
+            <span>スタート</span>
+          </button>
+          <button id="sw-btn-lap" onclick="recordLap()" disabled class="w-32 py-3.5 bg-slate-200 dark:bg-slate-700 text-slate-400 cursor-not-allowed font-bold rounded-2xl transition active:scale-95 flex items-center justify-center gap-2">
+            <i class="fa-solid fa-flag"></i>
+            <span>ラップ</span>
+          </button>
+          <button id="sw-btn-reset" onclick="resetStopwatch()" class="w-32 py-3.5 bg-slate-200 dark:bg-slate-700 hover:bg-slate-300 dark:hover:bg-slate-600 active:scale-95 text-slate-700 dark:text-slate-200 font-bold rounded-2xl transition flex items-center justify-center gap-2">
+            <i class="fa-solid fa-rotate-left"></i>
+            <span>リセット</span>
+          </button>
+        </div>
+
+        <div class="mt-6 flex flex-wrap items-center justify-center gap-4 text-xs text-slate-500 dark:text-slate-400">
+          <span class="flex items-center gap-1.5"><kbd class="px-2 py-0.5 rounded bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-200 font-mono">Space</kbd> スタート/停止</span>
+          <span class="flex items-center gap-1.5"><kbd class="px-2 py-0.5 rounded bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-200 font-mono">L</kbd> ラップ記録</span>
+          <span class="flex items-center gap-1.5"><kbd class="px-2 py-0.5 rounded bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-200 font-mono">R</kbd> リセット</span>
+        </div>
+      </div>
+
+      <!-- ラップタイム履歴 -->
+      <div class="bg-white dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700/60 rounded-3xl p-6 shadow-sm">
+        <div class="flex items-center justify-between mb-4 pb-3 border-b border-slate-200 dark:border-slate-700/60">
+          <div class="flex items-center gap-3">
+            <h3 class="text-base font-bold text-slate-900 dark:text-white flex items-center gap-2">
+              <i class="fa-solid fa-list-ol text-indigo-500 dark:text-indigo-400"></i>
+              ラップタイム一覧
+            </h3>
+            <span id="lap-count-badge" class="text-xs px-2.5 py-0.5 rounded-full bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-300 font-bold">0 ラップ</span>
+          </div>
+          <div class="flex items-center gap-2">
+            <button onclick="downloadLapCSV()" id="sw-btn-csv" disabled class="px-3 py-1.5 rounded-xl bg-slate-100 dark:bg-slate-700/60 text-slate-400 text-xs font-semibold flex items-center gap-1.5 cursor-not-allowed">
+              <i class="fa-solid fa-file-arrow-down"></i> CSV出力
+            </button>
+            <button onclick="clearLaps()" id="sw-btn-clearlap" disabled class="px-3 py-1.5 rounded-xl bg-slate-100 dark:bg-slate-700/60 text-slate-400 text-xs font-semibold hover:text-rose-500 transition cursor-not-allowed">
+              <i class="fa-regular fa-trash-can"></i> クリア
+            </button>
+          </div>
+        </div>
+
+        <div class="overflow-x-auto max-h-80 custom-scrollbar">
+          <table class="w-full text-left text-sm font-mono">
+            <thead class="text-xs text-slate-500 dark:text-slate-400 border-b border-slate-200 dark:border-slate-700/50 uppercase">
+              <tr>
+                <th class="py-2.5 px-4"># ラップ</th>
+                <th class="py-2.5 px-4">ラップタイム (区間)</th>
+                <th class="py-2.5 px-4">スプリットタイム (累計)</th>
+                <th class="py-2.5 px-4 text-right">状態</th>
+              </tr>
+            </thead>
+            <tbody id="lap-table-body" class="divide-y divide-slate-100 dark:divide-slate-700/30 text-slate-700 dark:text-slate-300">
+              <tr>
+                <td colspan="4" class="text-center py-8 text-slate-400 dark:text-slate-500 font-sans">
+                  ラップはまだ記録されていません。「ラップ」ボタンまたは <kbd class="px-1.5 py-0.5 rounded bg-slate-200 dark:bg-slate-700 text-xs">L</kbd> キーで記録できます。
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+    </section>
+
+    <!-- ======================================================== -->
+    <!-- タブ4: 時差計算 & ミーティング時間プランナー              -->
+    <!-- ======================================================== -->
+    <section id="tab-planner" class="space-y-6 hidden">
+      
+      <div class="bg-white dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700/80 rounded-3xl p-6 sm:p-8 shadow-xl backdrop-blur space-y-6">
+        
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <div>
+            <h2 class="text-lg font-bold text-slate-900 dark:text-white flex items-center gap-2">
+              <i class="fa-solid fa-sliders text-indigo-500 dark:text-indigo-400"></i>
+              ミーティング・タイムプランナー
+            </h2>
+            <p class="text-xs text-slate-500 dark:text-slate-400">スライダーを動かすと、各国の現地時刻とビジネス可能時間が一目で連動します</p>
+          </div>
+
+          <div class="flex items-center gap-2">
+            <button onclick="syncPlannerToNow()" class="px-4 py-2 bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 dark:hover:bg-slate-600 text-slate-700 dark:text-slate-200 text-xs font-bold rounded-xl transition flex items-center gap-1.5 active:scale-95">
+              <i class="fa-solid fa-arrows-rotate"></i> 今の時刻に合わせる
+            </button>
+          </div>
+        </div>
+
+        <!-- 基準都市と選択された時刻 -->
+        <div class="bg-slate-50 dark:bg-slate-900/80 rounded-2xl p-4 border border-slate-200 dark:border-slate-700/60 flex flex-col sm:flex-row items-center justify-between gap-4">
+          <div class="flex items-center gap-3">
+            <div class="w-10 h-10 rounded-xl bg-indigo-500/20 text-indigo-600 dark:text-indigo-400 border border-indigo-500/30 flex items-center justify-center font-bold">
+              基
+            </div>
+            <div>
+              <span class="text-xs text-slate-500 dark:text-slate-400 font-semibold">基準都市</span>
+              <div class="flex items-center gap-2">
+                <select id="planner-base-city" onchange="onPlannerBaseCityChange()" class="bg-transparent font-bold text-slate-900 dark:text-white text-base focus:outline-none border-b border-indigo-500 cursor-pointer">
+                </select>
+              </div>
+            </div>
+          </div>
+
+          <div class="text-center sm:text-right">
+            <span class="text-xs text-slate-500 dark:text-slate-400 font-semibold">設定時刻 (24H)</span>
+            <div class="text-3xl font-mono font-extrabold text-indigo-600 dark:text-indigo-400" id="planner-selected-time-str">15:00</div>
+          </div>
+        </div>
+
+        <!-- 24時間スライダー -->
+        <div class="space-y-2 pt-2">
+          <div class="flex justify-between text-xs font-mono text-slate-500 dark:text-slate-400 px-1">
+            <span>00:00 (深夜)</span>
+            <span>06:00 (朝)</span>
+            <span>12:00 (正午)</span>
+            <span>18:00 (夕)</span>
+            <span>23:59 (深夜)</span>
+          </div>
+          <input type="range" id="planner-slider" min="0" max="1439" step="15" value="900" oninput="onPlannerSliderChange(this.value)" class="w-full h-3 bg-slate-200 dark:bg-slate-700 rounded-lg appearance-none cursor-pointer accent-indigo-600">
+          <div class="flex items-center justify-between text-xs text-slate-500">
+            <span>※15分刻みで調整可能</span>
+            <span class="flex items-center gap-2">
+              <span class="inline-block w-3 h-3 rounded-full bg-emerald-500/80"></span> 業務時間内 (09:00 - 18:00)
+              <span class="inline-block w-3 h-3 rounded-full bg-slate-400 dark:bg-slate-600 ml-2"></span> 業務時間外
+            </span>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- タイムライン一覧 -->
+      <div class="space-y-4">
+        <div class="flex items-center justify-between">
+          <h3 class="text-base font-bold text-slate-900 dark:text-white flex items-center gap-2">
+            <i class="fa-solid fa-users text-indigo-500 dark:text-indigo-400"></i>
+            比較都市タイムライン
+          </h3>
+          <div class="flex items-center gap-2">
+            <select id="planner-add-city-select" class="bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 text-slate-800 dark:text-slate-200 text-xs rounded-xl px-2.5 py-1.5 focus:outline-none focus:border-indigo-500">
+            </select>
+            <button onclick="addPlannerCity()" class="px-3 py-1.5 bg-indigo-600 hover:bg-indigo-500 text-white rounded-xl text-xs font-bold transition flex items-center gap-1 active:scale-95">
+              <i class="fa-solid fa-plus"></i> 追加
+            </button>
+          </div>
+        </div>
+
+        <div id="planner-cities-container" class="space-y-3">
+        </div>
+
+        <!-- 判定サマリー -->
+        <div id="planner-verdict-card" class="bg-gradient-to-r from-slate-100 to-white dark:from-slate-800 dark:to-slate-800/80 border border-slate-200 dark:border-slate-700/80 rounded-2xl p-5 flex items-center gap-4">
+        </div>
+      </div>
+
+    </section>
+
+    <!-- ======================================================== -->
+    <!-- タブ5: タイマー (Countdown Timer)                        -->
+    <!-- ======================================================== -->
+    <section id="tab-timer" class="space-y-6 hidden">
+      <div class="bg-white dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700/80 rounded-3xl p-6 sm:p-10 shadow-xl backdrop-blur relative overflow-hidden">
+        <div class="max-w-xl mx-auto flex flex-col items-center">
+          
+          <div class="relative w-64 h-64 sm:w-72 sm:h-72 flex items-center justify-center my-4">
+            <svg class="w-full h-full -rotate-90" viewBox="0 0 200 200">
+              <circle cx="100" cy="100" r="88" class="stroke-slate-200 dark:stroke-slate-700/80" stroke-width="10" fill="transparent" />
+              <circle id="timer-progress-ring" cx="100" cy="100" r="88" stroke="#6366f1" stroke-width="10" stroke-linecap="round" fill="transparent" stroke-dasharray="552.92" stroke-dashoffset="0" class="transition-all duration-300" />
+            </svg>
+            <div class="absolute inset-0 flex flex-col items-center justify-center font-mono">
+              <span id="timer-display" class="text-5xl sm:text-6xl font-black text-slate-900 dark:text-white tracking-tight">00:00:00</span>
+              <span id="timer-status-hint" class="text-xs text-slate-500 dark:text-slate-400 mt-2 font-sans">時間を設定してスタート</span>
+            </div>
+          </div>
+
+          <div id="timer-inputs-wrapper" class="w-full bg-slate-50 dark:bg-slate-900/70 p-4 rounded-2xl border border-slate-200 dark:border-slate-700/60 my-4 flex items-center justify-center gap-3">
+            <div class="flex flex-col items-center">
+              <input type="number" id="timer-input-h" min="0" max="99" value="0" class="w-16 h-12 bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-xl text-center text-xl font-mono font-bold text-slate-900 dark:text-white focus:outline-none focus:border-indigo-500">
+              <span class="text-[11px] text-slate-500 dark:text-slate-400 mt-1">時間</span>
+            </div>
+            <span class="text-2xl font-bold text-slate-400 dark:text-slate-500">:</span>
+            <div class="flex flex-col items-center">
+              <input type="number" id="timer-input-m" min="0" max="59" value="5" class="w-16 h-12 bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-xl text-center text-xl font-mono font-bold text-slate-900 dark:text-white focus:outline-none focus:border-indigo-500">
+              <span class="text-[11px] text-slate-500 dark:text-slate-400 mt-1">分</span>
+            </div>
+            <span class="text-2xl font-bold text-slate-400 dark:text-slate-500">:</span>
+            <div class="flex flex-col items-center">
+              <input type="number" id="timer-input-s" min="0" max="59" value="0" class="w-16 h-12 bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-xl text-center text-xl font-mono font-bold text-slate-900 dark:text-white focus:outline-none focus:border-indigo-500">
+              <span class="text-[11px] text-slate-500 dark:text-slate-400 mt-1">秒</span>
+            </div>
+          </div>
+
+          <div class="flex flex-wrap items-center justify-center gap-2 mb-6 w-full">
+            <button onclick="addTimerQuickSeconds(60)" class="px-3 py-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-slate-700/70 dark:hover:bg-slate-700 text-xs font-bold text-slate-700 dark:text-slate-200 border border-slate-300 dark:border-slate-600 transition active:scale-95">+1分</button>
+            <button onclick="addTimerQuickSeconds(180)" class="px-3 py-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-slate-700/70 dark:hover:bg-slate-700 text-xs font-bold text-slate-700 dark:text-slate-200 border border-slate-300 dark:border-slate-600 transition active:scale-95">+3分</button>
+            <button onclick="addTimerQuickSeconds(300)" class="px-3 py-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-slate-700/70 dark:hover:bg-slate-700 text-xs font-bold text-slate-700 dark:text-slate-200 border border-slate-300 dark:border-slate-600 transition active:scale-95">+5分</button>
+            <button onclick="addTimerQuickSeconds(600)" class="px-3 py-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-slate-700/70 dark:hover:bg-slate-700 text-xs font-bold text-slate-700 dark:text-slate-200 border border-slate-300 dark:border-slate-600 transition active:scale-95">+10分</button>
+            <button onclick="addTimerQuickSeconds(1500)" class="px-3 py-1.5 rounded-xl bg-indigo-50 hover:bg-indigo-100 dark:bg-slate-700/70 dark:hover:bg-slate-700 text-xs font-bold text-indigo-700 dark:text-indigo-300 border border-indigo-200 dark:border-indigo-500/30 transition active:scale-95">ポモドーロ (25分)</button>
+          </div>
+
+          <div class="flex items-center gap-4">
+            <button id="timer-btn-toggle" onclick="toggleTimer()" class="w-36 py-3.5 bg-indigo-600 hover:bg-indigo-500 active:scale-95 text-white font-bold rounded-2xl transition shadow-lg shadow-indigo-600/30 flex items-center justify-center gap-2">
+              <i class="fa-solid fa-play"></i>
+              <span>スタート</span>
+            </button>
+            <button id="timer-btn-reset" onclick="resetTimer()" class="w-32 py-3.5 bg-slate-200 hover:bg-slate-300 dark:bg-slate-700 dark:hover:bg-slate-600 active:scale-95 text-slate-700 dark:text-slate-200 font-bold rounded-2xl transition flex items-center justify-center gap-2">
+              <i class="fa-solid fa-rotate-left"></i>
+              <span>リセット</span>
+            </button>
+          </div>
+
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- アラーム鳴動モーダル -->
+  <div id="ringing-modal" class="fixed inset-0 z-50 bg-black/80 backdrop-blur-md hidden flex items-center justify-center p-4">
+    <div class="bg-white dark:bg-slate-800 border-2 border-rose-500 rounded-3xl p-8 max-w-md w-full text-center shadow-2xl shadow-rose-500/30">
+      <div class="w-20 h-20 bg-rose-500/20 text-rose-500 dark:text-rose-400 border border-rose-500/40 rounded-full flex items-center justify-center text-4xl mx-auto mb-4 animate-pulse">
+        <i class="fa-solid fa-bell"></i>
+      </div>
+      <h3 id="ringing-modal-title" class="text-2xl font-black text-slate-900 dark:text-white">時間になりました！</h3>
+      <p id="ringing-modal-desc" class="text-sm text-slate-600 dark:text-slate-300 mt-2 font-medium">集中セッションが完了しました。少し休憩しましょう。</p>
+      
+      <div class="mt-8 flex justify-center">
+        <button onclick="dismissAlarmSound()" class="px-8 py-3.5 bg-rose-600 hover:bg-rose-500 active:scale-95 text-white font-bold rounded-2xl transition shadow-lg shadow-rose-600/40 text-base flex items-center gap-2">
+          <i class="fa-solid fa-check"></i>
+          <span>アラームを止める</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- フッター -->
+  <footer class="border-t border-slate-200 dark:border-slate-800/80 py-4 text-center text-xs text-slate-500 dark:text-slate-400">
+    <div class="max-w-6xl mx-auto px-4 flex flex-col sm:flex-row items-center justify-between gap-2">
+      <div class="flex items-center gap-2">
+        <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+        <span>ローカル環境 / ブラウザ内高精度タイマー駆動</span>
+      </div>
+      <div>ChronoSync World Time & Focus Suite</div>
+    </div>
+  </footer>
+
+  <!-- ======================================================== -->
+  <!-- JavaScript コアスクリプト                                -->
+  <!-- ======================================================== -->
+  <script>
+    // ----------------------------------------------------
+    // テーマ管理 & タブ切替
+    // ----------------------------------------------------
+    const THEME_STORAGE_KEY = 'chronosync_theme_v1';
+
+    function initTheme() {
+      const savedTheme = localStorage.getItem(THEME_STORAGE_KEY);
+      const isDark = savedTheme ? savedTheme === 'dark' : true;
+      applyTheme(isDark);
+    }
+
+    function toggleTheme() {
+      const isCurrentlyDark = document.documentElement.classList.contains('dark');
+      const newDark = !isCurrentlyDark;
+      localStorage.setItem(THEME_STORAGE_KEY, newDark ? 'dark' : 'light');
+      applyTheme(newDark);
+    }
+
+    function applyTheme(isDark) {
+      if (isDark) {
+        document.documentElement.classList.add('dark');
+      } else {
+        document.documentElement.classList.remove('dark');
+      }
+
+      // アイコン・ラベルの更新
+      const mobileIcon = document.getElementById('theme-icon-mobile');
+      const desktopIcon = document.getElementById('theme-icon-desktop');
+      const desktopLabel = document.getElementById('theme-label-desktop');
+
+      if (mobileIcon) {
+        mobileIcon.className = isDark ? 'fa-solid fa-sun text-amber-400' : 'fa-solid fa-moon text-indigo-600';
+      }
+      if (desktopIcon) {
+        desktopIcon.className = isDark ? 'fa-solid fa-sun text-amber-500' : 'fa-solid fa-moon text-indigo-600';
+      }
+      if (desktopLabel) {
+        desktopLabel.textContent = isDark ? 'ライト' : 'ダーク';
+      }
+
+      updateAnalogClockTickColors();
+    }
+
+    function switchTab(tabName) {
+      const tabs = ['clock', 'alarm', 'stopwatch', 'planner', 'timer'];
+      tabs.forEach(t => {
+        const sec = document.getElementById(`tab-${t}`);
+        const btn = document.getElementById(`nav-btn-${t}`);
+        if (sec) sec.classList.add('hidden');
+        if (btn) {
+          btn.className = 'px-3 sm:px-4 py-2 rounded-xl text-xs sm:text-sm font-bold transition-all flex items-center gap-1.5 text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white whitespace-nowrap';
+        }
+      });
+
+      const activeSec = document.getElementById(`tab-${tabName}`);
+      const activeBtn = document.getElementById(`nav-btn-${tabName}`);
+      if (activeSec) activeSec.classList.remove('hidden');
+      if (activeBtn) {
+        activeBtn.className = 'px-3 sm:px-4 py-2 rounded-xl text-xs sm:text-sm font-bold transition-all flex items-center gap-1.5 bg-indigo-600 text-white shadow-md shadow-indigo-600/30 whitespace-nowrap';
+      }
+    }
+
+    // ----------------------------------------------------
+    // 都市データベース & 共有ステート
+    // ----------------------------------------------------
+    const CITY_DATABASE = [
+      { id: 'tokyo', name: '東京 (Tokyo)', tz: 'Asia/Tokyo', flag: '🇯🇵', offsetHrs: 9 },
+      { id: 'london', name: 'ロンドン (London)', tz: 'Europe/London', flag: '🇬🇧', offsetHrs: 0 },
+      { id: 'newyork', name: 'ニューヨーク (New York)', tz: 'America/New_York', flag: '🇺🇸', offsetHrs: -5 },
+      { id: 'sanfrancisco', name: 'サンフランシスコ (SF)', tz: 'America/Los_Angeles', flag: '🇺🇸', offsetHrs: -8 },
+      { id: 'singapore', name: 'シンガポール (Singapore)', tz: 'Asia/Singapore', flag: '🇸🇬', offsetHrs: 8 },
+      { id: 'sydney', name: 'シドニー (Sydney)', tz: 'Australia/Sydney', flag: '🇦🇺', offsetHrs: 11 },
+      { id: 'paris', name: 'パリ (Paris)', tz: 'Europe/Paris', flag: '🇫🇷', offsetHrs: 1 }
+    ];
+
+    let userWorldCities = ['tokyo', 'newyork', 'london'];
+    let plannerBaseCityId = 'tokyo';
+    let plannerCities = ['tokyo', 'newyork', 'london'];
+    let plannerMinutes = 900;
+
+    // ----------------------------------------------------
+    // Web Audio アラーム音 & モーダル通知
+    // ----------------------------------------------------
+    let alarmAudioCtx = null;
+    let alarmOscInterval = null;
+
+    function playBeepTone() {
+      try {
+        if (!alarmAudioCtx) {
+          alarmAudioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        }
+        if (alarmAudioCtx.state === 'suspended') {
+          alarmAudioCtx.resume();
+        }
+        const now = alarmAudioCtx.currentTime;
+        const osc = alarmAudioCtx.createOscillator();
+        const gain = alarmAudioCtx.createGain();
+
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(880, now);
+        osc.frequency.setValueAtTime(1174.66, now + 0.15);
+
+        gain.gain.setValueAtTime(0, now);
+        gain.gain.linearRampToValueAtTime(0.3, now + 0.02);
+        gain.gain.exponentialRampToValueAtTime(0.001, now + 0.45);
+
+        osc.connect(gain);
+        gain.connect(alarmAudioCtx.destination);
+
+        osc.start(now);
+        osc.stop(now + 0.45);
+      } catch (e) {}
+    }
+
+    function triggerAlarmModal(title, desc) {
+      const modal = document.getElementById('ringing-modal');
+      const titleEl = document.getElementById('ringing-modal-title');
+      const descEl = document.getElementById('ringing-modal-desc');
+
+      if (titleEl) titleEl.textContent = title;
+      if (descEl) descEl.textContent = desc;
+      if (modal) modal.classList.remove('hidden');
+
+      playBeepTone();
+      clearInterval(alarmOscInterval);
+      alarmOscInterval = setInterval(playBeepTone, 1000);
+
+      if ("Notification" in window && Notification.permission === "granted") {
+        new Notification(title, { body: desc, icon: 'favicon.ico' });
+      }
+    }
+
+    function dismissAlarmSound() {
+      clearInterval(alarmOscInterval);
+      alarmOscInterval = null;
+      const modal = document.getElementById('ringing-modal');
+      if (modal) modal.classList.add('hidden');
+    }
+
+    // ----------------------------------------------------
+    // 画面3: アラーム エンジン
+    // ----------------------------------------------------
+    const ALARM_STORAGE_KEY = 'chronosync_alarms_v1';
+    let userAlarms = [];
+    let lastCheckedMinuteStr = '';
+
+    // アラーム設定用ヘルパー関数群
+    function updateAlarmInputs(hhmm) {
+      const input = document.getElementById('alarm-input-time');
+      const slider = document.getElementById('alarm-slider');
+      const hint = document.getElementById('alarm-slider-hint');
+      if (input) input.value = hhmm;
+
+      const [hStr, mStr] = hhmm.split(':');
+      const totalM = (parseInt(hStr, 10) * 60) + parseInt(mStr, 10);
+      if (slider) slider.value = totalM;
+      if (hint) hint.textContent = hhmm;
+    }
+
+    function syncAlarmFromTimeInput(val) {
+      if (!val) return;
+      updateAlarmInputs(val);
+    }
+
+    function onAlarmSliderChange(minutesVal) {
+      const totalM = parseInt(minutesVal, 10);
+      const h = Math.floor(totalM / 60);
+      const m = totalM % 60;
+      const pad2 = (n) => String(n).padStart(2, '0');
+      const hhmm = `${pad2(h)}:${pad2(m)}`;
+      updateAlarmInputs(hhmm);
+    }
+
+    function adjustAlarmTime(deltaMinutes) {
+      const input = document.getElementById('alarm-input-time');
+      let currentVal = input.value || '07:00';
+      const [hStr, mStr] = currentVal.split(':');
+      let totalM = (parseInt(hStr, 10) * 60) + parseInt(mStr, 10) + deltaMinutes;
+
+      while (totalM < 0) totalM += 1440;
+      while (totalM >= 1440) totalM -= 1440;
+
+      const h = Math.floor(totalM / 60);
+      const m = totalM % 60;
+      const pad2 = (n) => String(n).padStart(2, '0');
+      updateAlarmInputs(`${pad2(h)}:${pad2(m)}`);
+    }
+
+    function setAlarmPreset(hhmm, defaultLabel) {
+      updateAlarmInputs(hhmm);
+      const labelInput = document.getElementById('alarm-input-label');
+      if (labelInput && !labelInput.value) {
+        labelInput.value = defaultLabel;
+      }
+    }
+
+    function setAlarmFromNow(offsetMinutes, defaultLabel) {
+      const now = new Date();
+      now.setMinutes(now.getMinutes() + offsetMinutes);
+      const pad2 = (n) => String(n).padStart(2, '0');
+      const hhmm = `${pad2(now.getHours())}:${pad2(now.getMinutes())}`;
+      updateAlarmInputs(hhmm);
+
+      const labelInput = document.getElementById('alarm-input-label');
+      if (labelInput) {
+        labelInput.value = defaultLabel;
+      }
+    }
+
+    function loadAlarms() {
+      const stored = localStorage.getItem(ALARM_STORAGE_KEY);
+      if (stored) {
+        try {
+          userAlarms = JSON.parse(stored);
+        } catch(e) {
+          userAlarms = [];
+        }
+      } else {
+        // 初回アクセス時は空（ダミーのアラームは一切登録しない）
+        userAlarms = [];
+      }
+      renderAlarms();
+      checkAlarmBadge();
+    }
+
+    function saveAlarms() {
+      localStorage.setItem(ALARM_STORAGE_KEY, JSON.stringify(userAlarms));
+      renderAlarms();
+      checkAlarmBadge();
+    }
+
+    function handleCreateAlarm(e) {
+      e.preventDefault();
+      const timeVal = document.getElementById('alarm-input-time').value;
+      const labelVal = document.getElementById('alarm-input-label').value.trim() || '集中セッション';
+      if (!timeVal) return;
+
+      userAlarms.push({
+        id: 'al_' + Date.now(),
+        time: timeVal,
+        label: labelVal,
+        enabled: true
+      });
+
+      userAlarms.sort((a, b) => a.time.localeCompare(b.time));
+      saveAlarms();
+      document.getElementById('alarm-input-label').value = '';
+
+      // 通知権限リクエスト
+      if ("Notification" in window && Notification.permission === "default") {
+        Notification.requestPermission();
+      }
+    }
+
+    function toggleAlarmEnabled(id) {
+      const item = userAlarms.find(a => a.id === id);
+      if (item) {
+        item.enabled = !item.enabled;
+        saveAlarms();
+      }
+    }
+
+    function deleteAlarm(id) {
+      userAlarms = userAlarms.filter(a => a.id !== id);
+      saveAlarms();
+    }
+
+    function checkAlarmBadge() {
+      const hasActive = userAlarms.some(a => a.enabled);
+      const badge = document.getElementById('active-alarm-badge');
+      if (badge) badge.classList.toggle('hidden', !hasActive);
+    }
+
+    function renderAlarms() {
+      const container = document.getElementById('alarm-list-container');
+      const countBadge = document.getElementById('alarm-count-badge');
+      if (!container) return;
+
+      countBadge.textContent = `${userAlarms.length}件`;
+
+      if (userAlarms.length === 0) {
+        container.innerHTML = `
+          <div class="text-center py-12 px-4 rounded-2xl border-2 border-dashed border-slate-200 dark:border-slate-800 text-slate-400 dark:text-slate-500 text-sm flex flex-col items-center justify-center gap-2">
+            <i class="fa-regular fa-bell-slash text-2xl mb-1 text-slate-300 dark:text-slate-600"></i>
+            <span class="font-bold">登録中のアラームはありません</span>
+            <span class="text-xs">左の集中クイックオフセットボタン（+45分など）を選んで「アラームを追加」を押すと登録されます。</span>
+          </div>
+        `;
+        return;
+      }
+
+      container.innerHTML = userAlarms.map(a => {
+        return `
+          <div class="bg-slate-50 dark:bg-slate-900/80 border ${a.enabled ? 'border-amber-500/50 dark:border-amber-500/40' : 'border-slate-200 dark:border-slate-800 opacity-60'} rounded-2xl p-4 flex items-center justify-between transition shadow-sm">
+            <div class="flex items-center gap-3">
+              <div class="font-mono text-3xl font-extrabold ${a.enabled ? 'text-amber-600 dark:text-amber-400' : 'text-slate-400 dark:text-slate-500'}">
+                ${a.time}
+              </div>
+              <div>
+                <div class="font-bold text-slate-800 dark:text-slate-200 text-sm">${a.label}</div>
+                <div class="text-xs text-slate-500 dark:text-slate-400">${a.enabled ? '監視中' : 'オフ'}</div>
+              </div>
+            </div>
+
+            <div class="flex items-center gap-3">
+              <!-- オン/オフトグルスイッチ -->
+              <button onclick="toggleAlarmEnabled('${a.id}')" class="relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${a.enabled ? 'bg-amber-500' : 'bg-slate-300 dark:bg-slate-700'}">
+                <span class="inline-block h-5 w-5 transform rounded-full bg-white shadow-lg transition duration-200 ease-in-out ${a.enabled ? 'translate-x-5' : 'translate-x-0'}"></span>
+              </button>
+
+              <!-- 削除ボタン（ゴミ箱アイコン） -->
+              <button onclick="deleteAlarm('${a.id}')" class="text-slate-400 hover:text-rose-500 p-2 transition text-sm" title="削除">
+                <i class="fa-solid fa-trash-can"></i>
+              </button>
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    function checkAlarmsTrigger(now) {
+      const pad2 = (n) => String(n).padStart(2, '0');
+      const currentHM = `${pad2(now.getHours())}:${pad2(now.getMinutes())}`;
+
+      if (currentHM === lastCheckedMinuteStr) return;
+      lastCheckedMinuteStr = currentHM;
+
+      userAlarms.forEach(a => {
+        if (a.enabled && a.time === currentHM) {
+          triggerAlarmModal(`時間です！ (${a.time})`, a.label);
+        }
+      });
+    }
+
+    // ----------------------------------------------------
+    // 時計 & 世界時計 エンジン
+    // ----------------------------------------------------
+    function initAnalogClockTicks() {
+      const ticksGroup = document.getElementById('clock-ticks');
+      if (!ticksGroup) return;
+      ticksGroup.innerHTML = '';
+      for (let i = 0; i < 60; i++) {
+        const angle = i * 6;
+        const isHour = i % 5 === 0;
+        const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+        const r1 = 90;
+        const r2 = isHour ? 80 : 85;
+        const rad = (angle - 90) * (Math.PI / 180);
+        
+        line.setAttribute('x1', 100 + r1 * Math.cos(rad));
+        line.setAttribute('y1', 100 + r1 * Math.sin(rad));
+        line.setAttribute('x2', 100 + r2 * Math.cos(rad));
+        line.setAttribute('y2', 100 + r2 * Math.sin(rad));
+        line.setAttribute('class', `analog-tick ${isHour ? 'tick-hour' : 'tick-min'}`);
+        line.setAttribute('stroke-width', isHour ? '2.5' : '1');
+        line.setAttribute('stroke-linecap', 'round');
+        ticksGroup.appendChild(line);
+      }
+      updateAnalogClockTickColors();
+    }
+
+    function updateAnalogClockTickColors() {
+      const isDark = document.documentElement.classList.contains('dark');
+      document.querySelectorAll('.analog-tick.tick-hour').forEach(el => {
+        el.setAttribute('stroke', isDark ? '#64748b' : '#94a3b8');
+      });
+      document.querySelectorAll('.analog-tick.tick-min').forEach(el => {
+        el.setAttribute('stroke', isDark ? '#334155' : '#cbd5e1');
+      });
+    }
+
+    function getWarekiString(date) {
+      try {
+        const formatter = new Intl.DateTimeFormat('ja-JP-u-ca-japanese', { era: 'long', year: 'numeric' });
+        return formatter.format(date);
+      } catch (e) {
+        return '令和';
+      }
+    }
+
+    let lastSecond = -1;
+    function updateClockLoop() {
+      const now = new Date();
+      const ms = now.getMilliseconds();
+      const s = now.getSeconds();
+      const m = now.getMinutes();
+      const h = now.getHours();
+
+      const secAngle = (s + ms / 1000) * 6;
+      const minAngle = (m + s / 60) * 6;
+      const hourAngle = ((h % 12) + m / 60 + s / 3600) * 30;
+
+      const secHand = document.getElementById('second-hand');
+      const minHand = document.getElementById('minute-hand');
+      const hourHand = document.getElementById('hour-hand');
+
+      if (secHand) secHand.setAttribute('transform', `rotate(${secAngle} 100 100)`);
+      if (minHand) minHand.setAttribute('transform', `rotate(${minAngle} 100 100)`);
+      if (hourHand) hourHand.setAttribute('transform', `rotate(${hourAngle} 100 100)`);
+
+      const pad2 = (n) => String(n).padStart(2, '0');
+      const pad3 = (n) => String(n).padStart(3, '0');
+      
+      const hmsEl = document.getElementById('digital-hms');
+      const msEl = document.getElementById('digital-ms');
+      if (hmsEl) hmsEl.textContent = `${pad2(h)}:${pad2(m)}:${pad2(s)}`;
+      if (msEl) msEl.textContent = `.${pad3(ms)}`;
+
+      if (s !== lastSecond) {
+        lastSecond = s;
+        updateDateAndProgress(now);
+        updateWorldClocksDisplay(now);
+        checkAlarmsTrigger(now);
+      }
+
+      requestAnimationFrame(updateClockLoop);
+    }
+
+    function updateDateAndProgress(now) {
+      const weekdays = ['日', '月', '火', '水', '木', '金', '土'];
+      const y = now.getFullYear();
+      const m = now.getMonth() + 1;
+      const d = now.getDate();
+      const w = weekdays[now.getDay()];
+
+      const dateEl = document.getElementById('full-date-display');
+      const warekiEl = document.getElementById('wareki-display');
+      if (dateEl) dateEl.textContent = `${y}年 ${m}月 ${d}日 (${w})`;
+      if (warekiEl) warekiEl.textContent = `${getWarekiString(now)} (和暦)`;
+
+      const totalSec = now.getHours() * 3600 + now.getMinutes() * 60 + now.getSeconds();
+      const pct = ((totalSec / 86400) * 100).toFixed(1);
+      const progTxt = document.getElementById('day-progress-pct');
+      const progBar = document.getElementById('day-progress-bar');
+      if (progTxt) progTxt.textContent = `本日の経過: ${pct}%`;
+      if (progBar) progBar.style.width = `${pct}%`;
+    }
+
+    function updateWorldClocksDisplay(now) {
+      const grid = document.getElementById('world-clocks-grid');
+      if (!grid) return;
+
+      const userTz = Intl.DateTimeFormat().resolvedOptions().timeZone || 'Asia/Tokyo';
+
+      grid.innerHTML = userWorldCities.map(cityId => {
+        const city = CITY_DATABASE.find(c => c.id === cityId);
+        if (!city) return '';
+
+        const formatter = new Intl.DateTimeFormat('ja-JP', {
+          timeZone: city.tz,
+          year: 'numeric',
+          month: '2-digit',
+          day: '2-digit',
+          hour: '2-digit',
+          minute: '2-digit',
+          second: '2-digit',
+          hour12: false
+        });
+
+        const parts = formatter.formatToParts(now);
+        const map = {};
+        parts.forEach(p => map[p.type] = p.value);
+
+        const hour = parseInt(map.hour, 10);
+        const min = map.minute;
+        const sec = map.second;
+        const dateStr = `${map.month}/${map.day}`;
+
+        const isDaytime = hour >= 6 && hour < 18;
+
+        const locDate = new Date(now.toLocaleString('en-US', { timeZone: userTz }));
+        const tgtDate = new Date(now.toLocaleString('en-US', { timeZone: city.tz }));
+        const diffHrs = Math.round((tgtDate - locDate) / (1000 * 60 * 60));
+        const diffSign = diffHrs >= 0 ? `+${diffHrs}` : `${diffHrs}`;
+
+        return `
+          <div class="bg-white dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700/70 hover:border-indigo-500/50 rounded-2xl p-4.5 transition-all shadow-md group">
+            <div class="flex items-center justify-between mb-2">
+              <div class="flex items-center gap-2">
+                <span class="text-xl">${city.flag}</span>
+                <span class="font-bold text-slate-800 dark:text-slate-200 text-sm">${city.name}</span>
+              </div>
+              <div class="flex items-center gap-2">
+                <span class="text-xs px-2 py-0.5 rounded-full font-bold ${isDaytime ? 'bg-amber-100 dark:bg-amber-500/20 text-amber-800 dark:text-amber-300 border border-amber-300 dark:border-amber-500/30' : 'bg-indigo-50 dark:bg-indigo-950 text-indigo-700 dark:text-indigo-300 border border-indigo-200 dark:border-indigo-800'} flex items-center gap-1">
+                  <i class="fa-solid ${isDaytime ? 'fa-sun text-amber-500' : 'fa-moon text-indigo-400'}"></i>
+                  ${isDaytime ? '昼' : '夜'}
+                </span>
+                <button onclick="removeWorldCity('${city.id}')" class="text-slate-400 hover:text-rose-500 text-xs p-1 transition opacity-0 group-hover:opacity-100" title="削除">
+                  <i class="fa-solid fa-xmark"></i>
+                </button>
+              </div>
+            </div>
+
+            <div class="flex items-baseline justify-between mt-2">
+              <div class="font-mono text-3xl font-extrabold text-slate-900 dark:text-white">
+                ${map.hour}:${min}<span class="text-xs font-normal text-slate-400 ml-1">:${sec}</span>
+              </div>
+              <div class="text-right">
+                <div class="text-xs font-semibold text-slate-700 dark:text-slate-300">${dateStr}</div>
+                <div class="text-[11px] font-mono text-indigo-600 dark:text-indigo-400">時差 ${diffSign}h</div>
+              </div>
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    function initCitySelectors() {
+      const addSelect = document.getElementById('add-city-select');
+      const baseSelect = document.getElementById('planner-base-city');
+      const plannerAddSelect = document.getElementById('planner-add-city-select');
+
+      if (!addSelect || !baseSelect || !plannerAddSelect) return;
+
+      addSelect.innerHTML = CITY_DATABASE.map(c => `<option value="${c.id}">${c.flag} ${c.name}</option>`).join('');
+      baseSelect.innerHTML = CITY_DATABASE.map(c => `<option value="${c.id}">${c.flag} ${c.name}</option>`).join('');
+      plannerAddSelect.innerHTML = CITY_DATABASE.map(c => `<option value="${c.id}">${c.flag} ${c.name}</option>`).join('');
+
+      baseSelect.value = plannerBaseCityId;
+    }
+
+    function addSelectedCity() {
+      const select = document.getElementById('add-city-select');
+      const id = select.value;
+      if (!userWorldCities.includes(id)) {
+        userWorldCities.push(id);
+        updateWorldClocksDisplay(new Date());
+      }
+    }
+
+    function removeWorldCity(id) {
+      userWorldCities = userWorldCities.filter(c => c !== id);
+      updateWorldClocksDisplay(new Date());
+    }
+
+    // ----------------------------------------------------
+    // ストップウォッチ エンジン
+    // ----------------------------------------------------
+    let swRunning = false;
+    let swStartTime = 0;
+    let swElapsedTime = 0;
+    let swIntervalId = null;
+    let swLaps = [];
+    let swLastLapTime = 0;
+
+    function formatStopwatchTime(msTotal) {
+      const totalHundredths = Math.floor(msTotal / 10);
+      const hundredths = totalHundredths % 100;
+      const totalSec = Math.floor(totalHundredths / 100);
+      const sec = totalSec % 60;
+      const min = Math.floor(totalSec / 60);
+
+      const pad2 = (n) => String(n).padStart(2, '0');
+      return {
+        main: `${pad2(min)}:${pad2(sec)}.${pad2(hundredths)}`,
+        msDigit: String(Math.floor((msTotal % 10) / 1))
+      };
+    }
+
+    function updateStopwatchDisplay() {
+      const now = performance.now();
+      const currentElapsed = swElapsedTime + (swRunning ? (now - swStartTime) : 0);
+      const fmt = formatStopwatchTime(currentElapsed);
+
+      const mainEl = document.getElementById('sw-main-display');
+      const msEl = document.getElementById('sw-ms-display');
+      if (mainEl) mainEl.textContent = fmt.main;
+      if (msEl) msEl.textContent = fmt.msDigit;
+    }
+
+    function toggleStopwatch() {
+      const toggleBtn = document.getElementById('sw-btn-toggle');
+      const lapBtn = document.getElementById('sw-btn-lap');
+
+      if (!swRunning) {
+        swRunning = true;
+        swStartTime = performance.now();
+        swIntervalId = setInterval(updateStopwatchDisplay, 10);
+
+        toggleBtn.innerHTML = '<i class="fa-solid fa-pause"></i><span>一時停止</span>';
+        toggleBtn.className = 'w-36 py-3.5 bg-rose-600 hover:bg-rose-500 active:scale-95 text-white font-bold rounded-2xl transition shadow-lg shadow-rose-600/30 flex items-center justify-center gap-2';
+
+        lapBtn.disabled = false;
+        lapBtn.className = 'w-32 py-3.5 bg-indigo-600 hover:bg-indigo-500 active:scale-95 text-white font-bold rounded-2xl transition flex items-center justify-center gap-2';
+      } else {
+        swRunning = false;
+        swElapsedTime += performance.now() - swStartTime;
+        clearInterval(swIntervalId);
+        updateStopwatchDisplay();
+
+        toggleBtn.innerHTML = '<i class="fa-solid fa-play"></i><span>再開</span>';
+        toggleBtn.className = 'w-36 py-3.5 bg-emerald-600 hover:bg-emerald-500 active:scale-95 text-white font-bold rounded-2xl transition shadow-lg shadow-emerald-600/30 flex items-center justify-center gap-2';
+
+        lapBtn.disabled = true;
+        lapBtn.className = 'w-32 py-3.5 bg-slate-200 dark:bg-slate-700 text-slate-400 cursor-not-allowed font-bold rounded-2xl transition flex items-center justify-center gap-2';
+      }
+    }
+
+    function recordLap() {
+      if (!swRunning) return;
+      const currentTotal = swElapsedTime + (performance.now() - swStartTime);
+      const lapDuration = currentTotal - swLastLapTime;
+      swLastLapTime = currentTotal;
+
+      const lapNumber = swLaps.length + 1;
+      swLaps.unshift({
+        num: lapNumber,
+        lapTime: lapDuration,
+        splitTime: currentTotal
+      });
+
+      renderLaps();
+    }
+
+    function resetStopwatch() {
+      swRunning = false;
+      clearInterval(swIntervalId);
+      swStartTime = 0;
+      swElapsedTime = 0;
+      swLastLapTime = 0;
+      updateStopwatchDisplay();
+
+      const toggleBtn = document.getElementById('sw-btn-toggle');
+      const lapBtn = document.getElementById('sw-btn-lap');
+      toggleBtn.innerHTML = '<i class="fa-solid fa-play"></i><span>スタート</span>';
+      toggleBtn.className = 'w-36 py-3.5 bg-emerald-600 hover:bg-emerald-500 active:scale-95 text-white font-bold rounded-2xl transition shadow-lg shadow-emerald-600/30 flex items-center justify-center gap-2';
+
+      lapBtn.disabled = true;
+      lapBtn.className = 'w-32 py-3.5 bg-slate-200 dark:bg-slate-700 text-slate-400 cursor-not-allowed font-bold rounded-2xl transition flex items-center justify-center gap-2';
+    }
+
+    function clearLaps() {
+      swLaps = [];
+      swLastLapTime = 0;
+      renderLaps();
+    }
+
+    function renderLaps() {
+      const tbody = document.getElementById('lap-table-body');
+      const badge = document.getElementById('lap-count-badge');
+      const csvBtn = document.getElementById('sw-btn-csv');
+      const clearBtn = document.getElementById('sw-btn-clearlap');
+
+      badge.textContent = `${swLaps.length} ラップ`;
+
+      if (swLaps.length === 0) {
+        tbody.innerHTML = `
+          <tr>
+            <td colspan="4" class="text-center py-8 text-slate-400 dark:text-slate-500 font-sans">
+              ラップはまだ記録されていません。「ラップ」ボタンまたは <kbd class="px-1.5 py-0.5 rounded bg-slate-200 dark:bg-slate-700 text-xs">L</kbd> キーで記録できます。
+            </td>
+          </tr>
+        `;
+        csvBtn.disabled = true;
+        csvBtn.className = 'px-3 py-1.5 rounded-xl bg-slate-100 dark:bg-slate-700/60 text-slate-400 text-xs font-semibold flex items-center gap-1.5 cursor-not-allowed';
+        clearBtn.disabled = true;
+        clearBtn.className = 'px-3 py-1.5 rounded-xl bg-slate-100 dark:bg-slate-700/60 text-slate-400 text-xs font-semibold cursor-not-allowed';
+        return;
+      }
+
+      csvBtn.disabled = false;
+      csvBtn.className = 'px-3 py-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-slate-700 dark:hover:bg-slate-600 text-slate-700 dark:text-slate-200 text-xs font-semibold flex items-center gap-1.5 cursor-pointer transition';
+      clearBtn.disabled = false;
+      clearBtn.className = 'px-3 py-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-slate-700 dark:hover:bg-slate-600 text-rose-500 text-xs font-semibold cursor-pointer transition';
+
+      let fastestLap = Infinity;
+      let slowestLap = -1;
+      if (swLaps.length >= 2) {
+        swLaps.forEach(l => {
+          if (l.lapTime < fastestLap) fastestLap = l.lapTime;
+          if (l.lapTime > slowestLap) slowestLap = l.lapTime;
+        });
+      }
+
+      tbody.innerHTML = swLaps.map(l => {
+        let tag = '';
+        let rowClass = 'hover:bg-slate-50 dark:hover:bg-slate-700/20';
+        if (swLaps.length >= 2) {
+          if (l.lapTime === fastestLap) {
+            tag = '<span class="px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 text-xs font-bold border border-emerald-500/30">最速 FAST</span>';
+            rowClass = 'bg-emerald-50/50 dark:bg-emerald-950/20';
+          } else if (l.lapTime === slowestLap) {
+            tag = '<span class="px-2 py-0.5 rounded bg-rose-500/20 text-rose-600 dark:text-rose-400 text-xs font-bold border border-rose-500/30">最遅 SLOW</span>';
+            rowClass = 'bg-rose-50/50 dark:bg-rose-950/20';
+          }
+        }
+
+        const lapFmt = formatStopwatchTime(l.lapTime);
+        const splitFmt = formatStopwatchTime(l.splitTime);
+
+        return `
+          <tr class="${rowClass} transition">
+            <td class="py-3 px-4 font-bold text-slate-500">#${String(l.num).padStart(2, '0')}</td>
+            <td class="py-3 px-4 font-bold text-base text-slate-900 dark:text-white">+${lapFmt.main}</td>
+            <td class="py-3 px-4 text-indigo-600 dark:text-indigo-300 font-semibold">${splitFmt.main}</td>
+            <td class="py-3 px-4 text-right">${tag}</td>
+          </tr>
+        `;
+      }).join('');
+    }
+
+    function downloadLapCSV() {
+      if (swLaps.length === 0) return;
+      let csvContent = '\uFEFFラップ番号,区間ラップタイム,累計スプリットタイム\n';
+      const sorted = [...swLaps].sort((a, b) => a.num - b.num);
+      sorted.forEach(l => {
+        const lapF = formatStopwatchTime(l.lapTime).main;
+        const splF = formatStopwatchTime(l.splitTime).main;
+        csvContent += `${l.num},"${lapF}","${splF}"\n`;
+      });
+
+      const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `stopwatch_laps_${new Date().toISOString().slice(0, 10)}.csv`;
+      a.click();
+    }
+
+    // ----------------------------------------------------
+    // 時差計算 & ミーティングプランナー
+    // ----------------------------------------------------
+    function onPlannerBaseCityChange() {
+      plannerBaseCityId = document.getElementById('planner-base-city').value;
+      renderPlanner();
+    }
+
+    function onPlannerSliderChange(val) {
+      plannerMinutes = parseInt(val, 10);
+      renderPlanner();
+    }
+
+    function syncPlannerToNow() {
+      const now = new Date();
+      const baseCity = CITY_DATABASE.find(c => c.id === plannerBaseCityId);
+      if (!baseCity) return;
+
+      const f = new Intl.DateTimeFormat('en-US', {
+        timeZone: baseCity.tz,
+        hour: 'numeric',
+        minute: 'numeric',
+        hour12: false
+      });
+      const parts = f.formatToParts(now);
+      let h = 0, m = 0;
+      parts.forEach(p => {
+        if (p.type === 'hour') h = parseInt(p.value, 10);
+        if (p.type === 'minute') m = parseInt(p.value, 10);
+      });
+
+      plannerMinutes = h * 60 + m;
+      document.getElementById('planner-slider').value = plannerMinutes;
+      renderPlanner();
+    }
+
+    function addPlannerCity() {
+      const sel = document.getElementById('planner-add-city-select');
+      const id = sel.value;
+      if (!plannerCities.includes(id)) {
+        plannerCities.push(id);
+        renderPlanner();
+      }
+    }
+
+    function removePlannerCity(id) {
+      if (plannerCities.length <= 1) return;
+      plannerCities = plannerCities.filter(c => c !== id);
+      renderPlanner();
+    }
+
+    function renderPlanner() {
+      const baseCity = CITY_DATABASE.find(c => c.id === plannerBaseCityId) || CITY_DATABASE[0];
+      const h = Math.floor(plannerMinutes / 60);
+      const m = plannerMinutes % 60;
+      const pad2 = (n) => String(n).padStart(2, '0');
+      
+      const timeStrEl = document.getElementById('planner-selected-time-str');
+      if (timeStrEl) timeStrEl.textContent = `${pad2(h)}:${pad2(m)}`;
+
+      const container = document.getElementById('planner-cities-container');
+      if (!container) return;
+
+      let allInBusinessHours = true;
+      let nonBusinessList = [];
+
+      container.innerHTML = plannerCities.map(cityId => {
+        const city = CITY_DATABASE.find(c => c.id === cityId);
+        if (!city) return '';
+
+        const baseOffset = baseCity.offsetHrs;
+        const targetOffset = city.offsetHrs;
+        const diffFromBase = targetOffset - baseOffset;
+
+        let totalTargetMinutes = plannerMinutes + Math.round(diffFromBase * 60);
+        let dayOffset = 0;
+        
+        while (totalTargetMinutes < 0) {
+          totalTargetMinutes += 1440;
+          dayOffset -= 1;
+        }
+        while (totalTargetMinutes >= 1440) {
+          totalTargetMinutes -= 1440;
+          dayOffset += 1;
+        }
+
+        const targetH = Math.floor(totalTargetMinutes / 60);
+        const targetM = totalTargetMinutes % 60;
+        
+        const isBusiness = totalTargetMinutes >= 540 && totalTargetMinutes < 1080;
+        const isNight = totalTargetMinutes < 360 || totalTargetMinutes >= 1320;
+
+        if (!isBusiness) {
+          allInBusinessHours = false;
+          nonBusinessList.push(city.name);
+        }
+
+        let dayBadge = '<span class="text-xs px-2 py-0.5 rounded bg-slate-100 dark:bg-slate-700 text-slate-500">同日</span>';
+        if (dayOffset === 1) dayBadge = '<span class="text-xs px-2 py-0.5 rounded bg-sky-100 dark:bg-sky-900/60 text-sky-700 dark:text-sky-300 font-bold border border-sky-300 dark:border-sky-700/50">+1日(翌日)</span>';
+        if (dayOffset === -1) dayBadge = '<span class="text-xs px-2 py-0.5 rounded bg-amber-100 dark:bg-amber-900/60 text-amber-700 dark:text-amber-300 font-bold border border-amber-300 dark:border-amber-700/50">-1日(前日)</span>';
+
+        const pctPosition = ((totalTargetMinutes / 1440) * 100).toFixed(1);
+
+        return `
+          <div class="bg-white dark:bg-slate-800/90 border ${isBusiness ? 'border-emerald-500/50 dark:border-emerald-500/40' : 'border-slate-200 dark:border-slate-700/70'} rounded-2xl p-4 sm:p-5 transition shadow-sm">
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+              <div class="flex items-center gap-3">
+                <span class="text-2xl">${city.flag}</span>
+                <div>
+                  <div class="flex items-center gap-2">
+                    <span class="font-bold text-slate-900 dark:text-white text-base">${city.name}</span>
+                    ${city.id === baseCity.id ? '<span class="text-[10px] px-2 py-0.5 bg-indigo-500/20 text-indigo-600 dark:text-indigo-300 rounded-full font-bold">基準都市</span>' : ''}
+                  </div>
+                  <div class="text-xs text-slate-500 dark:text-slate-400">
+                    基準都市との差: <span class="font-mono ${diffFromBase >= 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-amber-600 dark:text-amber-400'}">${diffFromBase >= 0 ? '+' : ''}${diffFromBase}時間</span>
+                  </div>
+                </div>
+              </div>
+
+              <div class="flex items-center gap-3 justify-between sm:justify-end">
+                <div class="text-right">
+                  <div class="font-mono text-3xl font-black ${isBusiness ? 'text-emerald-600 dark:text-emerald-400' : isNight ? 'text-rose-600 dark:text-rose-400' : 'text-slate-700 dark:text-slate-300'}">
+                    ${pad2(targetH)}:${pad2(targetM)}
+                  </div>
+                  <div class="flex items-center gap-2 justify-end mt-0.5">
+                    ${dayBadge}
+                    <span class="text-xs font-semibold px-2 py-0.5 rounded-full ${isBusiness ? 'bg-emerald-100 dark:bg-emerald-500/20 text-emerald-800 dark:text-emerald-300 border border-emerald-300 dark:border-emerald-500/40' : isNight ? 'bg-rose-100 dark:bg-rose-950/80 text-rose-800 dark:text-rose-300 border border-rose-300 dark:border-rose-800' : 'bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-300'}">
+                      <i class="fa-solid ${isBusiness ? 'fa-briefcase' : isNight ? 'fa-bed' : 'fa-house'} mr-1"></i>
+                      ${isBusiness ? '業務時間内' : isNight ? '深夜・睡眠帯' : '時間外'}
+                    </span>
+                  </div>
+                </div>
+
+                ${plannerCities.length > 1 ? `
+                  <button onclick="removePlannerCity('${city.id}')" class="text-slate-400 hover:text-rose-500 p-2 transition text-sm" title="比較から外す">
+                    <i class="fa-solid fa-trash-can"></i>
+                  </button>
+                ` : ''}
+              </div>
+            </div>
+
+            <div class="mt-4 pt-3 border-t border-slate-200 dark:border-slate-700/50">
+              <div class="relative w-full h-3 bg-slate-200 dark:bg-slate-900 rounded-full overflow-hidden flex">
+                <div class="h-full bg-slate-300 dark:bg-slate-800" style="width: 37.5%"></div>
+                <div class="h-full bg-emerald-500/40 dark:bg-emerald-500/30 border-x border-emerald-500/50" style="width: 37.5%"></div>
+                <div class="h-full bg-slate-300 dark:bg-slate-800" style="width: 25%"></div>
+              </div>
+              <div class="relative w-full h-0">
+                <div class="absolute -top-3.5 -ml-1 text-indigo-600 dark:text-indigo-400 transition-all duration-75 text-xs" style="left: ${pctPosition}%">
+                  ▲
+                </div>
+              </div>
+            </div>
+          </div>
+        `;
+      }).join('');
+
+      const verdictEl = document.getElementById('planner-verdict-card');
+      if (allInBusinessHours) {
+        verdictEl.className = 'bg-gradient-to-r from-emerald-50 to-white dark:from-emerald-950/50 dark:to-slate-900 border border-emerald-300 dark:border-emerald-500/40 rounded-2xl p-5 flex items-center gap-4';
+        verdictEl.innerHTML = `
+          <div class="w-12 h-12 rounded-2xl bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 border border-emerald-500/40 flex items-center justify-center text-xl shrink-0">
+            <i class="fa-solid fa-circle-check"></i>
+          </div>
+          <div>
+            <h4 class="font-bold text-emerald-800 dark:text-emerald-300 text-sm">ベストミーティング時間です！ (ゴールデンタイム)</h4>
+            <p class="text-xs text-slate-600 dark:text-slate-300 mt-0.5">全都市（${plannerCities.length}都市）が業務時間帯（09:00〜18:00）に収まっています。</p>
+          </div>
+        `;
+      } else {
+        verdictEl.className = 'bg-gradient-to-r from-amber-50 to-white dark:from-amber-950/40 dark:to-slate-900 border border-amber-300 dark:border-amber-500/30 rounded-2xl p-5 flex items-center gap-4';
+        verdictEl.innerHTML = `
+          <div class="w-12 h-12 rounded-2xl bg-amber-500/20 text-amber-600 dark:text-amber-400 border border-amber-500/30 flex items-center justify-center text-xl shrink-0">
+            <i class="fa-solid fa-triangle-exclamation"></i>
+          </div>
+          <div>
+            <h4 class="font-bold text-amber-800 dark:text-amber-300 text-sm">一部の都市で業務時間外または夜間帯です</h4>
+            <p class="text-xs text-slate-600 dark:text-slate-400 mt-0.5">現在設定では <span class="text-amber-700 dark:text-amber-200 font-semibold">${nonBusinessList.join('、')}</span> が時間外です。</p>
+          </div>
+        `;
+      }
+    }
+
+    // ----------------------------------------------------
+    // タイマー エンジン
+    // ----------------------------------------------------
+    let timerInitialSeconds = 300;
+    let timerRemainingSeconds = 300;
+    let timerRunning = false;
+    let timerInterval = null;
+    const RING_CIRCUMFERENCE = 2 * Math.PI * 88;
+
+    function updateTimerDisplay() {
+      const h = Math.floor(timerRemainingSeconds / 3600);
+      const m = Math.floor((timerRemainingSeconds % 3600) / 60);
+      const s = timerRemainingSeconds % 60;
+      const pad2 = (n) => String(n).padStart(2, '0');
+
+      document.getElementById('timer-display').textContent = `${pad2(h)}:${pad2(m)}:${pad2(s)}`;
+
+      const ring = document.getElementById('timer-progress-ring');
+      if (ring) {
+        const pct = timerInitialSeconds > 0 ? (timerRemainingSeconds / timerInitialSeconds) : 0;
+        const offset = RING_CIRCUMFERENCE * (1 - pct);
+        ring.style.strokeDashoffset = offset;
+        
+        if (timerRemainingSeconds <= 10 && timerRemainingSeconds > 0) {
+          ring.setAttribute('stroke', '#f43f5e');
+        } else {
+          ring.setAttribute('stroke', '#6366f1');
+        }
+      }
+    }
+
+    function toggleTimer() {
+      const toggleBtn = document.getElementById('timer-btn-toggle');
+      const hint = document.getElementById('timer-status-hint');
+
+      if (!timerRunning) {
+        if (timerRemainingSeconds <= 0) {
+          readTimerInputs();
+          if (timerRemainingSeconds <= 0) return;
+        }
+        timerRunning = true;
+        toggleBtn.innerHTML = '<i class="fa-solid fa-pause"></i><span>一時停止</span>';
+        toggleBtn.className = 'w-36 py-3.5 bg-rose-600 hover:bg-rose-500 active:scale-95 text-white font-bold rounded-2xl transition shadow-lg shadow-rose-600/30 flex items-center justify-center gap-2';
+        hint.textContent = 'カウントダウン中...';
+
+        timerInterval = setInterval(() => {
+          if (timerRemainingSeconds > 0) {
+            timerRemainingSeconds--;
+            updateTimerDisplay();
+          } else {
+            clearInterval(timerInterval);
+            timerRunning = false;
+            toggleBtn.innerHTML = '<i class="fa-solid fa-play"></i><span>スタート</span>';
+            toggleBtn.className = 'w-36 py-3.5 bg-indigo-600 hover:bg-indigo-500 active:scale-95 text-white font-bold rounded-2xl transition shadow-lg shadow-indigo-600/30 flex items-center justify-center gap-2';
+            hint.textContent = 'タイムアップ！';
+            triggerAlarmModal('タイマー完了', '設定した時間が経過しました！');
+          }
+        }, 1000);
+      } else {
+        timerRunning = false;
+        clearInterval(timerInterval);
+        toggleBtn.innerHTML = '<i class="fa-solid fa-play"></i><span>再開</span>';
+        toggleBtn.className = 'w-36 py-3.5 bg-emerald-600 hover:bg-emerald-500 active:scale-95 text-white font-bold rounded-2xl transition shadow-lg shadow-emerald-600/30 flex items-center justify-center gap-2';
+        hint.textContent = '一時停止中';
+      }
+    }
+
+    function resetTimer() {
+      timerRunning = false;
+      clearInterval(timerInterval);
+      readTimerInputs();
+      const toggleBtn = document.getElementById('timer-btn-toggle');
+      toggleBtn.innerHTML = '<i class="fa-solid fa-play"></i><span>スタート</span>';
+      toggleBtn.className = 'w-36 py-3.5 bg-indigo-600 hover:bg-indigo-500 active:scale-95 text-white font-bold rounded-2xl transition shadow-lg shadow-indigo-600/30 flex items-center justify-center gap-2';
+      document.getElementById('timer-status-hint').textContent = '待機中';
+      updateTimerDisplay();
+    }
+
+    function readTimerInputs() {
+      const h = parseInt(document.getElementById('timer-input-h').value, 10) || 0;
+      const m = parseInt(document.getElementById('timer-input-m').value, 10) || 0;
+      const s = parseInt(document.getElementById('timer-input-s').value, 10) || 0;
+      timerInitialSeconds = (h * 3600) + (m * 60) + s;
+      timerRemainingSeconds = timerInitialSeconds;
+      updateTimerDisplay();
+    }
+
+    function addTimerQuickSeconds(sec) {
+      if (timerRunning) return;
+      readTimerInputs();
+      timerInitialSeconds += sec;
+      timerRemainingSeconds = timerInitialSeconds;
+
+      const h = Math.floor(timerInitialSeconds / 3600);
+      const m = Math.floor((timerInitialSeconds % 3600) / 60);
+      const s = timerInitialSeconds % 60;
+
+      document.getElementById('timer-input-h').value = h;
+      document.getElementById('timer-input-m').value = m;
+      document.getElementById('timer-input-s').value = s;
+      updateTimerDisplay();
+    }
+
+    // キーボードショートカット
+    window.addEventListener('keydown', (e) => {
+      if (['INPUT', 'SELECT', 'TEXTAREA'].includes(document.activeElement.tagName)) return;
+
+      if (e.code === 'Space') {
+        e.preventDefault();
+        toggleStopwatch();
+      } else if (e.key === 'l' || e.key === 'L') {
+        e.preventDefault();
+        recordLap();
+      } else if (e.key === 'r' || e.key === 'R') {
+        e.preventDefault();
+        resetStopwatch();
+      }
+    });
+
+    // ----------------------------------------------------
+    // 初期化
+    // ----------------------------------------------------
+    window.addEventListener('DOMContentLoaded', () => {
+      initTheme();
+      initAnalogClockTicks();
+      initCitySelectors();
+      loadAlarms();
+      readTimerInputs();
+      updateClockLoop();
+      renderPlanner();
+
+      // 初期の終了予定時刻を+45分で表示セット
+      setAlarmFromNow(45, '45分集中ワーク');
+    });
+  </script>
+</body>
+</html>

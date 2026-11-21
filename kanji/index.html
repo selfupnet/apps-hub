@@ -1,0 +1,944 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Kanji Studio - 漢字学習＆筆順マスター</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=BIZ+UDPGothic:wght@400;700&family=Klee+One:wght@600&display=swap');
+    body {
+      font-family: 'BIZ UDPGothic', sans-serif;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .font-kanji {
+      font-family: 'Klee One', 'BIZ UDPGothic', serif;
+    }
+    .grid-bg {
+      background-size: 20px 20px;
+      background-image: 
+        linear-gradient(to right, rgba(226, 232, 240, 0.6) 1px, transparent 1px),
+        linear-gradient(to bottom, rgba(226, 232, 240, 0.6) 1px, transparent 1px);
+    }
+    /* KanjiVG stroke styling */
+    .kvg-stroke {
+      fill: none;
+      stroke: #1e293b;
+      stroke-width: 4;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+      transition: stroke 0.2s, stroke-width 0.2s, opacity 0.2s;
+    }
+    .kvg-stroke.active {
+      stroke: #4f46e5 !important;
+      stroke-width: 6 !important;
+      opacity: 1 !important;
+    }
+    .kvg-stroke.completed {
+      stroke: #1e293b !important;
+      stroke-width: 4 !important;
+      opacity: 1 !important;
+    }
+    .kvg-stroke.upcoming {
+      stroke: #94a3b8 !important;
+      stroke-width: 4 !important;
+      opacity: 0.18 !important;
+    }
+    .kvg-number {
+      font-size: 10px;
+      fill: #ef4444;
+      font-weight: bold;
+      font-family: sans-serif;
+      transition: opacity 0.2s;
+    }
+  </style>
+</head>
+<body class="bg-slate-50 text-slate-800 min-h-screen flex flex-col justify-between">
+
+  <!-- Header (Apps Hub共通規格: href="../") -->
+  <header class="bg-white border-b border-slate-200 sticky top-0 z-30 shadow-xs">
+    <div class="max-w-5xl mx-auto px-4 h-14 flex items-center justify-between">
+      <div class="flex items-center gap-3">
+        <a href="../" class="text-xs font-bold text-slate-500 hover:text-slate-800 bg-slate-100 hover:bg-slate-200 px-2.5 py-1.5 rounded-lg transition flex items-center gap-1.5">
+          <i class="fa-solid fa-arrow-left"></i> Apps Hub
+        </a>
+        <div class="h-4 w-px bg-slate-200"></div>
+        <h1 class="text-base font-bold text-slate-800 flex items-center gap-2">
+          <span class="w-7 h-7 rounded-lg bg-indigo-600 text-white flex items-center justify-center text-xs font-kanji font-bold">漢</span>
+          Kanji Studio
+        </h1>
+      </div>
+      <div id="learnedStats" class="text-xs font-bold text-slate-500 bg-slate-100 px-3 py-1.5 rounded-full flex items-center gap-1.5">
+        <i class="fa-solid fa-circle-check text-emerald-500"></i>
+        <span>習得: 0 / 0</span>
+      </div>
+    </div>
+  </header>
+
+  <!-- Main Container -->
+  <main class="max-w-5xl mx-auto px-4 py-6 w-full flex-1">
+    
+    <!-- Mode Tabs -->
+    <div class="flex bg-slate-200/80 p-1 rounded-xl mb-6 max-w-md mx-auto text-xs font-bold">
+      <button onclick="setTab('writer')" id="tabBtnWriter" class="flex-1 py-2 rounded-lg text-slate-600 transition flex items-center justify-center gap-1.5">
+        <i class="fa-solid fa-pen-nib"></i> 筆順・なぞり書き
+      </button>
+      <button onclick="setTab('dict')" id="tabBtnDict" class="flex-1 py-2 rounded-lg text-slate-600 transition flex items-center justify-center gap-1.5">
+        <i class="fa-solid fa-book"></i> 漢字一覧・辞典
+      </button>
+      <button onclick="setTab('quiz')" id="tabBtnQuiz" class="flex-1 py-2 rounded-lg text-slate-600 transition flex items-center justify-center gap-1.5">
+        <i class="fa-solid fa-circle-question"></i> 実戦テスト
+      </button>
+    </div>
+
+    <!-- Loading State -->
+    <div id="loadingView" class="py-20 text-center">
+      <div class="inline-block w-8 h-8 border-4 border-indigo-600 border-t-transparent rounded-full animate-spin mb-3"></div>
+      <p class="text-sm font-bold text-slate-500">漢字データを展開中...</p>
+    </div>
+
+    <!-- TAB 1: 筆順・なぞり書き -->
+    <section id="writerView" class="hidden">
+      <div class="grid grid-cols-1 md:grid-cols-12 gap-6 items-start">
+        
+        <!-- Left: Canvas Area -->
+        <div class="md:col-span-7 bg-white p-5 rounded-2xl border border-slate-200 shadow-sm flex flex-col items-center">
+          
+          <div class="w-full flex items-center justify-between border-b border-slate-100 pb-3 mb-4">
+            <div class="flex items-center gap-2">
+              <span id="writerChar" class="text-3xl font-kanji font-bold text-slate-800">一</span>
+              <div>
+                <span id="writerGradeBadge" class="text-[11px] font-bold px-2 py-0.5 rounded-md bg-indigo-50 text-indigo-700">小1</span>
+                <span id="writerStrokesBadge" class="text-[11px] font-bold px-2 py-0.5 rounded-md bg-slate-100 text-slate-600">1画</span>
+              </div>
+            </div>
+            <div class="flex items-center gap-1.5">
+              <button onclick="toggleLearnedCurrent()" id="btnLearnedCheck" class="text-xs font-bold px-3 py-1.5 rounded-lg border border-slate-200 text-slate-600 hover:bg-slate-50 flex items-center gap-1 transition">
+                <i class="fa-regular fa-circle-check"></i> <span>覚えた</span>
+              </button>
+            </div>
+          </div>
+
+          <!-- Board Stack -->
+          <div class="relative w-[280px] h-[280px] sm:w-[320px] sm:h-[320px] rounded-2xl border-2 border-slate-300 grid-bg overflow-hidden flex items-center justify-center select-none shadow-inner">
+            <div class="absolute inset-0 pointer-events-none flex items-center justify-center">
+              <div class="w-full h-[1px] border-b border-dashed border-slate-300"></div>
+            </div>
+            <div class="absolute inset-0 pointer-events-none flex items-center justify-center">
+              <div class="h-full w-[1px] border-r border-dashed border-slate-300"></div>
+            </div>
+            
+            <div id="svgContainer" class="absolute inset-0 w-full h-full flex items-center justify-center p-2"></div>
+            <canvas id="traceCanvas" width="320" height="320" class="absolute inset-0 w-full h-full cursor-crosshair z-10 touch-none"></canvas>
+          </div>
+
+          <!-- Controls -->
+          <div class="w-full mt-4 flex flex-col gap-2.5">
+            <div class="flex items-center justify-between text-xs font-bold text-slate-500 px-1">
+              <span>画数ナビ: <b id="currentStrokeNum" class="text-indigo-600">0</b> / <span id="totalStrokeNum">0</span> 画</span>
+              <div class="flex gap-1.5 items-center">
+                <span>速度:</span>
+                <button onclick="setPlaySpeed(1.5)" id="spdFast" class="px-2 py-0.5 rounded bg-slate-100 hover:bg-slate-200 text-[10px]">はやい</button>
+                <button onclick="setPlaySpeed(1.0)" id="spdNormal" class="px-2 py-0.5 rounded bg-indigo-100 text-indigo-700 text-[10px]">ふつう</button>
+                <button onclick="setPlaySpeed(0.6)" id="spdSlow" class="px-2 py-0.5 rounded bg-slate-100 hover:bg-slate-200 text-[10px]">ゆっくり</button>
+              </div>
+            </div>
+
+            <div class="grid grid-cols-4 gap-2">
+              <button onclick="stepStroke(-1)" class="py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold transition flex items-center justify-center gap-1">
+                <i class="fa-solid fa-backward-step"></i> 前の画
+              </button>
+              <button onclick="togglePlayAnimation()" id="btnPlayAnim" class="py-2 col-span-2 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold transition shadow-xs flex items-center justify-center gap-1.5">
+                <i class="fa-solid fa-play"></i> 筆順再生
+              </button>
+              <button onclick="stepStroke(1)" class="py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold transition flex items-center justify-center gap-1">
+                次の画 <i class="fa-solid fa-forward-step"></i>
+              </button>
+            </div>
+
+            <div class="flex items-center justify-between pt-2 border-t border-slate-100 text-xs">
+              <div class="flex gap-2">
+                <button onclick="clearCanvas()" class="px-3 py-1.5 rounded-lg border border-slate-200 text-slate-600 hover:bg-slate-50 font-bold transition flex items-center gap-1">
+                  <i class="fa-solid fa-eraser"></i> 手書きを消す
+                </button>
+                <button onclick="toggleModelVisibility()" id="btnToggleModel" class="px-3 py-1.5 rounded-lg border border-slate-200 text-slate-600 hover:bg-slate-50 font-bold transition flex items-center gap-1">
+                  <i class="fa-solid fa-eye"></i> お手本ON
+                </button>
+              </div>
+              <div class="flex items-center gap-1">
+                <span class="text-slate-400 text-[11px]">筆色:</span>
+                <button onclick="setStrokeColor('#ef4444')" class="w-5 h-5 rounded-full bg-red-500 ring-2 ring-transparent focus:ring-offset-1 focus:ring-slate-400"></button>
+                <button onclick="setStrokeColor('#2563eb')" class="w-5 h-5 rounded-full bg-blue-600 ring-2 ring-transparent focus:ring-offset-1 focus:ring-slate-400"></button>
+                <button onclick="setStrokeColor('#0f172a')" class="w-5 h-5 rounded-full bg-slate-900 ring-2 ring-transparent focus:ring-offset-1 focus:ring-slate-400"></button>
+              </div>
+            </div>
+          </div>
+
+        </div>
+
+        <!-- Right: Info Area & Quick Kanji List -->
+        <div class="md:col-span-5 flex flex-col gap-4">
+          
+          <!-- Detailed Info Card -->
+          <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm">
+            <h2 class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-3 flex items-center gap-1.5">
+              <i class="fa-solid fa-circle-info text-indigo-500"></i> 読み・用例
+            </h2>
+            <div class="space-y-2.5 text-xs">
+              <div class="flex items-baseline">
+                <span class="w-16 font-bold text-slate-400">音読み:</span>
+                <span id="writerOnReading" class="font-bold text-slate-800 text-sm tracking-wide">イチ、イツ</span>
+              </div>
+              <div class="flex items-baseline">
+                <span class="w-16 font-bold text-slate-400">訓読み:</span>
+                <span id="writerKunReading" class="font-bold text-slate-800 text-sm tracking-wide">ひと、ひと.つ</span>
+              </div>
+              <div class="flex items-baseline">
+                <span class="w-16 font-bold text-slate-400">主な用例:</span>
+                <span id="writerMeanings" class="text-slate-700 font-medium leading-relaxed">一日（いちにち）、 一番（いちばん）</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- 外側に独立配置したフィルターバー（レベル選択 ＆ 画数選択） -->
+          <div class="bg-slate-100/90 p-2.5 rounded-2xl border border-slate-200/80 flex flex-wrap items-center gap-2">
+            <!-- レベル選択 -->
+            <div class="flex-1 min-w-[130px]">
+              <select id="quickStageFilter" onchange="changeQuickStage()" class="w-full px-2.5 py-1.5 rounded-xl bg-white border border-slate-200 text-xs font-bold text-slate-700 shadow-2xs focus:outline-indigo-500">
+                <option value="elem1">小学校 1年 (80字)</option>
+                <option value="elem2">小学校 2年 (160字)</option>
+                <option value="elem3">小学校 3年 (200字)</option>
+                <option value="elem4">小学校 4年 (202字)</option>
+                <option value="elem5">小学校 5年 (193字)</option>
+                <option value="elem6">小学校 6年 (191字)</option>
+                <option value="junior">中学校 (1,110字)</option>
+                <option value="jinmei">人名用漢字 (863字)</option>
+                <option value="jis1">JIS第1水準 (常用外)</option>
+                <option value="jis2">JIS第2水準 (難読・地名)</option>
+                <option value="all">全レベル (すべて)</option>
+              </select>
+            </div>
+
+            <!-- 画数選択（画数のみの絞り込みにも対応） -->
+            <div class="w-28">
+              <select id="quickStrokeFilter" onchange="changeQuickStage()" class="w-full px-2.5 py-1.5 rounded-xl bg-white border border-slate-200 text-xs font-bold text-slate-700 shadow-2xs focus:outline-indigo-500">
+                <option value="all">全画数</option>
+                <option value="1">1画</option>
+                <option value="2">2画</option>
+                <option value="3">3画</option>
+                <option value="4">4画</option>
+                <option value="5">5画</option>
+                <option value="6">6画</option>
+                <option value="7">7画</option>
+                <option value="8">8画</option>
+                <option value="9">9画</option>
+                <option value="10">10画</option>
+                <option value="11">11画</option>
+                <option value="12">12画</option>
+                <option value="13">13画</option>
+                <option value="14">14画</option>
+                <option value="15">15画</option>
+                <option value="16">16画</option>
+                <option value="17">17画</option>
+                <option value="18">18画</option>
+                <option value="19">19画</option>
+                <option value="20">20画以上</option>
+              </select>
+            </div>
+          </div>
+
+          <!-- 漢字選択ミニグリッド（カード枠） -->
+          <div class="bg-white p-4 sm:p-5 rounded-2xl border border-slate-200 shadow-sm flex-1 flex flex-col">
+            <div class="flex items-center justify-between mb-3">
+              <span class="text-xs font-bold text-slate-500 flex items-center gap-1.5">
+                <i class="fa-solid fa-list-check text-indigo-500"></i>
+                <span>漢字選択</span>
+                <span id="quickMatchCount" class="text-[11px] font-normal text-slate-400">（0字）</span>
+              </span>
+              <div class="flex gap-1 text-[11px] items-center">
+                <span id="quickPageIndicator" class="text-[10px] text-slate-400 font-bold mr-1">1 / 1</span>
+                <button onclick="prevQuickPage()" class="p-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-600 transition"><i class="fa-solid fa-chevron-left"></i></button>
+                <button onclick="nextQuickPage()" class="p-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-600 transition"><i class="fa-solid fa-chevron-right"></i></button>
+              </div>
+            </div>
+            
+            <div id="quickKanjiGrid" class="grid grid-cols-7 gap-1.5 max-h-[240px] overflow-y-auto pr-1"></div>
+            <div id="quickEmptyNotice" class="hidden py-8 text-center text-xs text-slate-400 font-bold">条件に合う漢字がありません</div>
+          </div>
+
+        </div>
+
+      </div>
+    </section>
+
+    <!-- TAB 2: 漢字一覧・辞典 -->
+    <section id="dictView" class="hidden">
+      <div class="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm mb-6 flex flex-col md:flex-row gap-3">
+        <div class="relative flex-1">
+          <i class="fa-solid fa-magnifying-glass absolute left-3.5 top-3 text-slate-400 text-xs"></i>
+          <input type="text" id="dictSearchInput" placeholder="漢字・音訓読み・用例で検索..." oninput="filterKanjiList()"
+            class="w-full pl-9 pr-4 py-2 rounded-xl bg-slate-50 border border-slate-200 text-xs focus:bg-white focus:outline-none focus:border-indigo-500 transition">
+        </div>
+        <div class="flex items-center gap-2 overflow-x-auto pb-1 md:pb-0">
+          <select id="stageFilter" onchange="filterKanjiList()" class="px-3 py-2 rounded-xl bg-slate-50 border border-slate-200 text-xs font-bold text-slate-700">
+            <option value="all">全レベル（約6,350字）</option>
+            <option value="elem1">小学校 1年（80字）</option>
+            <option value="elem2">小学校 2年（160字）</option>
+            <option value="elem3">小学校 3年（200字）</option>
+            <option value="elem4">小学校 4年（202字）</option>
+            <option value="elem5">小学校 5年（193字）</option>
+            <option value="elem6">小学校 6年（191字）</option>
+            <option value="junior">中学校（1,110字）</option>
+            <option value="jinmei">人名用漢字（863字）</option>
+            <option value="jis1">JIS第1水準（常用外）</option>
+            <option value="jis2">JIS第2水準（難読・地名）</option>
+          </select>
+          <select id="statusFilter" onchange="filterKanjiList()" class="px-3 py-2 rounded-xl bg-slate-50 border border-slate-200 text-xs font-bold text-slate-700">
+            <option value="all">すべて</option>
+            <option value="unlearned">未習得のみ</option>
+            <option value="learned">習得済みのみ</option>
+          </select>
+        </div>
+      </div>
+
+      <div id="dictGrid" class="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 lg:grid-cols-8 gap-3"></div>
+      <div id="dictEmpty" class="hidden py-16 text-center text-xs text-slate-400 font-bold">該当する漢字が見つかりませんでした</div>
+    </section>
+
+    <!-- TAB 3: 実戦テスト -->
+    <section id="quizView" class="hidden">
+      <div class="max-w-xl mx-auto">
+        <div id="quizStartCard" class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm text-center">
+          <div class="w-12 h-12 bg-indigo-50 text-indigo-600 rounded-2xl flex items-center justify-center text-xl mx-auto mb-3">
+            <i class="fa-solid fa-graduation-cap"></i>
+          </div>
+          <h2 class="text-base font-bold text-slate-800 mb-1">漢字実力テスト（全10問）</h2>
+          <p class="text-xs text-slate-500 mb-6">音訓読み・画数・配当レベルからランダムに出題されます</p>
+          <button onclick="startQuiz()" class="w-full py-3 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs shadow-sm transition">
+            テストを開始する
+          </button>
+        </div>
+
+        <div id="quizPlayCard" class="hidden bg-white p-6 rounded-2xl border border-slate-200 shadow-sm">
+          <div class="flex items-center justify-between text-xs text-slate-400 font-bold mb-4">
+            <span id="quizProgress">第 1 / 10 問</span>
+            <span id="quizScoreCount">スコア: 0</span>
+          </div>
+          <div class="text-center py-6 border-b border-slate-100 mb-5">
+            <span id="quizKanji" class="text-5xl font-kanji font-bold text-slate-800 inline-block mb-3">運</span>
+            <p id="quizQuestion" class="text-sm font-bold text-slate-600">この漢字の正しい「訓読み」はどれ？</p>
+          </div>
+          <div id="quizOptions" class="grid grid-cols-1 gap-2.5 mb-4"></div>
+        </div>
+
+        <div id="quizResultCard" class="hidden bg-white p-6 rounded-2xl border border-slate-200 shadow-sm text-center">
+          <h2 class="text-base font-bold text-slate-800 mb-2">テスト終了！</h2>
+          <p id="quizResultScore" class="text-2xl font-bold text-indigo-600 mb-6">10 問中 8 問正解</p>
+          <button onclick="startQuiz()" class="w-full py-3 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs shadow-sm transition">
+            もう一度挑戦する
+          </button>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- ライセンス表示カード -->
+  <section class="max-w-5xl mx-auto px-4 mt-8 mb-4 w-full">
+    <div class="bg-white rounded-2xl p-4 sm:p-5 border border-slate-200 shadow-xs">
+      <h3 class="text-xs font-bold text-slate-700 flex items-center gap-1.5 mb-2.5">
+        <i class="fa-solid fa-scale-balanced text-indigo-500"></i>
+        <span>収録データ・オープンライセンス表示</span>
+      </h3>
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 text-[11px] text-slate-600">
+        <div class="bg-slate-50 p-3 rounded-xl border border-slate-100">
+          <p class="font-bold text-slate-800 mb-0.5">筆順（書き順）ベクターデータ</p>
+          <p class="text-slate-500 leading-relaxed">
+            <span class="font-semibold text-slate-700">KanjiVG</span> (Ulrich Apel / KanjiVG Project)<br>
+            ライセンス: <a href="https://creativecommons.org/licenses/by-sa/3.0/" target="_blank" rel="noopener noreferrer" class="text-indigo-600 hover:underline font-medium">CC BY-SA 3.0</a>
+          </p>
+        </div>
+        <div class="bg-slate-50 p-3 rounded-xl border border-slate-100">
+          <p class="font-bold text-slate-800 mb-0.5">漢字辞書・音訓読みデータ</p>
+          <p class="text-slate-500 leading-relaxed">
+            <span class="font-semibold text-slate-700">KANJIDIC2</span> (Electronic Dictionary R&D Group)<br>
+            区分: 文部科学省 学習指導要領配当 / JIS X 0208 規格準拠
+          </p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- フッター（コピーライトなし・ミニ免責ワンライナーのみ） -->
+  <footer class="py-6 text-center border-t border-slate-200 bg-white">
+    <div class="max-w-4xl mx-auto px-4">
+      <p class="text-[11px] text-slate-400">
+        ※個人開発プロトタイプにつき無保証・自己責任にてご利用ください（データは端末内完結・サポート対象外）
+      </p>
+    </div>
+  </footer>
+
+  <script>
+    let KANJI_DATA = [];
+    let currentIndex = 0;
+    let strokesList = [];
+    let numbersList = [];
+    let currentStrokeIdx = -1;
+    let isPlaying = false;
+    let playSpeed = 1.0;
+    let animTimer = null;
+    let learnedSet = new Set();
+    let showModel = true;
+
+    // クイック選択ミニグリッド状態
+    let quickFilteredList = [];
+    let quickPageIndex = 0;
+    const QUICK_PAGE_SIZE = 70;
+
+    const canvas = document.getElementById('traceCanvas');
+    const ctx = canvas.getContext('2d');
+    let isDrawing = false;
+    let strokeColor = '#2563eb';
+
+    // 1. Data Loader
+    async function loadData() {
+      try {
+        const res = await fetch('./kanji_data.json');
+        if (!res.ok) throw new Error(`HTTP ${res.status}: kanji_data.json が取得できませんでした`);
+        KANJI_DATA = await res.json();
+        
+        const saved = localStorage.getItem('kanjistudio_learned');
+        if (saved) {
+          try { learnedSet = new Set(JSON.parse(saved)); } catch(e) {}
+        }
+        updateLearnedStats();
+
+        document.getElementById('loadingView').classList.add('hidden');
+        document.getElementById('writerView').classList.remove('hidden');
+        
+        setupCanvas();
+        changeQuickStage();
+        renderKanji(0);
+        renderDictGrid();
+      } catch (err) {
+        console.error(err);
+        document.getElementById('loadingView').innerHTML = `
+          <div class="p-6 bg-rose-50 text-rose-700 rounded-2xl max-w-md mx-auto text-xs border border-rose-200">
+            <i class="fa-solid fa-triangle-exclamation text-lg mb-2 text-rose-500"></i>
+            <p class="font-bold">データの読み込みに失敗しました</p>
+            <p class="mt-1 text-slate-500 leading-relaxed">${err.message}</p>
+          </div>
+        `;
+      }
+    }
+
+    // 2. Render Single Kanji
+    async function renderKanji(idx) {
+      if (!KANJI_DATA || !KANJI_DATA[idx]) return;
+      currentIndex = idx;
+      const k = KANJI_DATA[idx];
+
+      stopAnimation();
+      clearCanvas();
+
+      document.getElementById('writerChar').innerText = k.kanji || '';
+      document.getElementById('writerGradeBadge').innerText = k.gradeLabel || '';
+      document.getElementById('writerStrokesBadge').innerText = `${k.strokes || 0}画`;
+      document.getElementById('writerOnReading').innerText = (k.on && k.on.length) ? k.on.join('、') : '—';
+      document.getElementById('writerKunReading').innerText = (k.kun && k.kun.length) ? k.kun.join('、') : '—';
+
+      let displayEx = '—';
+      if (k.examples && k.examples.length) {
+        displayEx = k.examples.join('、 ');
+      } else if (k.meanings_ja && k.meanings_ja.length) {
+        displayEx = k.meanings_ja.join('、 ');
+      } else if (k.kun && k.kun.length) {
+        displayEx = k.kun.map(item => item.replace('.', '')).join('、 ');
+      }
+      document.getElementById('writerMeanings').innerText = displayEx;
+
+      updateLearnedBtn();
+      renderQuickGrid();
+
+      const container = document.getElementById('svgContainer');
+      container.innerHTML = '<div class="text-[11px] text-slate-400">筆順読込中...</div>';
+
+      try {
+        const svgUrl = `https://cdn.jsdelivr.net/gh/KanjiVG/kanjivg/kanji/${k.svgCode}.svg`;
+        const resp = await fetch(svgUrl);
+        if (!resp.ok) throw new Error('SVG not found');
+        const svgText = await resp.text();
+        
+        const parser = new DOMParser();
+        const doc = parser.parseFromString(svgText, 'image/svg+xml');
+        const svgElem = doc.querySelector('svg');
+        svgElem.setAttribute('width', '100%');
+        svgElem.setAttribute('height', '100%');
+        svgElem.setAttribute('viewBox', '0 0 109 109');
+
+        const paths = svgElem.querySelectorAll('path');
+        strokesList = Array.from(paths);
+        strokesList.forEach(p => p.classList.add('kvg-stroke'));
+
+        const texts = svgElem.querySelectorAll('text');
+        numbersList = Array.from(texts);
+        numbersList.forEach(t => t.classList.add('kvg-number'));
+
+        container.innerHTML = '';
+        container.appendChild(svgElem);
+
+        currentStrokeIdx = strokesList.length - 1;
+        document.getElementById('totalStrokeNum').innerText = strokesList.length;
+        updateStrokeDisplay();
+      } catch (e) {
+        container.innerHTML = `<div class="text-7xl font-kanji text-slate-800">${k.kanji}</div>`;
+        strokesList = [];
+        numbersList = [];
+        document.getElementById('totalStrokeNum').innerText = k.strokes || 0;
+        document.getElementById('currentStrokeNum').innerText = k.strokes || 0;
+      }
+    }
+
+    function updateStrokeDisplay() {
+      if (!strokesList.length) return;
+      document.getElementById('currentStrokeNum').innerText = currentStrokeIdx + 1;
+
+      strokesList.forEach((p, idx) => {
+        p.classList.remove('active', 'completed', 'upcoming');
+        if (idx < currentStrokeIdx) {
+          p.classList.add('completed');
+        } else if (idx === currentStrokeIdx) {
+          p.classList.add('active');
+        } else {
+          if (showModel) {
+            p.classList.add('upcoming');
+          } else {
+            p.style.opacity = '0';
+          }
+        }
+      });
+
+      numbersList.forEach((t, idx) => {
+        if (idx <= currentStrokeIdx) {
+          t.style.opacity = '1';
+        } else {
+          t.style.opacity = showModel ? '0.25' : '0';
+        }
+      });
+    }
+
+    function stepStroke(dir) {
+      stopAnimation();
+      if (!strokesList.length) return;
+      currentStrokeIdx = Math.max(0, Math.min(strokesList.length - 1, currentStrokeIdx + dir));
+      updateStrokeDisplay();
+    }
+
+    function togglePlayAnimation() {
+      if (isPlaying) {
+        stopAnimation();
+      } else {
+        startAnimation();
+      }
+    }
+
+    function startAnimation() {
+      if (!strokesList.length) return;
+      isPlaying = true;
+      document.getElementById('btnPlayAnim').innerHTML = '<i class="fa-solid fa-pause"></i> 一時停止';
+      
+      currentStrokeIdx = 0;
+      updateStrokeDisplay();
+
+      animTimer = setInterval(() => {
+        currentStrokeIdx++;
+        if (currentStrokeIdx >= strokesList.length) {
+          stopAnimation();
+          currentStrokeIdx = strokesList.length - 1;
+          updateStrokeDisplay();
+          return;
+        }
+        updateStrokeDisplay();
+      }, 800 / playSpeed);
+    }
+
+    function stopAnimation() {
+      isPlaying = false;
+      if (animTimer) clearInterval(animTimer);
+      document.getElementById('btnPlayAnim').innerHTML = '<i class="fa-solid fa-play"></i> 筆順再生';
+    }
+
+    function setPlaySpeed(spd) {
+      playSpeed = spd;
+      document.getElementById('spdSlow').className = spd === 0.6 ? 'px-2 py-0.5 rounded bg-indigo-100 text-indigo-700 text-[10px]' : 'px-2 py-0.5 rounded bg-slate-100 text-[10px]';
+      document.getElementById('spdNormal').className = spd === 1.0 ? 'px-2 py-0.5 rounded bg-indigo-100 text-indigo-700 text-[10px]' : 'px-2 py-0.5 rounded bg-slate-100 text-[10px]';
+      document.getElementById('spdFast').className = spd === 1.5 ? 'px-2 py-0.5 rounded bg-indigo-100 text-indigo-700 text-[10px]' : 'px-2 py-0.5 rounded bg-slate-100 text-[10px]';
+      if (isPlaying) {
+        stopAnimation();
+        startAnimation();
+      }
+    }
+
+    function toggleModelVisibility() {
+      showModel = !showModel;
+      const btn = document.getElementById('btnToggleModel');
+      const svgBox = document.getElementById('svgContainer');
+      
+      if (showModel) {
+        svgBox.style.opacity = '1';
+        btn.classList.remove('bg-indigo-50', 'text-indigo-600', 'border-indigo-300');
+        btn.innerHTML = '<i class="fa-solid fa-eye"></i> お手本ON';
+      } else {
+        svgBox.style.opacity = '0';
+        btn.classList.add('bg-indigo-50', 'text-indigo-600', 'border-indigo-300');
+        btn.innerHTML = '<i class="fa-solid fa-eye-slash"></i> お手本OFF';
+      }
+      updateStrokeDisplay();
+    }
+
+    function setupCanvas() {
+      const getPos = (e) => {
+        const rect = canvas.getBoundingClientRect();
+        const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+        const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+        return {
+          x: (clientX - rect.left) * (canvas.width / rect.width),
+          y: (clientY - rect.top) * (canvas.height / rect.height)
+        };
+      };
+
+      const start = (e) => {
+        isDrawing = true;
+        const pos = getPos(e);
+        ctx.beginPath();
+        ctx.moveTo(pos.x, pos.y);
+        ctx.strokeStyle = strokeColor;
+        ctx.lineWidth = 14;
+        ctx.lineCap = 'round';
+        ctx.lineJoin = 'round';
+      };
+
+      const move = (e) => {
+        if (!isDrawing) return;
+        const pos = getPos(e);
+        ctx.lineTo(pos.x, pos.y);
+        ctx.stroke();
+      };
+
+      const end = () => { isDrawing = false; };
+
+      canvas.addEventListener('mousedown', start);
+      canvas.addEventListener('mousemove', move);
+      window.addEventListener('mouseup', end);
+
+      canvas.addEventListener('touchstart', start, { passive: false });
+      canvas.addEventListener('touchmove', (e) => { e.preventDefault(); move(e); }, { passive: false });
+      window.addEventListener('touchend', end);
+    }
+
+    function clearCanvas() {
+      // 1. 手書きCanvasをクリア
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      // 2. 筆順再生を停止し、ストローク状態もリセット
+      stopAnimation();
+      if (strokesList.length) {
+        currentStrokeIdx = strokesList.length - 1;
+        updateStrokeDisplay();
+      }
+    }
+
+    function setStrokeColor(c) {
+      strokeColor = c;
+    }
+
+    function toggleLearnedCurrent() {
+      const k = KANJI_DATA[currentIndex];
+      if (learnedSet.has(k.kanji)) {
+        learnedSet.delete(k.kanji);
+      } else {
+        learnedSet.add(k.kanji);
+      }
+      localStorage.setItem('kanjistudio_learned', JSON.stringify(Array.from(learnedSet)));
+      updateLearnedBtn();
+      updateLearnedStats();
+      renderQuickGrid();
+    }
+
+    function updateLearnedBtn() {
+      const k = KANJI_DATA[currentIndex];
+      const btn = document.getElementById('btnLearnedCheck');
+      const isL = learnedSet.has(k.kanji);
+      if (isL) {
+        btn.className = "text-xs font-bold px-3 py-1.5 rounded-lg bg-emerald-50 text-emerald-700 border border-emerald-300 flex items-center gap-1 transition";
+        btn.innerHTML = '<i class="fa-solid fa-circle-check"></i> <span>習得済み</span>';
+      } else {
+        btn.className = "text-xs font-bold px-3 py-1.5 rounded-lg border border-slate-200 text-slate-600 hover:bg-slate-50 flex items-center gap-1 transition";
+        btn.innerHTML = '<i class="fa-regular fa-circle-check"></i> <span>覚えた</span>';
+      }
+    }
+
+    function updateLearnedStats() {
+      const total = KANJI_DATA.length || 0;
+      document.getElementById('learnedStats').innerHTML = `
+        <i class="fa-solid fa-circle-check text-emerald-500"></i>
+        <span>習得: ${learnedSet.size} / ${total}</span>
+      `;
+    }
+
+    // クイック選択ミニグリッド処理（レベル選択 ＆ 画数選択の独立／複合フィルター）
+    function changeQuickStage() {
+      const stage = document.getElementById('quickStageFilter').value;
+      const strokeVal = document.getElementById('quickStrokeFilter').value;
+
+      quickFilteredList = KANJI_DATA.filter(k => {
+        // レベル条件
+        let matchStage = true;
+        if (stage.startsWith('elem')) {
+          const g = parseInt(stage.replace('elem', ''));
+          matchStage = (k.grade === g);
+        } else if (stage === 'junior') {
+          matchStage = (k.grade === 8);
+        } else if (stage === 'jinmei') {
+          matchStage = (k.stage === 'jinmei' || k.grade === 9 || k.grade === 10);
+        } else if (stage === 'jis1') {
+          matchStage = (k.stage === 'jis1');
+        } else if (stage === 'jis2') {
+          matchStage = (k.stage === 'jis2');
+        }
+
+        if (!matchStage) return false;
+
+        // 画数条件（単独指定・複合指定の両対応）
+        if (strokeVal !== 'all') {
+          const targetStrokes = parseInt(strokeVal);
+          if (targetStrokes === 20) {
+            if ((k.strokes || 0) < 20) return false;
+          } else {
+            if ((k.strokes || 0) !== targetStrokes) return false;
+          }
+        }
+
+        return true;
+      });
+
+      quickPageIndex = 0;
+      renderQuickGrid();
+    }
+
+    function renderQuickGrid() {
+      const container = document.getElementById('quickKanjiGrid');
+      const emptyNotice = document.getElementById('quickEmptyNotice');
+      const countLabel = document.getElementById('quickMatchCount');
+
+      countLabel.innerText = `（${quickFilteredList.length}字）`;
+
+      if (!quickFilteredList.length) {
+        container.innerHTML = '';
+        emptyNotice.classList.remove('hidden');
+        document.getElementById('quickPageIndicator').innerText = `0 / 0`;
+        return;
+      }
+      emptyNotice.classList.add('hidden');
+      
+      const totalPages = Math.ceil(quickFilteredList.length / QUICK_PAGE_SIZE) || 1;
+      document.getElementById('quickPageIndicator').innerText = `${quickPageIndex + 1} / ${totalPages}`;
+
+      const start = quickPageIndex * QUICK_PAGE_SIZE;
+      const pageItems = quickFilteredList.slice(start, start + QUICK_PAGE_SIZE);
+
+      container.innerHTML = pageItems.map(k => {
+        const globalIdx = KANJI_DATA.findIndex(item => item.kanji === k.kanji);
+        const isActive = globalIdx === currentIndex;
+        const isL = learnedSet.has(k.kanji);
+        return `
+          <button onclick="renderKanji(${globalIdx})" class="h-9 rounded-lg border relative ${isActive ? 'border-indigo-600 bg-indigo-50 text-indigo-700 font-black' : 'border-slate-200 hover:border-indigo-400 text-slate-700 hover:bg-indigo-50'} font-kanji text-sm transition">
+            ${k.kanji}
+            ${isL ? '<span class="absolute top-1 right-1 w-1.5 h-1.5 rounded-full bg-emerald-500"></span>' : ''}
+          </button>
+        `;
+      }).join('');
+    }
+
+    function prevQuickPage() {
+      if (quickPageIndex > 0) {
+        quickPageIndex--;
+        renderQuickGrid();
+      }
+    }
+
+    function nextQuickPage() {
+      const totalPages = Math.ceil(quickFilteredList.length / QUICK_PAGE_SIZE);
+      if (quickPageIndex < totalPages - 1) {
+        quickPageIndex++;
+        renderQuickGrid();
+      }
+    }
+
+    // 4. Dict List（JIS第1・第2水準対応）
+    function renderDictGrid(filtered) {
+      const list = filtered || KANJI_DATA;
+      const grid = document.getElementById('dictGrid');
+      const empty = document.getElementById('dictEmpty');
+
+      if (!list || !list.length) {
+        grid.innerHTML = '';
+        empty.classList.remove('hidden');
+        return;
+      }
+      empty.classList.add('hidden');
+
+      grid.innerHTML = list.slice(0, 240).map(k => {
+        const isL = learnedSet.has(k.kanji);
+        const displayReading = (k.kun && k.kun.length > 0) ? k.kun[0] : ((k.on && k.on.length > 0) ? k.on[0] : '');
+        return `
+          <div onclick="selectFromDict('${k.kanji}')" class="bg-white p-3 rounded-xl border border-slate-200 hover:border-indigo-400 hover:shadow-xs transition cursor-pointer flex flex-col justify-between h-28 relative">
+            ${isL ? '<span class="absolute top-2 right-2 w-2 h-2 rounded-full bg-emerald-500"></span>' : ''}
+            <div class="flex items-center justify-between">
+              <span class="text-[10px] font-bold text-slate-400">${k.gradeLabel || ''}</span>
+              <span class="text-[10px] text-slate-400">${k.strokes || 0}画</span>
+            </div>
+            <div class="text-3xl font-kanji font-bold text-slate-800 text-center my-1">${k.kanji}</div>
+            <div class="text-[10px] text-slate-500 truncate text-center">${displayReading}</div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    function filterKanjiList() {
+      const q = document.getElementById('dictSearchInput').value.trim();
+      const stage = document.getElementById('stageFilter').value;
+      const status = document.getElementById('statusFilter').value;
+
+      const filtered = KANJI_DATA.filter(k => {
+        if (stage.startsWith('elem')) {
+          const g = parseInt(stage.replace('elem', ''));
+          if (k.grade !== g) return false;
+        } else if (stage === 'junior' && k.grade !== 8) {
+          return false;
+        } else if (stage === 'jinmei' && (k.stage !== 'jinmei' && k.grade !== 9 && k.grade !== 10)) {
+          return false;
+        } else if (stage === 'jis1' && k.stage !== 'jis1') {
+          return false;
+        } else if (stage === 'jis2' && k.stage !== 'jis2') {
+          return false;
+        }
+
+        const isL = learnedSet.has(k.kanji);
+        if (status === 'learned' && !isL) return false;
+        if (status === 'unlearned' && isL) return false;
+
+        if (q) {
+          const onStr = (k.on || []).join(' ');
+          const kunStr = (k.kun || []).join(' ');
+          const exStr = (k.examples || []).join(' ');
+          const mStr = (k.meanings_ja || []).join(' ');
+          return k.kanji.includes(q) || onStr.includes(q) || kunStr.includes(q) || exStr.includes(q) || mStr.includes(q);
+        }
+        return true;
+      });
+
+      renderDictGrid(filtered);
+    }
+
+    function selectFromDict(char) {
+      const idx = KANJI_DATA.findIndex(k => k.kanji === char);
+      if (idx !== -1) {
+        setTab('writer');
+        renderKanji(idx);
+      }
+    }
+
+    // 5. Quiz Engine
+    let quizQuestions = [];
+    let currentQuizIdx = 0;
+    let quizScore = 0;
+
+    function startQuiz() {
+      document.getElementById('quizStartCard').classList.add('hidden');
+      document.getElementById('quizResultCard').classList.add('hidden');
+      document.getElementById('quizPlayCard').classList.remove('hidden');
+
+      const eligible = KANJI_DATA.filter(k => k.kun && k.kun.length > 0);
+      const shuffled = [...eligible].sort(() => 0.5 - Math.random()).slice(0, 10);
+
+      quizQuestions = shuffled.map(item => {
+        const correct = item.kun[0];
+        const wrongPool = eligible.filter(x => x.kanji !== item.kanji && x.kun[0] !== correct);
+        const wrong = wrongPool.sort(() => 0.5 - Math.random()).slice(0, 3).map(w => w.kun[0]);
+        const opts = [correct, ...wrong].sort(() => 0.5 - Math.random());
+        return {
+          kanji: item.kanji,
+          correct: correct,
+          options: opts
+        };
+      });
+
+      currentQuizIdx = 0;
+      quizScore = 0;
+      renderQuizQuestion();
+    }
+
+    function renderQuizQuestion() {
+      const q = quizQuestions[currentQuizIdx];
+      document.getElementById('quizProgress').innerText = `第 ${currentQuizIdx + 1} / 10 問`;
+      document.getElementById('quizScoreCount').innerText = `スコア: ${quizScore}`;
+      document.getElementById('quizKanji').innerText = q.kanji;
+
+      const optContainer = document.getElementById('quizOptions');
+      optContainer.innerHTML = q.options.map(opt => `
+        <button onclick="handleAnswer('${opt}')" class="quiz-btn w-full py-3 px-4 rounded-xl border border-slate-200 hover:border-indigo-500 font-bold text-xs text-slate-700 text-left transition flex items-center justify-between">
+          <span>${opt}</span>
+          <i class="fa-solid fa-chevron-right text-slate-300"></i>
+        </button>
+      `).join('');
+    }
+
+    function handleAnswer(selected) {
+      const q = quizQuestions[currentQuizIdx];
+      const isCorrect = selected === q.correct;
+      if (isCorrect) quizScore++;
+
+      const btns = document.querySelectorAll('.quiz-btn');
+      btns.forEach(btn => {
+        const text = btn.querySelector('span').innerText;
+        btn.disabled = true;
+        if (text === q.correct) {
+          btn.classList.add('bg-emerald-50', 'border-emerald-500', 'text-emerald-700');
+        } else if (text === selected && !isCorrect) {
+          btn.classList.add('bg-rose-50', 'border-rose-500', 'text-rose-700');
+        }
+      });
+
+      setTimeout(() => {
+        currentQuizIdx++;
+        if (currentQuizIdx < 10) {
+          renderQuizQuestion();
+        } else {
+          showQuizResult();
+        }
+      }, 700);
+    }
+
+    function showQuizResult() {
+      document.getElementById('quizPlayCard').classList.add('hidden');
+      document.getElementById('quizResultCard').classList.remove('hidden');
+      document.getElementById('quizResultScore').innerText = `10 問中 ${quizScore} 問正解！`;
+    }
+
+    function setTab(tab) {
+      ['writer', 'dict', 'quiz'].forEach(t => {
+        document.getElementById(t + 'View').classList.add('hidden');
+        document.getElementById('tabBtn' + t.charAt(0).toUpperCase() + t.slice(1)).classList.remove('bg-white', 'text-indigo-600', 'shadow-xs');
+      });
+      document.getElementById(tab + 'View').classList.remove('hidden');
+      document.getElementById('tabBtn' + tab.charAt(0).toUpperCase() + tab.slice(1)).classList.add('bg-white', 'text-indigo-600', 'shadow-xs');
+    }
+
+    window.addEventListener('DOMContentLoaded', () => {
+      setTab('writer');
+      loadData();
+    });
+  </script>
+</body>
+</html>

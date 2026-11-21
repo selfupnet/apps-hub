@@ -1,0 +1,1296 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <title>TypeCraft - タイピング練習（PCローマ字 ＆ スマホ標準フリック対応）</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;600;700&family=Noto+Sans+JP:wght@400;600;800&display=swap');
+    body {
+      font-family: 'Noto Sans JP', sans-serif;
+      min-height: 100vh;
+      min-height: 100dvh;
+      padding-top: env(safe-area-inset-top);
+      padding-bottom: env(safe-area-inset-bottom);
+      -webkit-tap-highlight-color: transparent;
+    }
+    .font-mono-code { font-family: 'Fira Code', monospace; }
+    .key-active {
+      transform: translateY(2px);
+      background-color: #4f46e5 !important;
+      color: #ffffff !important;
+      border-color: #818cf8 !important;
+    }
+    .char-cursor {
+      background-color: rgba(99, 102, 241, 0.35);
+      color: #ffffff;
+      border-bottom: 3px solid #818cf8;
+      border-radius: 4px;
+      padding: 0 2px;
+      box-shadow: 0 0 12px rgba(99, 102, 241, 0.45);
+    }
+    @keyframes shake {
+      0%, 100% { transform: translateX(0); }
+      25% { transform: translateX(-4px); }
+      75% { transform: translateX(4px); }
+    }
+    .animate-shake { animation: shake 0.18s ease-in-out; }
+
+    /* マウス操作（PC環境）では入力モード切替ボタンを完全に非表示にする */
+    @media (hover: hover) and (pointer: fine) {
+      .touch-only-control {
+        display: none !important;
+      }
+    }
+  </style>
+</head>
+<body class="bg-slate-950 text-slate-100 flex flex-col select-none" onclick="handleGlobalClick(event)">
+
+  <!-- PC用隠しインプット（IMEバイパス・物理キー捕捉用） -->
+  <input id="pc-focus-catcher" type="password" inputmode="none" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"
+         class="fixed opacity-0 pointer-events-none w-0 h-0 top-0 left-0" aria-hidden="true">
+
+  <!-- ヘッダー -->
+  <header class="border-b border-slate-800/90 bg-slate-900/80 backdrop-blur px-4 sm:px-6 py-3 flex flex-wrap items-center justify-between gap-3" onclick="event.stopPropagation()">
+    <div class="flex items-center gap-3">
+      <a href="../" class="inline-flex items-center gap-1.5 text-xs font-bold text-slate-300 hover:text-white bg-slate-800 hover:bg-slate-700 border border-slate-700 px-3 py-1.5 rounded-full transition shrink-0">
+        <i class="fa-solid fa-arrow-left text-[10px]"></i>
+        <span>Apps Hub</span>
+      </a>
+      <div class="flex items-center gap-2.5">
+        <div class="w-9 h-9 rounded-xl bg-indigo-600 flex items-center justify-center text-white shadow-lg shadow-indigo-500/30 shrink-0">
+          <i class="fa-solid fa-keyboard"></i>
+        </div>
+        <div>
+          <h1 class="text-base sm:text-lg font-extrabold tracking-tight text-white leading-tight">TypeCraft</h1>
+          <p class="text-[11px] text-slate-400 hidden sm:block">PCローマ字柔軟判定 ＆ スマホフリック対応</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- コントロール群 -->
+    <div class="flex flex-wrap items-center gap-2" onclick="event.stopPropagation()">
+      <!-- 入力モード切替（PC環境ではCSSで自動非表示、タッチ端末のみ表示） -->
+      <div class="touch-only-control inline-flex bg-slate-950 p-1 rounded-xl border border-slate-800 text-xs font-bold">
+        <button id="mode-pc-btn" type="button" onclick="setInputMode('pc')" class="px-2.5 py-1 rounded-lg bg-indigo-600 text-white transition flex items-center gap-1">
+          <i class="fa-solid fa-desktop text-[10px]"></i>
+          <span>PC</span>
+        </button>
+        <button id="mode-mobile-btn" type="button" onclick="setInputMode('mobile')" class="px-2.5 py-1 rounded-lg text-slate-400 hover:text-white transition flex items-center gap-1">
+          <i class="fa-solid fa-mobile-screen-button text-[10px]"></i>
+          <span>スマホ</span>
+        </button>
+      </div>
+
+      <!-- ランク基準表ボタン -->
+      <button type="button" onclick="openRankModal(event)" class="inline-flex items-center gap-1.5 bg-slate-800 hover:bg-slate-700 border border-slate-700 text-amber-300 text-xs font-bold rounded-xl px-3 py-2 transition">
+        <i class="fa-solid fa-award"></i>
+        <span>基準表</span>
+      </button>
+
+      <!-- コース切り替え -->
+      <select id="course-select" onchange="changeCourse()" class="bg-slate-800 border border-slate-700 text-xs font-bold rounded-xl px-3 py-2 text-slate-100 focus:outline-indigo-500 max-w-[180px] sm:max-w-none">
+        <option value="basic">🇯🇵 日本語（日常・ことわざ）</option>
+        <option value="english">🇺🇸 英語（名言・フレーズ）</option>
+        <option value="programming">💻 コード（JS / Python）</option>
+      </select>
+
+      <!-- サウンド -->
+      <button id="sound-toggle" type="button" onclick="toggleSound()" class="w-9 h-9 rounded-xl bg-slate-800 border border-slate-700 text-indigo-400 hover:bg-slate-700 flex items-center justify-center transition" title="効果音オン/オフ">
+        <i class="fa-solid fa-volume-high" id="sound-icon"></i>
+      </button>
+
+      <!-- リセット -->
+      <button type="button" onclick="initGame()" class="w-9 h-9 rounded-xl bg-slate-800 border border-slate-700 text-slate-300 hover:bg-slate-700 flex items-center justify-center transition" title="最初からやり直す">
+        <i class="fa-solid fa-rotate-right"></i>
+      </button>
+    </div>
+  </header>
+
+  <!-- オプション設定バー（PCモード用・スマホモード時はコンパクト表示） -->
+  <div id="pc-options-bar" class="bg-slate-900/50 border-b border-slate-800/70 px-4 py-2 flex flex-wrap items-center justify-center gap-4 text-xs text-slate-300" onclick="event.stopPropagation()">
+    <label class="inline-flex items-center gap-1.5 cursor-pointer hover:text-white">
+      <input type="checkbox" id="opt-case" onchange="saveOptions()" class="rounded border-slate-600 bg-slate-800 text-indigo-500 focus:ring-indigo-500">
+      <span>大文字区別</span>
+    </label>
+    <label class="inline-flex items-center gap-1.5 cursor-pointer hover:text-white">
+      <input type="checkbox" id="opt-space" onchange="saveOptions()" checked class="rounded border-slate-600 bg-slate-800 text-indigo-500 focus:ring-indigo-500">
+      <span>スペース打鍵</span>
+    </label>
+    <label class="inline-flex items-center gap-1.5 cursor-pointer hover:text-white">
+      <input type="checkbox" id="opt-keyboard" onchange="saveOptions()" checked class="rounded border-slate-600 bg-slate-800 text-indigo-500 focus:ring-indigo-500">
+      <span>キーボード表示</span>
+    </label>
+  </div>
+
+  <!-- メインコンテンツ -->
+  <main class="flex-1 max-w-4xl w-full mx-auto p-4 sm:p-6 flex flex-col justify-center gap-4 sm:gap-6">
+
+    <!-- リアルタイムステータスパネル -->
+    <section class="grid grid-cols-4 gap-2 sm:gap-3">
+      <div class="bg-slate-900/80 border border-slate-800 rounded-2xl p-3 sm:p-4 text-center">
+        <div class="text-[10px] sm:text-[11px] font-bold text-slate-400 tracking-wider">WPM (速度)</div>
+        <div id="stat-wpm" class="text-xl sm:text-3xl font-extrabold text-indigo-400 mt-0.5 font-mono-code">0</div>
+      </div>
+      <div class="bg-slate-900/80 border border-slate-800 rounded-2xl p-3 sm:p-4 text-center">
+        <div class="text-[10px] sm:text-[11px] font-bold text-slate-400 tracking-wider">正確率</div>
+        <div id="stat-acc" class="text-xl sm:text-3xl font-extrabold text-emerald-400 mt-0.5 font-mono-code">100%</div>
+      </div>
+      <div class="bg-slate-900/80 border border-slate-800 rounded-2xl p-3 sm:p-4 text-center">
+        <div class="text-[10px] sm:text-[11px] font-bold text-slate-400 tracking-wider">文字 / ミス</div>
+        <div class="text-xl sm:text-3xl font-extrabold text-slate-200 mt-0.5 font-mono-code">
+          <span id="stat-strokes">0</span><span class="text-xs text-rose-400 font-normal ml-0.5">/<span id="stat-miss">0</span></span>
+        </div>
+      </div>
+      <div class="bg-slate-900/80 border border-slate-800 rounded-2xl p-3 sm:p-4 text-center">
+        <div class="text-[10px] sm:text-[11px] font-bold text-slate-400 tracking-wider">進捗</div>
+        <div id="stat-progress" class="text-xl sm:text-3xl font-extrabold text-amber-400 mt-0.5 font-mono-code">0/10</div>
+      </div>
+    </section>
+
+    <!-- タイピング出題カード -->
+    <section id="typing-card" class="bg-slate-900/95 border border-slate-800 rounded-3xl p-5 sm:p-8 shadow-xl relative flex flex-col items-center justify-center min-h-[210px] transition">
+
+      <!-- 状態インジケーター -->
+      <div id="status-badge" class="mb-3 px-3.5 py-1 rounded-full bg-indigo-500/15 border border-indigo-500/30 text-[11px] font-bold text-indigo-300 flex items-center gap-2">
+        <span class="w-2 h-2 rounded-full bg-indigo-400 animate-pulse"></span>
+        <span id="status-text">ここをクリックして [Space] を押すと開始</span>
+      </div>
+
+      <!-- お題表示（漢字・英文・構文） -->
+      <div id="display-main" class="text-xl sm:text-2xl font-extrabold text-white tracking-wide text-center break-words max-w-full leading-snug">
+        準備完了
+      </div>
+
+      <!-- ひらがな（ふりがな） / 補助ガイド表示 -->
+      <div id="display-sub" class="text-sm sm:text-lg font-bold text-sky-400 mt-1.5 tracking-wider text-center break-words max-w-full min-h-[1.5rem]">
+      </div>
+
+      <!-- PCモード用：ローマ字 / コードターゲット枠 -->
+      <div id="pc-target-box" class="w-full mt-4 bg-slate-950/90 border border-slate-800 rounded-2xl px-4 py-4 text-center">
+        <div id="display-romaji" class="text-xl sm:text-3xl font-extrabold font-mono-code tracking-wider break-words leading-relaxed">
+          <span class="text-slate-500">Press Space</span>
+        </div>
+      </div>
+
+      <!-- スマホモード用：OS標準キーボード（フリック）直接入力エリア -->
+      <div id="mobile-input-box" class="hidden w-full mt-4 space-y-2.5" onclick="event.stopPropagation()">
+        <div class="relative">
+          <input id="mobile-text-input" type="text"
+                 autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"
+                 placeholder="ここをタップしてフリック入力..."
+                 class="w-full bg-slate-950 border-2 border-indigo-500/70 focus:border-indigo-400 rounded-2xl px-4 py-3.5 text-lg sm:text-xl font-bold text-white placeholder-slate-500 focus:outline-none shadow-inner">
+          <button type="button" onclick="clearMobileInput()" class="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-white p-1.5" title="クリア">
+            <i class="fa-solid fa-circle-xmark"></i>
+          </button>
+        </div>
+
+        <!-- スマホ用操作ボタン（スキップ / 確定判定） -->
+        <div class="flex items-center justify-between gap-2 text-xs">
+          <span id="mobile-match-hint" class="text-slate-400 font-medium">
+            変換確定すると自動で次へ進みます
+          </span>
+          <button type="button" onclick="skipMobileQuestion()" class="px-3 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold border border-slate-700 shrink-0">
+            パス（次へ） <i class="fa-solid fa-forward-step ml-1"></i>
+          </button>
+        </div>
+      </div>
+
+      <!-- ガイドヒント -->
+      <div class="mt-4 text-[11px] font-semibold text-slate-400 flex items-center gap-1.5 text-center">
+        <i class="fa-solid fa-circle-info text-indigo-400 shrink-0"></i>
+        <span id="guide-text">「ん」は後続が子音なら n 1個でOK。ti/chi, syo/sho も柔軟に適応します</span>
+      </div>
+    </section>
+
+    <!-- PCモード用：JIS日本語配列オンスクリーンキーボード -->
+    <section id="keyboard-section" class="bg-slate-900/70 border border-slate-800 rounded-3xl p-4 sm:p-5 shadow-inner overflow-x-auto">
+      <div id="keyboard" class="flex flex-col gap-1.5 min-w-[540px] max-w-3xl mx-auto text-xs font-bold font-mono-code">
+        <!-- JSでJISキー配列を動的生成 -->
+      </div>
+    </section>
+
+  </main>
+
+  <!-- 共通ミニ免責フッター -->
+  <footer class="py-4 px-4 text-center text-[11px] text-slate-500 border-t border-slate-900">
+    ※個人開発プロトタイプにつき無保証・自己責任にてご利用ください（データは端末内完結・サポート対象外）
+  </footer>
+
+  <!-- 結果モーダル（完了時表示） -->
+  <div id="result-modal" class="hidden fixed inset-0 bg-slate-950/85 backdrop-blur-sm flex items-center justify-center p-4 z-50" onclick="event.stopPropagation()">
+    <div class="bg-slate-900 border border-slate-700 rounded-3xl max-w-md w-full p-6 sm:p-8 text-center shadow-2xl">
+      <div class="w-14 h-14 bg-indigo-500/20 text-indigo-400 rounded-2xl flex items-center justify-center mx-auto mb-3 text-2xl">
+        <i class="fa-solid fa-trophy"></i>
+      </div>
+      <h2 class="text-2xl font-extrabold text-white">コース完走！</h2>
+      <p class="text-xs text-slate-400 mt-0.5">タイピング結果のスコアカード</p>
+
+      <!-- 段級位・称号カード -->
+      <div class="mt-4 bg-indigo-950/60 border border-indigo-500/40 rounded-2xl p-4">
+        <div class="flex items-center justify-between text-[11px] font-bold text-indigo-300 mb-1">
+          <span>タイピング実力評価</span>
+          <button type="button" onclick="openRankModal(event)" class="underline hover:text-white flex items-center gap-1">
+            <i class="fa-solid fa-circle-question"></i> 基準一覧
+          </button>
+        </div>
+        <div id="res-rank-title" class="text-xl sm:text-2xl font-extrabold text-amber-300 my-1">
+          🥉 初級（脱初心者）
+        </div>
+        <p id="res-rank-desc" class="text-xs text-slate-300 leading-relaxed">
+          基本の入力ができています。リズムを意識してさらに加速しましょう！
+        </p>
+      </div>
+
+      <div class="grid grid-cols-2 gap-2.5 my-5">
+        <div class="bg-slate-950/80 p-3.5 rounded-2xl border border-slate-800">
+          <span class="text-[11px] text-slate-400 font-bold block">タイピング速度</span>
+          <span id="res-wpm" class="text-xl sm:text-2xl font-extrabold text-indigo-400 font-mono-code">0 WPM</span>
+        </div>
+        <div class="bg-slate-950/80 p-3.5 rounded-2xl border border-slate-800">
+          <span class="text-[11px] text-slate-400 font-bold block">正確率</span>
+          <span id="res-acc" class="text-xl sm:text-2xl font-extrabold text-emerald-400 font-mono-code">0%</span>
+        </div>
+        <div class="bg-slate-950/80 p-3.5 rounded-2xl border border-slate-800">
+          <span class="text-[11px] text-slate-400 font-bold block">総文字 / 打鍵</span>
+          <span id="res-strokes" class="text-xl sm:text-2xl font-extrabold text-slate-200 font-mono-code">0</span>
+        </div>
+        <div class="bg-slate-950/80 p-3.5 rounded-2xl border border-slate-800">
+          <span class="text-[11px] text-slate-400 font-bold block">クリアタイム</span>
+          <span id="res-time" class="text-xl sm:text-2xl font-extrabold text-amber-400 font-mono-code">0.0s</span>
+        </div>
+      </div>
+
+      <button type="button" onclick="restartTest()" class="w-full py-3.5 bg-indigo-600 hover:bg-indigo-500 text-white font-bold rounded-2xl transition shadow-lg shadow-indigo-600/30">
+        もう一度挑戦する [Space]
+      </button>
+    </div>
+  </div>
+
+  <!-- ランク基準表モーダル（z-[60]で結果モーダルより前面に表示） -->
+  <div id="rank-modal" class="hidden fixed inset-0 bg-slate-950/85 backdrop-blur-sm flex items-center justify-center p-4 z-[60]" onclick="closeRankModal(event)">
+    <div class="bg-slate-900 border border-slate-700 rounded-3xl max-w-lg w-full p-6 shadow-2xl max-h-[85vh] overflow-y-auto" onclick="event.stopPropagation()">
+      <div class="flex items-center justify-between pb-3 border-b border-slate-800">
+        <h3 class="text-lg font-extrabold text-white flex items-center gap-2">
+          <i class="fa-solid fa-award text-amber-400"></i>
+          <span>段級位・称号の判定基準</span>
+        </h3>
+        <button type="button" onclick="closeRankModal(event)" class="w-8 h-8 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 flex items-center justify-center">
+          <i class="fa-solid fa-xmark"></i>
+        </button>
+      </div>
+
+      <p class="text-xs text-slate-400 mt-3 mb-4 leading-relaxed">
+        完走時の「タイピング速度（WPM）」と「正確率（%）」の両方を満たすと、以下の称号が認定されます（スマホ入力時は基準を自動最適化）。
+      </p>
+
+      <div class="space-y-2.5 text-xs">
+        <div class="p-3 rounded-2xl bg-amber-500/10 border border-amber-500/30 flex items-center justify-between gap-2">
+          <div>
+            <div class="font-extrabold text-amber-300 text-sm">🏆 名人（ゴッドハンド）</div>
+            <div class="text-slate-300 mt-0.5">思考と指先が直結する神業レベルのスピード</div>
+          </div>
+          <div class="text-right font-mono-code font-bold text-amber-200 shrink-0">
+            <div>WPM 90以上</div>
+            <div>正確率 95%以上</div>
+          </div>
+        </div>
+
+        <div class="p-3 rounded-2xl bg-indigo-500/10 border border-indigo-500/30 flex items-center justify-between gap-2">
+          <div>
+            <div class="font-extrabold text-indigo-300 text-sm">🎖️ 達人（エキスパート）</div>
+            <div class="text-slate-300 mt-0.5">長文やビジネス文書も一瞬で仕上げる上級者</div>
+          </div>
+          <div class="text-right font-mono-code font-bold text-indigo-200 shrink-0">
+            <div>WPM 75以上</div>
+            <div>正確率 93%以上</div>
+          </div>
+        </div>
+
+        <div class="p-3 rounded-2xl bg-emerald-500/10 border border-emerald-500/30 flex items-center justify-between gap-2">
+          <div>
+            <div class="font-extrabold text-emerald-300 text-sm">🥇 上級（オフィスプロ）</div>
+            <div class="text-slate-300 mt-0.5">実務で周囲から一目置かれる快適なタッチタイピング</div>
+          </div>
+          <div class="text-right font-mono-code font-bold text-emerald-200 shrink-0">
+            <div>WPM 60以上</div>
+            <div>正確率 90%以上</div>
+          </div>
+        </div>
+
+        <div class="p-3 rounded-2xl bg-sky-500/10 border border-sky-500/30 flex items-center justify-between gap-2">
+          <div>
+            <div class="font-extrabold text-sky-300 text-sm">🥈 中級（一般実務レベル）</div>
+            <div class="text-slate-300 mt-0.5">日常作業やチャット・メールで困らない標準速度</div>
+          </div>
+          <div class="text-right font-mono-code font-bold text-sky-200 shrink-0">
+            <div>WPM 45以上</div>
+            <div>正確率 88%以上</div>
+          </div>
+        </div>
+
+        <div class="p-3 rounded-2xl bg-slate-800/80 border border-slate-700 flex items-center justify-between gap-2">
+          <div>
+            <div class="font-extrabold text-slate-200 text-sm">🥉 初級（脱初心者）</div>
+            <div class="text-slate-400 mt-0.5">キー配列を覚え始め、リズム良く打てる段階</div>
+          </div>
+          <div class="text-right font-mono-code font-bold text-slate-300 shrink-0">
+            <div>WPM 30以上</div>
+            <div>正確率 85%以上</div>
+          </div>
+        </div>
+
+        <div class="p-3 rounded-2xl bg-slate-800/40 border border-slate-800 flex items-center justify-between gap-2">
+          <div>
+            <div class="font-extrabold text-slate-400 text-sm">🌱 初心者（見習い）</div>
+            <div class="text-slate-500 mt-0.5">まずは焦らずミスを減らして確実に打つ練習段階</div>
+          </div>
+          <div class="text-right font-mono-code font-bold text-slate-400 shrink-0">
+            <div>基礎トレーニング</div>
+          </div>
+        </div>
+      </div>
+
+      <button type="button" onclick="closeRankModal(event)" class="w-full mt-5 py-3 bg-slate-800 hover:bg-slate-700 text-white font-bold rounded-2xl border border-slate-700 transition">
+        閉じる
+      </button>
+    </div>
+  </div>
+
+  <script>
+    // =========================================================
+    // 出題データ（重複防止・大幅拡充版）
+    // =========================================================
+    const DATASETS = {
+      basic: [
+        { main: "継続は力なり。", kana: "けいぞくはちからなり。" },
+        { main: "時は金なり。", kana: "ときはかねなり。" },
+        { main: "千里の道も一歩から。", kana: "せんりのみちもいっぽから。" },
+        { main: "塵も積もれば山となる。", kana: "ちりもつもればやまとなる。" },
+        { main: "急がば回れ。", kana: "いそがばまわれ。" },
+        { main: "石の上にも三年。", kana: "いしのうえにもさんねん。" },
+        { main: "七転び八起き。", kana: "ななころびやおき。" },
+        { main: "猿も木から落ちる。", kana: "さるもきからおちる。" },
+        { main: "花より団子。", kana: "はなよりだんご。" },
+        { main: "百聞は一見に如かず。", kana: "ひゃくぶんはいっけんにしかず。" },
+        { main: "早起きは三文の徳。", kana: "はやおきはさんもんのとく。" },
+        { main: "好きこそ物の上手なれ。", kana: "すきこそもののじょうずなれ。" },
+        { main: "雨降って地固まる。", kana: "あめふってじかたまる。" },
+        { main: "備えあれば憂いなし。", kana: "そなえあればうれいなし。" },
+        { main: "笑う門には福来る。", kana: "わらうかどにはふくきたる。" },
+        { main: "おはようございます。", kana: "おはようございます。" },
+        { main: "いつもありがとうございます。", kana: "いつもありがとうございます。" },
+        { main: "今日も一日よろしくお願いします。", kana: "きょうもいちにちよろしくおねがいします。" },
+        { main: "お疲れ様でした。", kana: "おつかれさまでした。" },
+        { main: "確認をお願いいたします。", kana: "かくにんをおねがいいたします。" },
+        { main: "承知いたしました。", kana: "しょうちいたしました。" },
+        { main: "タイピングの速度が上がってきた。", kana: "たいぴんぐのそくどがあがってきた。" },
+        { main: "キーボードを見ずに正確に打つ。", kana: "きーぼーどをみずにせいかくにうつ。" },
+        { main: "ショートカットキーを使いこなす。", kana: "しょーとかっときーをつかいこなす。" },
+        { main: "毎日の小さな積み重ねが大切だ。", kana: "まいにちのちいさなつみかさねがたいせつだ。" },
+        { main: "春はあけぼの、やうやう白くなりゆく。", kana: "はるはあけぼの、やうやうしろくなりゆく。" },
+        { main: "吾輩は猫である。名前はまだ無い。", kana: "わがはいはねこである。なまえはまだない。" },
+        { main: "メロスは激怒した。", kana: "めろすはげきどした。" },
+        { main: "国境の長いトンネルを抜けると雪国であった。", kana: "こっきょうのながいとんねるをぬけるとゆきぐにであった。" },
+        { main: "明日は明日の風が吹く。", kana: "あしたはあしたのかぜがふく。" },
+        { main: "一期一会の出会いを大切にする。", kana: "いちごいちえのであいをたいせつにする。" },
+        { main: "温故知新の精神で新しい技術を学ぶ。", kana: "おんこちしんのせいしんであたらしいぎじゅつをまなぶ。" },
+        { main: "初心忘るべからず。", kana: "しょしんわするべからず。" },
+        { main: "二兎を追う者は一兎をも得ず。", kana: "にとをおうものはいっとをもえず。" },
+        { main: "能ある鷹は爪を隠す。", kana: "のうあるたかはつめをかくす。" },
+        { main: "井の中の蛙大海を知らず。", kana: "いのなかのかわずたいかいをしらず。" },
+        { main: "案ずるより産むが易し。", kana: "あんずるよりうむがやすし。" },
+        { main: "情けは人の為ならず。", kana: "なさけはひとのためならず。" },
+        { main: "終わり良ければ全て良し。", kana: "おわりよければすべてよし。" },
+        { main: "思い立ったが吉日。", kana: "おもいたったがきちじつ。" }
+      ],
+      english: [
+        { main: "Practice makes perfect.", kana: "習うより慣れよ（練習が完璧を作る）" },
+        { main: "Knowledge is power.", kana: "知識は力なり" },
+        { main: "Time is money.", kana: "時は金なり" },
+        { main: "Tomorrow is another day.", kana: "明日は明日の風が吹く" },
+        { main: "Action speaks louder than words.", kana: "行動は言葉よりも雄弁である" },
+        { main: "Where there is a will, there is a way.", kana: "意志あるところに道は開ける" },
+        { main: "Better late than never.", kana: "遅くともやらないよりはマシ" },
+        { main: "No pain, no gain.", kana: "労なくして得るものなし" },
+        { main: "Easy come, easy go.", kana: "悪銭身につかず" },
+        { main: "Fortune favors the bold.", kana: "幸運は勇者に味方する" },
+        { main: "Stay hungry, stay foolish.", kana: "ハングリーであれ、愚かであれ" },
+        { main: "Simple is best.", kana: "単純であることは最善である" },
+        { main: "Every cloud has a silver lining.", kana: "どんな雲にも銀の裏地がある（希望はある）" },
+        { main: "A journey of a thousand miles begins with a single step.", kana: "千里の道も一歩から" },
+        { main: "Honesty is the best policy.", kana: "正直は最良の策" },
+        { main: "Rome was not built in a day.", kana: "ローマは一日にして成らず" },
+        { main: "Strike while the iron is hot.", kana: "鉄は熱いうちに打て" },
+        { main: "Seeing is believing.", kana: "百聞は一見に如かず" }
+      ],
+      programming: [
+        { main: "const isCompleted = true;", kana: "JavaScript: 定数宣言" },
+        { main: "def calculate_total(items):", kana: "Python: 関数定義" },
+        { main: "items.forEach(item => console.log(item));", kana: "JavaScript: 配列ループ" },
+        { main: "const data = await fetch(url);", kana: "JavaScript: 非同期取得" },
+        { main: "try { run(); } catch (err) { }", kana: "JavaScript: 例外処理" },
+        { main: "return users.filter(u => u.active);", kana: "JavaScript: 配列フィルタリング" },
+        { main: "localStorage.setItem('key', value);", kana: "Web API: ローカル保存" },
+        { main: "document.getElementById('app');", kana: "DOM: 要素の取得" },
+        { main: "for i in range(10):", kana: "Python: 繰り返し構文" },
+        { main: "import json, os, sys", kana: "Python: モジュール読み込み" },
+        { main: "SELECT id, name FROM users WHERE active = 1;", kana: "SQL: データ抽出クエリ" },
+        { main: "git commit -m 'feat: add typing mode'", kana: "Git: コミットコマンド" },
+        { main: "npm install tailwindcss", kana: "Node.js: パッケージ導入" },
+        { main: "const sum = arr.reduce((a, b) => a + b, 0);", kana: "JavaScript: 合計値算出" },
+        { main: "export default function App() { }", kana: "React: コンポーネント定義" }
+      ]
+    };
+
+    // =========================================================
+    // ローマ字変換テーブル（ゆらぎ完全対応）
+    // =========================================================
+    const ROMAJI_TABLE = {
+      'あ': ['a'], 'い': ['i', 'yi'], 'う': ['u', 'wu', 'whu'], 'え': ['e'], 'お': ['o'],
+      'か': ['ka', 'ca'], 'き': ['ki'], 'く': ['ku', 'cu', 'qu'], 'け': ['ke'], 'こ': ['ko', 'co'],
+      'さ': ['sa'], 'し': ['si', 'shi', 'ci'], 'す': ['su'], 'せ': ['se', 'ce'], 'そ': ['so'],
+      'た': ['ta'], 'ち': ['ti', 'chi'], 'つ': ['tu', 'tsu'], 'て': ['te'], 'と': ['to'],
+      'な': ['na'], 'に': ['ni'], 'ぬ': ['nu'], 'ね': ['ne'], 'の': ['no'],
+      'は': ['ha'], 'ひ': ['hi'], 'ふ': ['fu', 'hu'], 'へ': ['he'], 'ほ': ['ho'],
+      'ま': ['ma'], 'み': ['mi'], 'む': ['mu'], 'め': ['me'], 'も': ['mo'],
+      'や': ['ya'], 'ゆ': ['yu'], 'よ': ['yo'],
+      'ら': ['ra'], 'り': ['ri'], 'る': ['ru'], 'れ': ['re'], 'ろ': ['ro'],
+      'わ': ['wa'], 'を': ['wo'], 'ん': ['nn', 'xn', "n'"],
+      'が': ['ga'], 'ぎ': ['gi'], 'ぐ': ['gu'], 'げ': ['ge'], 'ご': ['go'],
+      'ざ': ['za'], 'じ': ['zi', 'ji'], 'ず': ['zu'], 'ぜ': ['ze'], 'ぞ': ['zo'],
+      'だ': ['da'], 'ぢ': ['di'], 'づ': ['du'], 'で': ['de'], 'ど': ['do'],
+      'ば': ['ba'], 'び': ['bi'], 'ぶ': ['bu'], 'べ': ['be'], 'ぼ': ['bo'],
+      'ぱ': ['pa'], 'ぴ': ['pi'], 'ぷ': ['pu'], 'ぺ': ['pe'], 'ぽ': ['po'],
+      'ぁ': ['la', 'xa'], 'ぃ': ['li', 'xi'], 'ぅ': ['lu', 'xu'], 'ぇ': ['le', 'xe'], 'ぉ': ['lo', 'xo'],
+      'ゃ': ['lya', 'xya'], 'ゅ': ['lyu', 'xyu'], 'ょ': ['lyo', 'xyo'],
+      'っ': ['ltu', 'xtu', 'ltsu'],
+      'きゃ': ['kya'], 'きゅ': ['kyu'], 'きょ': ['kyo'],
+      'しゃ': ['sya', 'sha'], 'しゅ': ['syu', 'shu'], 'しょ': ['syo', 'sho'],
+      'ちゃ': ['tya', 'cha', 'cya'], 'ちゅ': ['tyu', 'chu', 'cyu'], 'ちょ': ['tyo', 'cho', 'cyo'],
+      'にゃ': ['nya'], 'にゅ': ['nyu'], 'にょ': ['nyo'],
+      'ひゃ': ['hya'], 'ひゅ': ['hyu'], 'ひょ': ['hyo'],
+      'みゃ': ['mya'], 'みゅ': ['myu'], 'みょ': ['myo'],
+      'りゃ': ['rya'], 'りゅ': ['ryu'], 'りょ': ['ryo'],
+      'ぎゃ': ['gya'], 'ぎゅ': ['gyu'], 'ぎょ': ['gyo'],
+      'じゃ': ['zya', 'ja', 'jya'], 'じゅ': ['zyu', 'ju', 'jyu'], 'じょ': ['zyo', 'jo', 'jyo'],
+      'びゃ': ['bya'], 'びゅ': ['byu'], 'びょ': ['byo'],
+      'ぴゃ': ['pya'], 'ぴゅ': ['pyu'], 'ぴょ': ['pyo'],
+      'ー': ['-'], '、': [','], '。': ['.'], '！': ['!'], '？': ['?'], '・': ['/'], ' ': [' ']
+    };
+
+    // 日本語JISキーボード配列（106/109準拠）
+    const JIS_KEYBOARD_ROWS = [
+      ["1", "2", "3", "4", "5", "6", "7", "8", "9", "0", "-", "^", "¥"],
+      ["q", "w", "e", "r", "t", "y", "u", "i", "o", "p", "@", "["],
+      ["a", "s", "d", "f", "g", "h", "j", "k", "l", ";", ":", "]"],
+      ["z", "x", "c", "v", "b", "n", "m", ",", ".", "/", "_"],
+      [" "]
+    ];
+
+    // Shift記号から物理JISキーへの逆引きマップ
+    const SHIFT_TO_JIS_BASE = {
+      '!': '1', '"': '2', '#': '3', '$': '4', '%': '5', '&': '6', "'": '7', '(': '8', ')': '9',
+      '=': '-', '~': '^', '|': '¥', '`': '@', '{': '[', '+': ';', '*': ':', '}': ']',
+      '<': ',', '>': '.', '?': '/'
+    };
+
+    // =========================================================
+    // 状態管理
+    // =========================================================
+    let inputMode = 'pc'; // 'pc' | 'mobile'
+    let currentQuestions = [];
+    let qIndex = 0;
+    let isRunning = false;
+    let startTime = 0;
+    let totalCorrectChars = 0;
+    let totalStrokes = 0;
+    let missStrokes = 0;
+    let soundEnabled = true;
+    let audioCtx = null;
+
+    // PC用ノードベース状態
+    let romajiNodes = [];
+    let nodeIndex = 0;
+
+    // 英語・コード用状態
+    let plainTarget = "";
+    let plainIndex = 0;
+
+    // =========================================================
+    // 初期化 ＆ 端末自動判定（PCではスマホモードへの切り替えを禁止）
+    // =========================================================
+    function isPcEnvironment() {
+      // 精密なポインタ（マウス等）かつホバー可能な環境はPCと判定
+      if (window.matchMedia && window.matchMedia('(hover: hover) and (pointer: fine)').matches) {
+        return true;
+      }
+      const isTouch = ('ontouchstart' in window) || (navigator.maxTouchPoints > 0);
+      return !isTouch;
+    }
+
+    function detectInitialDevice() {
+      return isPcEnvironment() ? 'pc' : 'mobile';
+    }
+
+    function loadOptions() {
+      try {
+        const savedCase = localStorage.getItem('tc_opt_case');
+        const savedSpace = localStorage.getItem('tc_opt_space');
+        const savedKb = localStorage.getItem('tc_opt_kb');
+        if (savedCase !== null) document.getElementById('opt-case').checked = (savedCase === 'true');
+        if (savedSpace !== null) document.getElementById('opt-space').checked = (savedSpace === 'true');
+        if (savedKb !== null) document.getElementById('opt-keyboard').checked = (savedKb === 'true');
+      } catch (e) {}
+      applyKeyboardVisibility();
+    }
+
+    function saveOptions() {
+      try {
+        localStorage.setItem('tc_opt_case', document.getElementById('opt-case').checked);
+        localStorage.setItem('tc_opt_space', document.getElementById('opt-space').checked);
+        localStorage.setItem('tc_opt_kb', document.getElementById('opt-keyboard').checked);
+      } catch (e) {}
+      applyKeyboardVisibility();
+      if (isRunning && inputMode === 'pc') {
+        skipSpacesIfNeeded();
+        renderPcTarget();
+      }
+      ensureFocus();
+    }
+
+    function applyKeyboardVisibility() {
+      const showKb = document.getElementById('opt-keyboard').checked;
+      const kbSec = document.getElementById('keyboard-section');
+      if (inputMode === 'pc' && showKb) {
+        kbSec.classList.remove('hidden');
+      } else {
+        kbSec.classList.add('hidden');
+      }
+    }
+
+    function setInputMode(mode) {
+      // PC環境の場合はスマホモードへの切り替えを許可しない
+      if (isPcEnvironment() && mode === 'mobile') {
+        mode = 'pc';
+      }
+
+      inputMode = mode;
+      const pcBtn = document.getElementById('mode-pc-btn');
+      const mobBtn = document.getElementById('mode-mobile-btn');
+      const pcBox = document.getElementById('pc-target-box');
+      const mobBox = document.getElementById('mobile-input-box');
+      const optBar = document.getElementById('pc-options-bar');
+      const guideText = document.getElementById('guide-text');
+
+      if (mode === 'pc') {
+        pcBtn.className = 'px-2.5 py-1 rounded-lg bg-indigo-600 text-white transition flex items-center gap-1';
+        mobBtn.className = 'px-2.5 py-1 rounded-lg text-slate-400 hover:text-white transition flex items-center gap-1';
+        pcBox.classList.remove('hidden');
+        mobBox.classList.add('hidden');
+        optBar.classList.remove('hidden');
+        guideText.innerText = "「ん」は後続が子音なら n 1個でOK。ti/chi, syo/sho も柔軟に適応します";
+      } else {
+        mobBtn.className = 'px-2.5 py-1 rounded-lg bg-indigo-600 text-white transition flex items-center gap-1';
+        pcBtn.className = 'px-2.5 py-1 rounded-lg text-slate-400 hover:text-white transition flex items-center gap-1';
+        pcBox.classList.add('hidden');
+        mobBox.classList.remove('hidden');
+        optBar.classList.add('hidden');
+        guideText.innerText = "スマホのフリック入力でお題（ふりがな・英文）をそのまま入力してください";
+      }
+
+      applyKeyboardVisibility();
+      initGame();
+    }
+
+    // =========================================================
+    // Web Audio API 効果音
+    // =========================================================
+    function playTone(isError = false) {
+      if (!soundEnabled) return;
+      try {
+        if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        if (audioCtx.state === 'suspended') audioCtx.resume();
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        osc.connect(gain);
+        gain.connect(audioCtx.destination);
+
+        if (isError) {
+          osc.type = 'sawtooth';
+          osc.frequency.setValueAtTime(145, audioCtx.currentTime);
+          gain.gain.setValueAtTime(0.14, audioCtx.currentTime);
+          gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.11);
+          osc.start();
+          osc.stop(audioCtx.currentTime + 0.11);
+        } else {
+          osc.type = 'sine';
+          osc.frequency.setValueAtTime(640, audioCtx.currentTime);
+          gain.gain.setValueAtTime(0.09, audioCtx.currentTime);
+          gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.045);
+          osc.start();
+          osc.stop(audioCtx.currentTime + 0.045);
+        }
+      } catch (e) {}
+    }
+
+    // =========================================================
+    // JISオンスクリーンキーボード生成
+    // =========================================================
+    function buildKeyboard() {
+      const container = document.getElementById('keyboard');
+      container.innerHTML = '';
+      JIS_KEYBOARD_ROWS.forEach((row) => {
+        const rowDiv = document.createElement('div');
+        rowDiv.className = 'flex justify-center gap-1.5';
+        row.forEach(key => {
+          const k = document.createElement('button');
+          k.type = 'button';
+          k.dataset.key = key;
+          const isSpace = key === ' ';
+          k.className = isSpace
+            ? 'w-56 h-10 rounded-xl bg-slate-800 border border-slate-700/80 flex items-center justify-center text-slate-300 font-semibold shadow-sm transition-all duration-75 hover:bg-slate-700'
+            : 'w-10 h-10 rounded-xl bg-slate-800 border border-slate-700/80 flex items-center justify-center text-slate-300 font-semibold shadow-sm transition-all duration-75 hover:bg-slate-700';
+          k.innerText = isSpace ? 'SPACE' : key.toUpperCase();
+          k.onclick = (e) => {
+            e.stopPropagation();
+            if (!isRunning) {
+              startGame();
+            } else if (inputMode === 'pc') {
+              handlePcCharInput(key);
+            }
+            ensureFocus();
+          };
+          rowDiv.appendChild(k);
+        });
+        container.appendChild(rowDiv);
+      });
+    }
+
+    function highlightNextKey(char) {
+      if (inputMode !== 'pc' || !document.getElementById('opt-keyboard').checked) return;
+      document.querySelectorAll('#keyboard button').forEach(el => {
+        el.classList.remove('bg-indigo-600', 'text-white', 'border-indigo-400', 'ring-2', 'ring-indigo-400/50');
+      });
+      if (!char) return;
+      const lower = char.toLowerCase();
+      const targetKey = SHIFT_TO_JIS_BASE[char] || lower;
+      const el = Array.from(document.querySelectorAll('#keyboard button')).find(b => b.dataset.key === targetKey);
+      if (el) {
+        el.classList.add('bg-indigo-600', 'text-white', 'border-indigo-400', 'ring-2', 'ring-indigo-400/50');
+      }
+    }
+
+    // =========================================================
+    // かな ➔ ローマ字ノード分解パーサー
+    // =========================================================
+    function buildRomajiNodes(kanaStr) {
+      const nodes = [];
+      let i = 0;
+      while (i < kanaStr.length) {
+        const two = kanaStr.slice(i, i + 2);
+        const one = kanaStr[i];
+
+        // 促音「っ」の処理
+        if (one === 'っ' && i + 1 < kanaStr.length) {
+          const nextTwo = kanaStr.slice(i + 1, i + 3);
+          const nextOne = kanaStr[i + 1];
+          const nextVariants = ROMAJI_TABLE[nextTwo] || ROMAJI_TABLE[nextOne];
+          if (nextVariants && nextVariants[0] && /^[bcdfghjklmnpqrstvwxyz]/.test(nextVariants[0])) {
+            const doubleConsonants = [...new Set(nextVariants.map(v => v[0]))];
+            nodes.push({
+              kana: 'っ',
+              variants: [...doubleConsonants, 'xtu', 'ltu'],
+              selected: doubleConsonants[0],
+              typed: ''
+            });
+            i += 1;
+            continue;
+          }
+        }
+
+        // 「ん」の処理（次の文字が母音・ヤ行・ナ行・記号・文末以外なら n 1個を許可）
+        if (one === 'ん') {
+          const nextChar = kanaStr[i + 1] || '';
+          const nextVariants = ROMAJI_TABLE[nextChar];
+          let allowSingleN = false;
+          if (nextChar && nextVariants && nextVariants[0]) {
+            const firstLetter = nextVariants[0][0];
+            if (!['a', 'i', 'u', 'e', 'o', 'y', 'n', '-', ',', '.', '!', '?', ' '].includes(firstLetter)) {
+              allowSingleN = true;
+            }
+          }
+          const variants = allowSingleN ? ['n', 'nn', 'xn'] : ['nn', 'xn', "n'"];
+          nodes.push({
+            kana: 'ん',
+            variants: variants,
+            selected: variants[0],
+            typed: ''
+          });
+          i += 1;
+          continue;
+        }
+
+        // 拗音（2文字）
+        if (ROMAJI_TABLE[two]) {
+          nodes.push({
+            kana: two,
+            variants: ROMAJI_TABLE[two],
+            selected: ROMAJI_TABLE[two][0],
+            typed: ''
+          });
+          i += 2;
+          continue;
+        }
+
+        // 単音（1文字）
+        if (ROMAJI_TABLE[one]) {
+          nodes.push({
+            kana: one,
+            variants: ROMAJI_TABLE[one],
+            selected: ROMAJI_TABLE[one][0],
+            typed: ''
+          });
+        } else {
+          nodes.push({
+            kana: one,
+            variants: [one],
+            selected: one,
+            typed: ''
+          });
+        }
+        i += 1;
+      }
+      return nodes;
+    }
+
+    // =========================================================
+    // ゲーム進行管理（フィッシャー–イェーツ完全シャッフル）
+    // =========================================================
+    function shuffleArray(arr) {
+      const copy = [...arr];
+      for (let i = copy.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [copy[i], copy[j]] = [copy[j], copy[i]];
+      }
+      return copy;
+    }
+
+    function initGame() {
+      const course = document.getElementById('course-select').value;
+      const pool = shuffleArray(DATASETS[course]);
+      currentQuestions = pool.slice(0, Math.min(10, pool.length));
+
+      qIndex = 0;
+      isRunning = false;
+      totalCorrectChars = 0;
+      totalStrokes = 0;
+      missStrokes = 0;
+
+      document.getElementById('result-modal').classList.add('hidden');
+      document.getElementById('stat-wpm').innerText = "0";
+      document.getElementById('stat-acc').innerText = "100%";
+      document.getElementById('stat-strokes').innerText = "0";
+      document.getElementById('stat-miss').innerText = "0";
+      document.getElementById('stat-progress').innerText = `0/${currentQuestions.length}`;
+
+      if (inputMode === 'pc') {
+        document.getElementById('status-text').innerText = "ここをクリックして [Space] を押すと開始";
+        document.getElementById('display-main').innerText = "準備完了";
+        document.getElementById('display-sub').innerText = "";
+        document.getElementById('display-romaji').innerHTML = '<span class="text-slate-500">Press Space</span>';
+        highlightNextKey(' ');
+      } else {
+        document.getElementById('status-text').innerText = "下の入力欄をタップして開始！";
+        const mobInput = document.getElementById('mobile-text-input');
+        mobInput.value = "";
+        startGame();
+      }
+    }
+
+    function startGame() {
+      isRunning = true;
+      startTime = Date.now();
+      document.getElementById('status-text').innerText = inputMode === 'pc'
+        ? "計測中...（Escでリセット）"
+        : "フリック入力中...（確定で自動判定）";
+      loadQuestion();
+      ensureFocus();
+    }
+
+    function loadQuestion() {
+      if (qIndex >= currentQuestions.length) {
+        finishGame();
+        return;
+      }
+
+      const course = document.getElementById('course-select').value;
+      const q = currentQuestions[qIndex];
+      document.getElementById('stat-progress').innerText = `${qIndex + 1}/${currentQuestions.length}`;
+      document.getElementById('display-main').innerText = q.main;
+
+      if (inputMode === 'mobile') {
+        const targetStr = (course === 'basic') ? q.kana : q.main;
+        document.getElementById('display-sub').innerText = q.kana || "";
+        const mobInput = document.getElementById('mobile-text-input');
+        mobInput.value = "";
+        updateMobileHint(targetStr, "");
+        return;
+      }
+
+      // PCモード
+      if (course === 'basic') {
+        romajiNodes = buildRomajiNodes(q.kana);
+        nodeIndex = 0;
+        skipSpacesIfNeeded();
+        renderPcTarget();
+      } else {
+        document.getElementById('display-sub').innerText = q.kana || "";
+        plainTarget = q.main;
+        plainIndex = 0;
+        skipSpacesIfNeeded();
+        renderPcTarget();
+      }
+    }
+
+    function skipSpacesIfNeeded() {
+      const requireSpace = document.getElementById('opt-space').checked;
+      if (requireSpace) return;
+
+      const course = document.getElementById('course-select').value;
+      if (course === 'basic') {
+        while (nodeIndex < romajiNodes.length && romajiNodes[nodeIndex].kana === ' ') {
+          romajiNodes[nodeIndex].typed = ' ';
+          nodeIndex++;
+        }
+      } else {
+        while (plainIndex < plainTarget.length && plainTarget[plainIndex] === ' ') {
+          plainIndex++;
+        }
+      }
+    }
+
+    // =========================================================
+    // PCモード描画 ＆ 判定ロジック
+    // =========================================================
+    function renderPcTarget() {
+      const course = document.getElementById('course-select').value;
+
+      if (course === 'basic') {
+        let kanaHtml = '';
+        romajiNodes.forEach((n, idx) => {
+          if (idx < nodeIndex) {
+            kanaHtml += `<span class="text-indigo-400/70">${escapeHtml(n.kana)}</span>`;
+          } else if (idx === nodeIndex) {
+            kanaHtml += `<span class="text-white underline decoration-indigo-400 decoration-2">${escapeHtml(n.kana)}</span>`;
+          } else {
+            kanaHtml += `<span>${escapeHtml(n.kana)}</span>`;
+          }
+        });
+        document.getElementById('display-sub').innerHTML = kanaHtml;
+
+        let romajiHtml = '';
+        let nextExpectedChar = null;
+
+        romajiNodes.forEach((n, idx) => {
+          if (idx < nodeIndex) {
+            romajiHtml += `<span class="text-indigo-400">${escapeHtml(n.typed)}</span>`;
+          } else if (idx === nodeIndex) {
+            const donePart = n.typed;
+            const remainPart = n.selected.slice(donePart.length);
+            const curChar = remainPart[0] || '';
+            const afterCur = remainPart.slice(1);
+            nextExpectedChar = curChar;
+
+            romajiHtml += `<span class="text-indigo-400">${escapeHtml(donePart)}</span>`;
+            romajiHtml += `<span class="char-cursor">${escapeHtml(curChar === ' ' ? '␣' : curChar)}</span>`;
+            romajiHtml += `<span class="text-slate-500">${escapeHtml(afterCur)}</span>`;
+          } else {
+            romajiHtml += `<span class="text-slate-500">${escapeHtml(n.selected)}</span>`;
+          }
+        });
+
+        document.getElementById('display-romaji').innerHTML = romajiHtml;
+        highlightNextKey(nextExpectedChar);
+      } else {
+        const typed = plainTarget.slice(0, plainIndex);
+        const current = plainTarget[plainIndex] || '';
+        const remaining = plainTarget.slice(plainIndex + 1);
+
+        document.getElementById('display-romaji').innerHTML = `
+          <span class="text-indigo-400">${escapeHtml(typed)}</span><span class="char-cursor">${escapeHtml(current === ' ' ? '␣' : current)}</span><span class="text-slate-500">${escapeHtml(remaining)}</span>
+        `;
+        highlightNextKey(current);
+      }
+    }
+
+    function handlePcCharInput(rawChar) {
+      if (!isRunning || inputMode !== 'pc') return;
+      const course = document.getElementById('course-select').value;
+      const strictCase = document.getElementById('opt-case').checked;
+
+      totalStrokes++;
+
+      const lower = rawChar.toLowerCase();
+      const baseKey = SHIFT_TO_JIS_BASE[rawChar] || lower;
+      const keyEl = Array.from(document.querySelectorAll('#keyboard button')).find(b => b.dataset.key === baseKey);
+      if (keyEl) {
+        keyEl.classList.add('key-active');
+        setTimeout(() => keyEl.classList.remove('key-active'), 85);
+      }
+
+      if (course === 'basic') {
+        const node = romajiNodes[nodeIndex];
+        if (!node) return;
+
+        const ch = rawChar.toLowerCase();
+        const candidateTyped = node.typed + ch;
+        const matchedVariants = node.variants.filter(v => v.startsWith(candidateTyped));
+
+        if (matchedVariants.length > 0) {
+          playTone(false);
+          totalCorrectChars++;
+          node.typed = candidateTyped;
+          node.selected = matchedVariants[0];
+
+          if (matchedVariants.some(v => v === candidateTyped)) {
+            nodeIndex++;
+            skipSpacesIfNeeded();
+            if (nodeIndex >= romajiNodes.length) {
+              qIndex++;
+              loadQuestion();
+              updateStats();
+              return;
+            }
+          }
+          renderPcTarget();
+        } else {
+          missStrokes++;
+          playTone(true);
+          triggerCardShake();
+        }
+      } else {
+        const expected = plainTarget[plainIndex];
+        const isMatch = strictCase
+          ? (rawChar === expected)
+          : (rawChar.toLowerCase() === expected.toLowerCase());
+
+        if (isMatch) {
+          playTone(false);
+          totalCorrectChars++;
+          plainIndex++;
+          skipSpacesIfNeeded();
+          if (plainIndex >= plainTarget.length) {
+            qIndex++;
+            loadQuestion();
+            updateStats();
+            return;
+          }
+          renderPcTarget();
+        } else {
+          missStrokes++;
+          playTone(true);
+          triggerCardShake();
+        }
+      }
+
+      updateStats();
+    }
+
+    // =========================================================
+    // スマホモード：OS標準フリック入力のリアルタイム＆確定判定
+    // =========================================================
+    const mobInputEl = document.getElementById('mobile-text-input');
+    let isMobileComposing = false;
+
+    mobInputEl.addEventListener('compositionstart', () => {
+      isMobileComposing = true;
+    });
+
+    mobInputEl.addEventListener('compositionend', () => {
+      isMobileComposing = false;
+      evaluateMobileInput();
+    });
+
+    mobInputEl.addEventListener('input', () => {
+      if (!isMobileComposing) {
+        evaluateMobileInput();
+      }
+    });
+
+    function normalizeMobileStr(str) {
+      return str
+        .replace(/！/g, '!')
+        .replace(/？/g, '?')
+        .replace(/．/g, '.')
+        .replace(/，/g, ',')
+        .replace(/ /g, ' ')
+        .trim();
+    }
+
+    function evaluateMobileInput() {
+      if (!isRunning || inputMode !== 'mobile') return;
+      const course = document.getElementById('course-select').value;
+      const q = currentQuestions[qIndex];
+      const expected = normalizeMobileStr(course === 'basic' ? q.kana : q.main);
+      const currentVal = normalizeMobileStr(mobInputEl.value);
+
+      updateMobileHint(expected, currentVal);
+
+      const expectedNoPeriod = expected.replace(/[。\.]+$/, '');
+      const valNoPeriod = currentVal.replace(/[。\.]+$/, '');
+
+      if (currentVal === expected || (expectedNoPeriod.length > 0 && valNoPeriod === expectedNoPeriod)) {
+        playTone(false);
+        totalCorrectChars += expected.length;
+        totalStrokes += expected.length;
+        qIndex++;
+        mobInputEl.value = "";
+        loadQuestion();
+        updateStats();
+      }
+    }
+
+    function updateMobileHint(expected, currentVal) {
+      const hintEl = document.getElementById('mobile-match-hint');
+      if (!currentVal) {
+        hintEl.innerHTML = `<span class="text-slate-400">全 ${expected.length} 文字</span>`;
+        return;
+      }
+      if (expected.startsWith(currentVal)) {
+        hintEl.innerHTML = `<span class="text-emerald-400 font-bold"><i class="fa-solid fa-check mr-1"></i>一致中 (${currentVal.length}/${expected.length}文字)</span>`;
+      } else {
+        hintEl.innerHTML = `<span class="text-amber-400 font-bold"><i class="fa-solid fa-pen mr-1"></i>変換確定または修正してください</span>`;
+      }
+    }
+
+    function clearMobileInput() {
+      mobInputEl.value = "";
+      mobInputEl.focus();
+      const course = document.getElementById('course-select').value;
+      const q = currentQuestions[qIndex];
+      updateMobileHint(course === 'basic' ? q.kana : q.main, "");
+    }
+
+    function skipMobileQuestion() {
+      if (!isRunning) return;
+      missStrokes += 1;
+      qIndex++;
+      loadQuestion();
+      updateStats();
+      mobInputEl.focus();
+    }
+
+    // =========================================================
+    // 統計・段級位判定（初心者 〜 名人）
+    // =========================================================
+    function updateStats() {
+      const elapsedMinutes = Math.max((Date.now() - startTime) / 60000, 0.002);
+      const effectiveChars = inputMode === 'pc' ? totalStrokes : totalCorrectChars;
+      const wpm = Math.round((effectiveChars / 5) / elapsedMinutes);
+      const acc = totalStrokes > 0
+        ? Math.max(0, Math.round(((totalStrokes - missStrokes) / totalStrokes) * 100))
+        : 100;
+
+      document.getElementById('stat-wpm').innerText = isNaN(wpm) ? 0 : wpm;
+      document.getElementById('stat-acc').innerText = `${acc}%`;
+      document.getElementById('stat-strokes').innerText = effectiveChars;
+      document.getElementById('stat-miss').innerText = missStrokes;
+    }
+
+    function evaluateRank(wpm, acc) {
+      const adjWpm = inputMode === 'mobile' ? Math.round(wpm * 1.45) : wpm;
+
+      if (adjWpm >= 90 && acc >= 95) {
+        return {
+          title: "🏆 名人（ゴッドハンド）",
+          desc: "圧巻のスピードと正確性！思考の速さそのままに指が動く神業レベルです。"
+        };
+      }
+      if (adjWpm >= 75 && acc >= 93) {
+        return {
+          title: "🎖️ 達人（エキスパート）",
+          desc: "素晴らしい実力です！長文入力や実務でもトップクラスの速さを誇ります。"
+        };
+      }
+      if (adjWpm >= 60 && acc >= 90) {
+        return {
+          title: "🥇 上級（オフィスプロ）",
+          desc: "非常に快適なタッチタイピングです。自信を持って人前でも披露できる腕前！"
+        };
+      }
+      if (adjWpm >= 45 && acc >= 88) {
+        return {
+          title: "🥈 中級（一般実務レベル）",
+          desc: "日常の作業やチャットで全く困らない実用レベルです。さらなる高みへ！"
+        };
+      }
+      if (adjWpm >= 30 && acc >= 85) {
+        return {
+          title: "🥉 初級（脱初心者）",
+          desc: "キーの配置をしっかり理解して打てています。ホームポジションを意識して加速しよう！"
+        };
+      }
+      return {
+        title: "🌱 初心者（見習い）",
+        desc: "まずはミスを減らして確実に打つのが上達の近道です。焦らず一歩ずつ！"
+      };
+    }
+
+    function finishGame() {
+      isRunning = false;
+      const totalSeconds = Math.max((Date.now() - startTime) / 1000, 0.1).toFixed(1);
+      const elapsedMinutes = Math.max(totalSeconds / 60, 0.002);
+      const effectiveChars = inputMode === 'pc' ? totalStrokes : totalCorrectChars;
+      const wpm = Math.round((effectiveChars / 5) / elapsedMinutes);
+      const acc = totalStrokes > 0
+        ? Math.max(0, Math.round(((totalStrokes - missStrokes) / totalStrokes) * 100))
+        : 100;
+
+      const rank = evaluateRank(wpm, acc);
+      document.getElementById('res-rank-title').innerText = rank.title;
+      document.getElementById('res-rank-desc').innerText = rank.desc;
+
+      document.getElementById('res-wpm').innerText = `${wpm} WPM`;
+      document.getElementById('res-acc').innerText = `${acc}%`;
+      document.getElementById('res-strokes').innerText = `${effectiveChars} 文字`;
+      document.getElementById('res-time').innerText = `${totalSeconds}s`;
+      document.getElementById('result-modal').classList.remove('hidden');
+      highlightNextKey(null);
+    }
+
+    // =========================================================
+    // UI補助・モーダル・フォーカス制御
+    // =========================================================
+    function triggerCardShake() {
+      const card = document.getElementById('typing-card');
+      card.classList.remove('animate-shake');
+      void card.offsetWidth;
+      card.classList.add('animate-shake');
+    }
+
+    function escapeHtml(str) {
+      return str.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+    }
+
+    function restartTest() {
+      initGame();
+      if (inputMode === 'pc') startGame();
+    }
+
+    function changeCourse() {
+      const sel = document.getElementById('course-select');
+      sel.blur();
+      initGame();
+    }
+
+    function toggleSound() {
+      soundEnabled = !soundEnabled;
+      const icon = document.getElementById('sound-icon');
+      icon.className = soundEnabled
+        ? 'fa-solid fa-volume-high'
+        : 'fa-solid fa-volume-xmark text-slate-500';
+      ensureFocus();
+    }
+
+    function openRankModal(e) {
+      if (e) { e.preventDefault(); e.stopPropagation(); }
+      document.getElementById('rank-modal').classList.remove('hidden');
+    }
+
+    function closeRankModal(e) {
+      if (e) { e.preventDefault(); e.stopPropagation(); }
+      document.getElementById('rank-modal').classList.add('hidden');
+      ensureFocus();
+    }
+
+    function handleGlobalClick(e) {
+      const tag = e.target.tagName;
+      if (tag === 'SELECT' || tag === 'OPTION' || tag === 'BUTTON' || tag === 'INPUT' || tag === 'LABEL') return;
+      ensureFocus();
+    }
+
+    function ensureFocus() {
+      if (!document.getElementById('rank-modal').classList.contains('hidden')) return;
+      if (!document.getElementById('result-modal').classList.contains('hidden')) return;
+
+      const activeTag = document.activeElement ? document.activeElement.tagName : '';
+      if (activeTag === 'SELECT' || activeTag === 'BUTTON') return;
+
+      if (inputMode === 'pc') {
+        const catcher = document.getElementById('pc-focus-catcher');
+        if (catcher) catcher.focus({ preventScroll: true });
+      } else {
+        const mobInput = document.getElementById('mobile-text-input');
+        if (mobInput) mobInput.focus({ preventScroll: true });
+      }
+    }
+
+    // PC物理キーボードイベント捕捉（IME ON時でも物理キーから復元）
+    window.addEventListener('keydown', (e) => {
+      if (!document.getElementById('rank-modal').classList.contains('hidden')) {
+        if (e.key === 'Escape') closeRankModal(e);
+        return;
+      }
+
+      if (inputMode === 'mobile') return;
+
+      if (e.key === 'Escape') {
+        e.preventDefault();
+        initGame();
+        return;
+      }
+
+      if (!document.getElementById('result-modal').classList.contains('hidden')) {
+        if (e.code === 'Space' || e.key === 'Enter') {
+          e.preventDefault();
+          restartTest();
+        }
+        return;
+      }
+
+      if (!isRunning) {
+        if (e.code === 'Space') {
+          e.preventDefault();
+          startGame();
+        }
+        return;
+      }
+
+      if (e.ctrlKey || e.metaKey || e.altKey) return;
+
+      if (e.key === 'Process' || e.isComposing) {
+        if (e.code && e.code.startsWith('Key')) {
+          e.preventDefault();
+          const letter = e.code.slice(3);
+          handlePcCharInput(e.shiftKey ? letter.toUpperCase() : letter.toLowerCase());
+        } else if (e.code === 'Space') {
+          e.preventDefault();
+          handlePcCharInput(' ');
+        }
+        return;
+      }
+
+      if (e.key === ' ' || e.code === 'Space') {
+        e.preventDefault();
+        handlePcCharInput(' ');
+        return;
+      }
+
+      if (e.key.length === 1) {
+        e.preventDefault();
+        handlePcCharInput(e.key);
+      }
+    });
+
+    window.addEventListener('DOMContentLoaded', () => {
+      buildKeyboard();
+      loadOptions();
+      const initialMode = detectInitialDevice();
+      setInputMode(initialMode);
+    });
+  </script>
+</body>
+</html>

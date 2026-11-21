@@ -1,0 +1,1204 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>達成スタンプカレンダー - 習慣・継続トラッカー</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@600;700;800&family=Noto+Sans+JP:wght@400;500;700;900&family=Yuji+Boku&display=swap');
+    body { font-family: 'Plus Jakarta Sans', 'Noto Sans JP', sans-serif; }
+    .font-stamp { font-family: 'Yuji Boku', 'Noto Sans JP', serif; }
+
+    /* 昭和レトロ・先生のハンコ押印アニメーション */
+    .stamp-badge {
+      animation: stamp-pop 0.22s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+      user-select: none;
+    }
+    @keyframes stamp-pop {
+      0% { transform: scale(2.4) rotate(-16deg); opacity: 0; }
+      80% { transform: scale(0.92) rotate(5deg); opacity: 0.96; }
+      100% { transform: scale(1) rotate(-4deg); opacity: 0.94; }
+    }
+    .stamp-ring {
+      box-shadow: inset 0 0 0 2px #dc2626, 0 0 0 1px #dc2626;
+    }
+    .no-scrollbar::-webkit-scrollbar { display: none; }
+    .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+  </style>
+</head>
+<body class="bg-slate-200/75 text-slate-800 min-h-screen flex flex-col justify-between selection:bg-rose-500 selection:text-white">
+
+  <!-- ヘッダー -->
+  <header class="bg-white border-b-2 border-slate-300 sticky top-0 z-30 shadow-xs">
+    <div class="max-w-4xl mx-auto px-4 py-3 flex items-center justify-between gap-2">
+      <a href="../" class="inline-flex items-center gap-1.5 text-xs font-bold text-slate-600 hover:text-slate-900 transition bg-slate-100 hover:bg-slate-200 border border-slate-300/70 px-3 py-1.5 rounded-full shrink-0">
+        <i class="fa-solid fa-arrow-left text-[11px]"></i>
+        <span>Apps Hub</span>
+      </a>
+
+      <div class="flex items-center gap-2">
+        <div class="w-7 h-7 rounded-lg bg-rose-600 text-white flex items-center justify-center text-sm shadow-xs">
+          💮
+        </div>
+        <h1 class="text-sm sm:text-base font-black text-slate-900 tracking-tight">達成スタンプカレンダー</h1>
+      </div>
+
+      <button onclick="openDataModal()" class="inline-flex items-center gap-1.5 text-xs font-bold text-slate-700 hover:text-slate-900 bg-slate-100 hover:bg-slate-200 border border-slate-300/70 px-3 py-1.5 rounded-full transition shrink-0" title="データ保護・バックアップ">
+        <i class="fa-solid fa-shield-halved text-emerald-600"></i>
+        <span class="hidden sm:inline">データ保護・JSON</span>
+      </button>
+    </div>
+  </header>
+
+  <!-- メインコンテンツ -->
+  <main class="max-w-4xl mx-auto px-3 sm:px-6 py-5 space-y-4 flex-1 w-full">
+
+    <!-- 1. マルチ習慣切り替えタブバー（最大3枠） -->
+    <div class="flex items-center justify-between gap-2 overflow-x-auto no-scrollbar pb-0.5">
+      <div id="habit-tabs" class="flex items-center gap-2 flex-nowrap">
+        <!-- JSで描画 -->
+      </div>
+      <button onclick="openHabitModal(true)" class="px-3.5 py-2 rounded-2xl bg-white border-2 border-slate-300 hover:border-slate-400 text-slate-700 text-xs font-bold transition flex items-center gap-1.5 shrink-0 shadow-xs">
+        <i class="fa-solid fa-sliders"></i>
+        <span>目標設定</span>
+      </button>
+    </div>
+
+    <!-- 2. 選択中習慣のアクションヘッダー -->
+    <section class="bg-white rounded-3xl p-4 sm:p-6 shadow-sm border-2 border-slate-300 flex flex-col sm:flex-row items-center justify-between gap-4">
+      <div class="flex items-center gap-3.5 w-full sm:w-auto">
+        <div id="active-habit-icon" class="w-12 h-12 sm:w-14 sm:h-14 rounded-2xl bg-rose-50 border-2 border-rose-200 flex items-center justify-center text-2xl sm:text-3xl shrink-0">
+          🍺
+        </div>
+        <div class="min-w-0 flex-1">
+          <div class="flex items-center gap-2 flex-wrap">
+            <h2 id="active-habit-title" class="text-lg sm:text-xl font-black text-slate-900 truncate">禁酒</h2>
+            <span id="active-habit-rule-badge" class="text-[11px] bg-slate-200 text-slate-700 px-2.5 py-0.5 rounded-full font-bold">毎日対象</span>
+          </div>
+          <p class="text-xs text-slate-600 mt-0.5">当日・過去日をタップで <span class="font-bold text-rose-600">💮達成</span> ➔ <span class="font-bold text-amber-700">☕休暇</span> ➔ 解除（未来日はロック）</p>
+        </div>
+      </div>
+
+      <!-- 今日のワンタップ操作ボタン群 -->
+      <div class="flex items-center gap-2 w-full sm:w-auto">
+        <button onclick="toggleTodayDone()" id="btn-today-done" class="flex-1 sm:flex-initial px-5 py-3 rounded-2xl bg-rose-600 hover:bg-rose-700 text-white font-bold shadow-md shadow-rose-500/25 active:scale-95 transition flex items-center justify-center gap-2 text-sm">
+          <span class="text-base">💮</span>
+          <span id="btn-today-done-text">今日 禁酒できた！</span>
+        </button>
+        <button onclick="toggleTodayRest()" id="btn-today-rest" class="px-3.5 py-3 rounded-2xl bg-slate-100 hover:bg-amber-100 border-2 border-slate-300 hover:border-amber-400 text-slate-700 hover:text-amber-800 font-bold active:scale-95 transition flex items-center justify-center gap-1.5 text-xs shrink-0" title="有給・公休・休息日として継続を維持">
+          <span>☕</span>
+          <span id="btn-today-rest-text">休暇</span>
+        </button>
+      </div>
+    </section>
+
+    <!-- 3. 状況連動型 励まし・称賛バナー -->
+    <section id="motivation-banner" class="rounded-2xl p-4 border-2 transition-all flex items-center gap-3.5 shadow-xs bg-amber-50 border-amber-300 text-amber-950">
+      <div id="motivation-icon" class="text-2xl sm:text-3xl shrink-0">🌱</div>
+      <div>
+        <h3 id="motivation-title" class="text-sm font-black tracking-tight">さあ、今日からスタートしましょう！</h3>
+        <p id="motivation-desc" class="text-xs mt-0.5 leading-relaxed">まずは1日、達成ボタンかカレンダーをタップしてハンコを押しましょう。</p>
+      </div>
+    </section>
+
+    <!-- 4. 実績サマリー（3カード構成） -->
+    <section class="grid grid-cols-1 md:grid-cols-3 gap-3">
+      <!-- 歴代BEST & 現在の継続記録 -->
+      <div class="bg-gradient-to-br from-amber-500 to-amber-600 text-white p-5 rounded-3xl border-2 border-amber-600 shadow-md shadow-amber-500/20 flex flex-col justify-between relative overflow-hidden">
+        <div class="absolute -right-3 -bottom-3 text-7xl text-white/15 pointer-events-none font-black">🏆</div>
+        <div class="pb-3 border-b border-white/25">
+          <div class="flex items-center justify-between">
+            <span class="text-xs font-bold tracking-wider text-amber-50 flex items-center gap-1.5">
+              <span>🏆</span> 過去の最長記録 (歴代BEST)
+            </span>
+            <span id="badge-record" class="hidden text-[10px] bg-white text-amber-700 px-2 py-0.5 rounded-full font-extrabold animate-pulse">
+              新記録更新中！
+            </span>
+          </div>
+          <div class="mt-1 flex items-baseline gap-1.5">
+            <span id="stat-max-streak" class="text-4xl font-black tracking-tight text-white">0</span>
+            <span class="text-sm font-bold text-amber-50">日連続</span>
+          </div>
+        </div>
+        <div class="pt-3">
+          <span class="text-xs font-bold tracking-wider text-amber-50 flex items-center gap-1.5">
+            <span>🔥</span> 現在の継続記録
+          </span>
+          <div class="mt-1 flex items-baseline gap-1.5">
+            <span id="stat-current-streak" class="text-3xl font-black tracking-tight text-white">0</span>
+            <span class="text-xs font-bold text-amber-100">日連続</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- 今月の達成日数 & 達成率 -->
+      <div class="bg-white p-5 rounded-3xl border-2 border-slate-300 shadow-xs flex flex-col justify-between">
+        <div>
+          <p class="text-xs font-bold text-slate-500">今月の達成日数（対象日ベース）</p>
+          <div class="mt-2 flex items-baseline gap-2">
+            <span id="stat-month-count" class="text-4xl font-black text-rose-600">0</span>
+            <span class="text-xs font-bold text-slate-500">/ <span id="stat-month-target">30</span> 対象日</span>
+          </div>
+        </div>
+        <div class="mt-3 pt-3 border-t border-slate-200 flex items-center justify-between text-xs">
+          <span class="text-slate-600 font-bold">今月達成率（休暇・祝休除く）</span>
+          <span class="text-base font-black text-slate-900"><span id="stat-month-rate">0</span>%</span>
+        </div>
+      </div>
+
+      <!-- 通算ハンコ総数 -->
+      <div class="bg-white p-5 rounded-3xl border-2 border-slate-300 shadow-xs flex flex-col justify-between">
+        <div>
+          <p class="text-xs font-bold text-slate-500">通算ハンコ総数</p>
+          <div class="mt-2 flex items-baseline gap-1.5">
+            <span id="stat-total" class="text-4xl font-black text-indigo-600">0</span>
+            <span class="text-xs font-bold text-slate-500">個</span>
+          </div>
+        </div>
+        <div class="mt-3 pt-3 border-t border-slate-200 flex items-center justify-between text-xs text-slate-600">
+          <span class="font-bold">休暇・公休ブリッジ</span>
+          <span class="font-black text-amber-700">☕ <span id="stat-rest-count">0</span>日</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- 5. 月間スタンプシート（カレンダー：外枠・マス境界・土日配色をくっきり強化） -->
+    <section class="bg-white rounded-3xl border-2 border-slate-300 shadow-md p-4 sm:p-6">
+      <div class="flex items-center justify-between mb-4">
+        <div class="flex items-center gap-2">
+          <h2 id="calendar-title" class="text-lg sm:text-xl font-black text-slate-900">2026年 11月</h2>
+          <span id="holiday-sync-badge" class="text-[11px] text-rose-700 bg-rose-100 border border-rose-200 px-2.5 py-0.5 rounded-full font-bold hidden">🎌 祝日自動判定ON</span>
+        </div>
+        <div class="flex items-center gap-1 bg-slate-200/80 border border-slate-300 p-1 rounded-2xl">
+          <button onclick="prevMonth()" class="w-8 h-8 flex items-center justify-center rounded-xl hover:bg-white text-slate-700 font-bold transition">
+            <i class="fa-solid fa-chevron-left text-xs"></i>
+          </button>
+          <button onclick="goToday()" class="px-3 py-1 text-xs font-black rounded-xl bg-white/80 hover:bg-white text-slate-800 shadow-2xs transition">
+            今月
+          </button>
+          <button onclick="nextMonth()" class="w-8 h-8 flex items-center justify-center rounded-xl hover:bg-white text-slate-700 font-bold transition">
+            <i class="fa-solid fa-chevron-right text-xs"></i>
+          </button>
+        </div>
+      </div>
+
+      <!-- 曜日ヘッダー（月曜始まり、土曜=濃い青、日曜=濃い赤） -->
+      <div class="grid grid-cols-7 gap-1.5 sm:gap-2 mb-2 text-center text-xs font-black">
+        <div class="py-2 text-slate-700 bg-slate-100 border border-slate-300 rounded-xl">月</div>
+        <div class="py-2 text-slate-700 bg-slate-100 border border-slate-300 rounded-xl">火</div>
+        <div class="py-2 text-slate-700 bg-slate-100 border border-slate-300 rounded-xl">水</div>
+        <div class="py-2 text-slate-700 bg-slate-100 border border-slate-300 rounded-xl">木</div>
+        <div class="py-2 text-slate-700 bg-slate-100 border border-slate-300 rounded-xl">金</div>
+        <div class="py-2 text-blue-800 bg-blue-100 border border-blue-300 rounded-xl">土</div>
+        <div class="py-2 text-rose-800 bg-rose-100 border border-rose-300 rounded-xl">日</div>
+      </div>
+
+      <!-- カレンダーグリッド -->
+      <div id="calendar-grid" class="grid grid-cols-7 gap-1.5 sm:gap-2">
+        <!-- JSで描画 -->
+      </div>
+
+      <!-- 凡例ガイド -->
+      <div class="mt-4 pt-3 border-t-2 border-slate-200 flex flex-wrap items-center justify-between text-[11px] text-slate-600 font-bold gap-2">
+        <div class="flex flex-wrap items-center gap-3">
+          <span class="flex items-center gap-1">
+            <span class="w-3 h-3 rounded-full border-2 border-rose-600 bg-rose-100 inline-block"></span>
+            💮 達成
+          </span>
+          <span class="flex items-center gap-1">
+            <span class="px-1.5 py-0.5 rounded bg-amber-100 border border-amber-300 text-amber-900 font-bold text-[10px]">☕ 休暇</span>
+            有給・休息（継続維持）
+          </span>
+          <span class="flex items-center gap-1">
+            <span class="px-1.5 py-0.5 rounded bg-slate-200 border border-slate-300 text-slate-600 font-bold text-[10px]">対象外</span>
+            公休曜日・祝日（継続維持）
+          </span>
+          <span class="flex items-center gap-1">
+            <span class="px-1.5 py-0.5 rounded bg-slate-200/70 border border-slate-300 text-slate-500 font-bold text-[10px]">未来日</span>
+            押印ロック
+          </span>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- 統一免責フッター -->
+  <footer class="py-5 text-center text-[11px] text-slate-500 border-t border-slate-300 max-w-4xl mx-auto w-full px-4">
+    ※個人開発プロトタイプにつき無保証・自己責任にてご利用ください（データは端末内完結・サポート対象外）
+  </footer>
+
+  <!-- モーダル1：習慣の新規追加・編集モーダル -->
+  <div id="habit-modal" class="fixed inset-0 bg-slate-900/55 backdrop-blur-xs z-50 hidden flex items-center justify-center p-4">
+    <div class="bg-white rounded-3xl p-5 sm:p-6 max-w-md w-full max-h-[90vh] overflow-y-auto space-y-4 shadow-2xl border-2 border-slate-300">
+      <div class="flex items-center justify-between pb-2 border-b border-slate-200">
+        <h3 id="habit-modal-title" class="font-black text-base text-slate-900">習慣の設定</h3>
+        <button onclick="closeHabitModal()" class="w-8 h-8 rounded-full flex items-center justify-center text-slate-500 hover:bg-slate-100 font-bold">✕</button>
+      </div>
+
+      <!-- クイックプリセット -->
+      <div class="space-y-1.5">
+        <label class="text-xs font-bold text-slate-600">クイックプリセット（ワンタップ入力）</label>
+        <div class="grid grid-cols-3 gap-1.5 text-xs">
+          <button type="button" onclick="applyPreset('sobriety')" class="p-2 rounded-xl border border-slate-300 hover:border-rose-500 hover:bg-rose-50 font-bold text-slate-800 transition">🍺 禁酒</button>
+          <button type="button" onclick="applyPreset('nosmoke')" class="p-2 rounded-xl border border-slate-300 hover:border-rose-500 hover:bg-rose-50 font-bold text-slate-800 transition">🚭 禁煙</button>
+          <button type="button" onclick="applyPreset('office')" class="p-2 rounded-xl border border-slate-300 hover:border-sky-500 hover:bg-sky-50 font-bold text-slate-800 transition">🏢 出社(平日)</button>
+          <button type="button" onclick="applyPreset('shift')" class="p-2 rounded-xl border border-slate-300 hover:border-violet-500 hover:bg-violet-50 font-bold text-slate-800 transition">🏪 出社(シフト)</button>
+          <button type="button" onclick="applyPreset('workout')" class="p-2 rounded-xl border border-slate-300 hover:border-emerald-500 hover:bg-emerald-50 font-bold text-slate-800 transition">🏃 運動</button>
+          <button type="button" onclick="applyPreset('study')" class="p-2 rounded-xl border border-slate-300 hover:border-indigo-500 hover:bg-indigo-50 font-bold text-slate-800 transition">📚 勉強</button>
+        </div>
+      </div>
+
+      <!-- タイトル ＆ アイコン -->
+      <div class="grid grid-cols-4 gap-2">
+        <div class="col-span-1 space-y-1">
+          <label class="text-xs font-bold text-slate-700">アイコン</label>
+          <input type="text" id="form-habit-icon" maxlength="4" class="w-full text-center text-xl p-2 rounded-xl border-2 border-slate-300 focus:border-rose-500 focus:outline-none" value="🍺">
+        </div>
+        <div class="col-span-3 space-y-1">
+          <label class="text-xs font-bold text-slate-700">目標・習慣名</label>
+          <input type="text" id="form-habit-title" maxlength="16" class="w-full text-sm font-bold p-2.5 rounded-xl border-2 border-slate-300 focus:border-rose-500 focus:outline-none" placeholder="例：禁酒、出社、筋トレ">
+        </div>
+      </div>
+
+      <!-- 今日の達成ボタン文言 -->
+      <div class="space-y-1">
+        <label class="text-xs font-bold text-slate-700">ボタンの文言</label>
+        <input type="text" id="form-habit-action" maxlength="20" class="w-full text-sm p-2.5 rounded-xl border-2 border-slate-300 focus:border-rose-500 focus:outline-none" placeholder="例：今日 禁酒できた！">
+      </div>
+
+      <!-- ハンコの印字スタイル -->
+      <div class="space-y-1.5">
+        <label class="text-xs font-bold text-slate-700">ハンコの印字</label>
+        <div class="grid grid-cols-3 gap-1.5 text-xs" id="stamp-style-options">
+          <button type="button" onclick="selectStampStyle('taihen')" data-style="taihen" class="stamp-style-btn p-2 rounded-xl border-2 border-rose-500 bg-rose-50 text-rose-700 font-bold">たいへんよくできました</button>
+          <button type="button" onclick="selectStampStyle('ganbatta')" data-style="ganbatta" class="stamp-style-btn p-2 rounded-xl border border-slate-300 bg-white text-slate-700 font-bold">よく頑張った！</button>
+          <button type="button" onclick="selectStampStyle('done')" data-style="done" class="stamp-style-btn p-2 rounded-xl border border-slate-300 bg-white text-slate-700 font-bold">達成・完了済</button>
+        </div>
+      </div>
+
+      <!-- 対象曜日・勤務パターン設定（カスタム対応） -->
+      <div class="space-y-2 pt-2 border-t border-slate-200">
+        <div class="flex items-center justify-between">
+          <label class="text-xs font-bold text-slate-700">実施対象曜日（対象外は継続維持）</label>
+          <div class="flex gap-1 text-[10px]">
+            <button type="button" onclick="setDaysPreset([0,1,2,3,4,5,6])" class="px-2 py-0.5 rounded bg-slate-200 hover:bg-slate-300 font-bold text-slate-700">毎日</button>
+            <button type="button" onclick="setDaysPreset([1,2,3,4,5])" class="px-2 py-0.5 rounded bg-slate-200 hover:bg-slate-300 font-bold text-slate-700">平日(月-金)</button>
+            <button type="button" onclick="setDaysPreset([0,1,4,5,6])" class="px-2 py-0.5 rounded bg-slate-200 hover:bg-slate-300 font-bold text-slate-700">火水休例</button>
+          </div>
+        </div>
+        <p class="text-[11px] text-slate-500">※土日休み以外の方も、稼働する曜日だけ自由にONにできます。</p>
+        <div class="grid grid-cols-7 gap-1 text-center text-xs font-bold" id="day-checkboxes">
+          <!-- 月〜日のトグルボタン -->
+        </div>
+      </div>
+
+      <!-- 日本の祝日自動お休み設定 -->
+      <label class="flex items-center justify-between p-3 rounded-2xl bg-slate-100 border border-slate-300 cursor-pointer">
+        <div>
+          <span class="text-xs font-bold text-slate-800 block">🎌 日本の祝日を自動でお休み扱いにする</span>
+          <span class="text-[10px] text-slate-600">祝日も連続記録をリセットせず維持（出社管理向け）</span>
+        </div>
+        <input type="checkbox" id="form-habit-holiday-rest" class="w-4 h-4 accent-rose-600 rounded">
+      </label>
+
+      <!-- 保存・削除ボタン -->
+      <div class="flex items-center gap-2 pt-2">
+        <button type="button" id="btn-delete-habit" onclick="deleteEditingHabit()" class="px-4 py-3 rounded-2xl bg-slate-200 hover:bg-rose-100 text-slate-700 hover:text-rose-700 font-bold text-xs transition hidden">
+          削除
+        </button>
+        <button type="button" onclick="saveHabitForm()" class="flex-1 py-3 rounded-2xl bg-slate-900 hover:bg-slate-800 text-white font-bold text-xs shadow-md transition">
+          この設定で保存する
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- モーダル2：データ保護・JSONバックアップ＆Safari対策ガイド -->
+  <div id="data-modal" class="fixed inset-0 bg-slate-900/55 backdrop-blur-xs z-50 hidden flex items-center justify-center p-4">
+    <div class="bg-white rounded-3xl p-5 sm:p-6 max-w-md w-full space-y-4 shadow-2xl border-2 border-slate-300">
+      <div class="flex items-center justify-between pb-2 border-b border-slate-200">
+        <h3 class="font-black text-base text-slate-900 flex items-center gap-2">
+          <i class="fa-solid fa-shield-halved text-emerald-600"></i>
+          データ保護・バックアップ
+        </h3>
+        <button onclick="closeDataModal()" class="w-8 h-8 rounded-full flex items-center justify-center text-slate-500 hover:bg-slate-100 font-bold">✕</button>
+      </div>
+
+      <div class="space-y-2 text-xs">
+        <p class="font-bold text-slate-700">全習慣・スタンプ履歴のJSON書き出し／復元</p>
+        <div class="flex gap-2">
+          <button onclick="exportJsonData()" class="flex-1 py-2.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-white font-bold transition flex items-center justify-center gap-1.5">
+            <i class="fa-solid fa-download"></i> JSON保存
+          </button>
+          <label class="flex-1 py-2.5 rounded-xl bg-slate-200 hover:bg-slate-300 text-slate-800 font-bold text-center cursor-pointer transition flex items-center justify-center gap-1.5">
+            <i class="fa-solid fa-upload"></i> JSON復元
+            <input type="file" accept=".json" onchange="importJsonData(event)" class="hidden">
+          </label>
+        </div>
+      </div>
+
+      <!-- Safari 7日間データ消去対策ガイド -->
+      <div class="p-3.5 rounded-2xl bg-amber-50 border-2 border-amber-300 space-y-1.5 text-[11px] text-amber-950">
+        <p class="font-bold flex items-center gap-1.5 text-amber-900">
+          <i class="fa-solid fa-triangle-exclamation"></i>
+          iPhone / Safari をご利用の方へ（データ消失防止）
+        </p>
+        <p class="leading-relaxed">
+          ブラウザの仕様により、<strong>7日間アクセスがないと保存データが自動消去</strong>される場合があります。大切な記録を守るため、以下の対策をおすすめします：
+        </p>
+        <ul class="list-disc pl-4 space-y-0.5">
+          <li>共有ボタンから<strong>「ホーム画面に追加」</strong>してアプリ化する</li>
+          <li>節目ごとに上の「JSON保存」でバックアップファイルを残す</li>
+        </ul>
+      </div>
+
+      <button onclick="closeDataModal()" class="w-full py-2.5 rounded-xl bg-slate-200 hover:bg-slate-300 text-slate-800 font-bold text-xs transition">
+        閉じる
+      </button>
+    </div>
+  </div>
+
+  <script>
+    /* =========================================================
+       1. 日本の祝日ハイブリッド判定（オフライン自動計算 ＋ API同期）
+       ========================================================= */
+    const HOLIDAY_CACHE_KEY = 'jp_holidays_cache_v1';
+    let apiHolidays = {};
+
+    function loadHolidayCache() {
+      try {
+        const raw = localStorage.getItem(HOLIDAY_CACHE_KEY);
+        if (raw) apiHolidays = JSON.parse(raw);
+      } catch (e) {}
+    }
+
+    async function syncHolidaysFromApi() {
+      try {
+        const res = await fetch('https://holidays-jp.github.io/api/v1/date.json');
+        if (!res.ok) return;
+        const data = await res.json();
+        if (data && typeof data === 'object') {
+          apiHolidays = data;
+          localStorage.setItem(HOLIDAY_CACHE_KEY, JSON.stringify(apiHolidays));
+          renderCalendar();
+          updateDashboard();
+        }
+      } catch (e) {}
+    }
+
+    function getNthMonday(year, month, n) {
+      const firstDay = new Date(year, month - 1, 1).getDay();
+      const offset = (1 - firstDay + 7) % 7;
+      return 1 + offset + (n - 1) * 7;
+    }
+
+    function getVernalEquinoxDay(year) {
+      return Math.floor(20.8431 + 0.242194 * (year - 1980) - Math.floor((year - 1980) / 4));
+    }
+
+    function getAutumnalEquinoxDay(year) {
+      return Math.floor(23.2488 + 0.242194 * (year - 1980) - Math.floor((year - 1980) / 4));
+    }
+
+    const computedYearCache = {};
+    function getComputedHolidaysForYear(year) {
+      if (computedYearCache[year]) return computedYearCache[year];
+      const map = {};
+      const add = (m, d, name) => {
+        const key = `${year}-${String(m).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
+        map[key] = name;
+      };
+
+      add(1, 1, '元日');
+      add(1, getNthMonday(year, 1, 2), '成人の日');
+      add(2, 11, '建国記念の日');
+      if (year >= 2020) add(2, 23, '天皇誕生日');
+      add(3, getVernalEquinoxDay(year), '春分の日');
+      add(4, 29, '昭和の日');
+      add(5, 3, '憲法記念日');
+      add(5, 4, 'みどりの日');
+      add(5, 5, 'こどもの日');
+      if (year >= 2016) add(8, 11, '山の日');
+      add(7, getNthMonday(year, 7, 3), '海の日');
+      const keirou = getNthMonday(year, 9, 3);
+      add(9, keirou, '敬老の日');
+      const shubun = getAutumnalEquinoxDay(year);
+      add(9, shubun, '秋分の日');
+      add(10, getNthMonday(year, 10, 2), 'スポーツの日');
+      add(11, 3, '文化の日');
+      add(11, 23, '勤労感謝の日');
+
+      if (shubun - keirou === 2) {
+        add(9, keirou + 1, '国民の休日');
+      }
+
+      Object.keys(map).sort().forEach(dateStr => {
+        const [y, m, d] = dateStr.split('-').map(Number);
+        const dt = new Date(y, m - 1, d);
+        if (dt.getDay() === 0) {
+          let sub = new Date(y, m - 1, d + 1);
+          while (true) {
+            const subKey = `${sub.getFullYear()}-${String(sub.getMonth()+1).padStart(2,'0')}-${String(sub.getDate()).padStart(2,'0')}`;
+            if (!map[subKey]) {
+              map[subKey] = '振替休日';
+              break;
+            }
+            sub.setDate(sub.getDate() + 1);
+          }
+        }
+      });
+
+      computedYearCache[year] = map;
+      return map;
+    }
+
+    function getJapaneseHolidayName(dateStr) {
+      if (apiHolidays && apiHolidays[dateStr]) return apiHolidays[dateStr];
+      const year = Number(dateStr.slice(0, 4));
+      const comp = getComputedHolidaysForYear(year);
+      return comp[dateStr] || null;
+    }
+
+    /* =========================================================
+       2. アプリ状態管理 & デフォルト習慣データ（初期：禁酒・禁煙 / 最大3枠）
+       ========================================================= */
+    const STORAGE_KEY = 'multi_stamp_calendar_v2';
+    const MAX_HABITS = 3;
+
+    let appState = {
+      activeHabitId: 'h_1',
+      habits: [
+        {
+          id: 'h_1',
+          title: '禁酒',
+          icon: '🍺',
+          actionLabel: '今日 禁酒できた！',
+          stampStyle: 'taihen',
+          targetDays: [0, 1, 2, 3, 4, 5, 6],
+          holidayIsRest: false,
+          records: {}
+        },
+        {
+          id: 'h_2',
+          title: '禁煙',
+          icon: '🚭',
+          actionLabel: '今日 禁煙できた！',
+          stampStyle: 'taihen',
+          targetDays: [0, 1, 2, 3, 4, 5, 6],
+          holidayIsRest: false,
+          records: {}
+        }
+      ]
+    };
+
+    let currentViewDate = new Date();
+    let editingHabitId = null;
+    let formTargetDays = [0, 1, 2, 3, 4, 5, 6];
+    let formStampStyle = 'taihen';
+
+    function initApp() {
+      loadAppState();
+      loadHolidayCache();
+      renderHabitTabs();
+      renderAllForActiveHabit();
+      syncHolidaysFromApi();
+    }
+
+    function loadAppState() {
+      try {
+        const raw = localStorage.getItem(STORAGE_KEY);
+        if (raw) {
+          const parsed = JSON.parse(raw);
+          if (parsed && Array.isArray(parsed.habits) && parsed.habits.length > 0) {
+            appState = parsed;
+          }
+        }
+      } catch (e) {}
+    }
+
+    function saveAppState() {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(appState));
+    }
+
+    function getActiveHabit() {
+      return appState.habits.find(h => h.id === appState.activeHabitId) || appState.habits[0];
+    }
+
+    function formatDate(year, month, day) {
+      return `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+    }
+
+    function getTodayString() {
+      const now = new Date();
+      return formatDate(now.getFullYear(), now.getMonth(), now.getDate());
+    }
+
+    function parseDateStr(dateStr) {
+      const [y, m, d] = dateStr.split('-').map(Number);
+      return new Date(y, m - 1, d);
+    }
+
+    function isFutureDate(dateStr) {
+      return dateStr > getTodayString();
+    }
+
+    function isAutoOffDay(habit, dateStr) {
+      const dt = parseDateStr(dateStr);
+      const dow = dt.getDay();
+      if (!habit.targetDays.includes(dow)) return true;
+      if (habit.holidayIsRest && getJapaneseHolidayName(dateStr)) return true;
+      return false;
+    }
+
+    /* =========================================================
+       3. タブ描画 ＆ 習慣切り替え
+       ========================================================= */
+    function renderHabitTabs() {
+      const container = document.getElementById('habit-tabs');
+      container.innerHTML = '';
+
+      appState.habits.forEach(h => {
+        const isActive = h.id === appState.activeHabitId;
+        const btn = document.createElement('button');
+        btn.className = `px-4 py-2 rounded-2xl text-xs sm:text-sm font-black transition flex items-center gap-2 shrink-0 ${
+          isActive
+            ? 'bg-slate-900 text-white border-2 border-slate-900 shadow-sm'
+            : 'bg-white border-2 border-slate-300 text-slate-700 hover:bg-slate-100'
+        }`;
+        btn.innerHTML = `<span>${h.icon}</span><span>${escapeHtml(h.title)}</span>`;
+        btn.onclick = () => {
+          appState.activeHabitId = h.id;
+          saveAppState();
+          renderHabitTabs();
+          renderAllForActiveHabit();
+        };
+        container.appendChild(btn);
+      });
+
+      if (appState.habits.length < MAX_HABITS) {
+        const addBtn = document.createElement('button');
+        addBtn.className = 'px-3.5 py-2 rounded-2xl bg-white/80 border-2 border-dashed border-slate-400 hover:border-rose-500 text-slate-600 hover:text-rose-600 text-xs font-bold transition flex items-center gap-1 shrink-0';
+        addBtn.innerHTML = `<i class="fa-solid fa-plus"></i><span>追加 (${appState.habits.length}/${MAX_HABITS})</span>`;
+        addBtn.onclick = () => openHabitModal(false);
+        container.appendChild(addBtn);
+      }
+    }
+
+    function renderAllForActiveHabit() {
+      const habit = getActiveHabit();
+      document.getElementById('active-habit-icon').textContent = habit.icon;
+      document.getElementById('active-habit-title').textContent = habit.title;
+
+      let ruleText = '';
+      if (habit.targetDays.length === 7) {
+        ruleText = '毎日対象';
+      } else if (habit.targetDays.length === 5 && [1,2,3,4,5].every(d => habit.targetDays.includes(d))) {
+        ruleText = '平日(月〜金)';
+      } else {
+        const names = ['日','月','火','水','木','金','土'];
+        const order = [1,2,3,4,5,6,0];
+        const activeNames = order.filter(d => habit.targetDays.includes(d)).map(d => names[d]);
+        ruleText = activeNames.length > 0 ? `${activeNames.join('・')} 対象` : '曜日未設定';
+      }
+      if (habit.holidayIsRest) ruleText += ' ＋ 祝休';
+      document.getElementById('active-habit-rule-badge').textContent = ruleText;
+
+      const syncBadge = document.getElementById('holiday-sync-badge');
+      syncBadge.classList.toggle('hidden', !habit.holidayIsRest);
+
+      updateTodayButtons();
+      renderCalendar();
+      updateDashboard();
+    }
+
+    /* =========================================================
+       4. スタンプ・休暇操作（未来日はロック）
+       ========================================================= */
+    function cycleDateRecord(dateStr) {
+      if (isFutureDate(dateStr)) return;
+
+      const habit = getActiveHabit();
+      const current = habit.records[dateStr];
+
+      if (!current) {
+        habit.records[dateStr] = 'done';
+      } else if (current === 'done') {
+        habit.records[dateStr] = 'rest';
+      } else {
+        delete habit.records[dateStr];
+      }
+
+      saveAppState();
+      updateTodayButtons();
+      renderCalendar();
+      updateDashboard();
+    }
+
+    function toggleTodayDone() {
+      const habit = getActiveHabit();
+      const today = getTodayString();
+      if (habit.records[today] === 'done') {
+        delete habit.records[today];
+      } else {
+        habit.records[today] = 'done';
+      }
+      saveAppState();
+      updateTodayButtons();
+      renderCalendar();
+      updateDashboard();
+    }
+
+    function toggleTodayRest() {
+      const habit = getActiveHabit();
+      const today = getTodayString();
+      if (habit.records[today] === 'rest') {
+        delete habit.records[today];
+      } else {
+        habit.records[today] = 'rest';
+      }
+      saveAppState();
+      updateTodayButtons();
+      renderCalendar();
+      updateDashboard();
+    }
+
+    function updateTodayButtons() {
+      const habit = getActiveHabit();
+      const today = getTodayString();
+      const state = habit.records[today];
+
+      const btnDone = document.getElementById('btn-today-done');
+      const txtDone = document.getElementById('btn-today-done-text');
+      const btnRest = document.getElementById('btn-today-rest');
+      const txtRest = document.getElementById('btn-today-rest-text');
+
+      if (state === 'done') {
+        btnDone.className = 'flex-1 sm:flex-initial px-5 py-3 rounded-2xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold shadow-md shadow-emerald-500/25 active:scale-95 transition flex items-center justify-center gap-2 text-sm';
+        txtDone.textContent = '本日は達成済み！(取消)';
+      } else {
+        btnDone.className = 'flex-1 sm:flex-initial px-5 py-3 rounded-2xl bg-rose-600 hover:bg-rose-700 text-white font-bold shadow-md shadow-rose-500/25 active:scale-95 transition flex items-center justify-center gap-2 text-sm';
+        txtDone.textContent = habit.actionLabel || `今日 ${habit.title}できた！`;
+      }
+
+      if (state === 'rest') {
+        btnRest.className = 'px-3.5 py-3 rounded-2xl bg-amber-500 border-2 border-amber-600 text-white font-bold shadow-xs active:scale-95 transition flex items-center justify-center gap-1.5 text-xs shrink-0';
+        txtRest.textContent = '休暇中(取消)';
+      } else {
+        btnRest.className = 'px-3.5 py-3 rounded-2xl bg-slate-100 hover:bg-amber-100 border-2 border-slate-300 hover:border-amber-400 text-slate-700 hover:text-amber-800 font-bold active:scale-95 transition flex items-center justify-center gap-1.5 text-xs shrink-0';
+        txtRest.textContent = '休暇';
+      }
+    }
+
+    /* =========================================================
+       5. 連続記録（ストリーク）計算（休暇・公休曜日・祝日ブリッジ対応）
+       ========================================================= */
+    function calculateHabitStats(habit) {
+      const todayStr = getTodayString();
+      const allRecordKeys = Object.keys(habit.records);
+
+      let totalDone = 0;
+      let totalRest = 0;
+      allRecordKeys.forEach(k => {
+        if (habit.records[k] === 'done') totalDone++;
+        if (habit.records[k] === 'rest') totalRest++;
+      });
+
+      let maxStreak = 0;
+      if (allRecordKeys.length > 0) {
+        const sortedKeys = allRecordKeys.slice().sort();
+        const startDt = parseDateStr(sortedKeys[0]);
+        const endDt = parseDateStr(todayStr);
+
+        let running = 0;
+        for (let d = new Date(startDt); d <= endDt; d.setDate(d.getDate() + 1)) {
+          const dStr = formatDate(d.getFullYear(), d.getMonth(), d.getDate());
+          const status = habit.records[dStr];
+
+          if (status === 'done') {
+            running++;
+            if (running > maxStreak) maxStreak = running;
+          } else if (status === 'rest' || isAutoOffDay(habit, dStr)) {
+            // 休暇・対象外曜日・祝日はリセットせず維持
+          } else {
+            running = 0;
+          }
+        }
+      }
+
+      let currentStreak = 0;
+      let checkDt = parseDateStr(todayStr);
+      const todayStatus = habit.records[todayStr];
+
+      if (todayStatus !== 'done') {
+        checkDt.setDate(checkDt.getDate() - 1);
+      }
+
+      for (let i = 0; i < 3650; i++) {
+        const dStr = formatDate(checkDt.getFullYear(), checkDt.getMonth(), checkDt.getDate());
+        const status = habit.records[dStr];
+
+        if (status === 'done') {
+          currentStreak++;
+        } else if (status === 'rest' || isAutoOffDay(habit, dStr)) {
+          // 休暇・対象外日はスキップして遡る
+        } else {
+          break;
+        }
+        checkDt.setDate(checkDt.getDate() - 1);
+      }
+
+      const isBroken = (totalDone > 0) && (currentStreak === 0) && (todayStatus !== 'done');
+
+      return { currentStreak, maxStreak, totalDone, totalRest, isBroken };
+    }
+
+    function updateDashboard() {
+      const habit = getActiveHabit();
+      const year = currentViewDate.getFullYear();
+      const month = currentViewDate.getMonth();
+      const lastDate = new Date(year, month + 1, 0).getDate();
+
+      let monthDone = 0;
+      let monthTargetDays = 0;
+
+      for (let day = 1; day <= lastDate; day++) {
+        const dStr = formatDate(year, month, day);
+        const status = habit.records[dStr];
+        if (status === 'done') {
+          monthDone++;
+          monthTargetDays++;
+        } else if (status === 'rest' || isAutoOffDay(habit, dStr)) {
+          // 対象日から除外
+        } else {
+          monthTargetDays++;
+        }
+      }
+
+      document.getElementById('stat-month-count').textContent = monthDone;
+      document.getElementById('stat-month-target').textContent = monthTargetDays;
+      const rate = monthTargetDays > 0 ? Math.min(100, Math.round((monthDone / monthTargetDays) * 100)) : 0;
+      document.getElementById('stat-month-rate').textContent = rate;
+
+      const { currentStreak, maxStreak, totalDone, totalRest, isBroken } = calculateHabitStats(habit);
+      document.getElementById('stat-max-streak').textContent = maxStreak;
+      document.getElementById('stat-current-streak').textContent = currentStreak;
+      document.getElementById('stat-total').textContent = totalDone;
+      document.getElementById('stat-rest-count').textContent = totalRest;
+
+      const badge = document.getElementById('badge-record');
+      if (currentStreak > 0 && currentStreak >= maxStreak) {
+        badge.classList.remove('hidden');
+      } else {
+        badge.classList.add('hidden');
+      }
+
+      updateMotivationBanner(habit, currentStreak, maxStreak, isBroken, totalDone);
+    }
+
+    function updateMotivationBanner(habit, currentStreak, maxStreak, isBroken, totalDone) {
+      const banner = document.getElementById('motivation-banner');
+      const icon = document.getElementById('motivation-icon');
+      const title = document.getElementById('motivation-title');
+      const desc = document.getElementById('motivation-desc');
+
+      if (totalDone === 0) {
+        banner.className = 'rounded-2xl p-4 border-2 border-amber-300 bg-amber-50 text-amber-950 shadow-xs flex items-center gap-3.5';
+        icon.textContent = '🌱';
+        title.textContent = `さあ、今日から「${habit.title}」をスタートしましょう！`;
+        desc.textContent = 'まずは1日、無理せず自分のペースでハンコを押してみましょう。';
+        return;
+      }
+
+      if (currentStreak > 0 && currentStreak >= maxStreak) {
+        banner.className = 'rounded-2xl p-4 border-2 border-rose-300 bg-gradient-to-r from-rose-50 to-amber-50 text-rose-950 shadow-xs flex items-center gap-3.5';
+        icon.textContent = '🎉';
+        title.textContent = `素晴らしい頑張り！歴代新記録を更新中です（${currentStreak}日連続達成）！`;
+        desc.textContent = `これまでの自分を越えて前進しています。${habit.title}の積み重ねが着実に実を結んでいます！`;
+        return;
+      }
+
+      if (isBroken) {
+        banner.className = 'rounded-2xl p-4 border-2 border-sky-300 bg-sky-50 text-sky-950 shadow-xs flex items-center gap-3.5';
+        icon.textContent = '🌈';
+        title.textContent = '大丈夫、ここからまたあらためて始めましょう！';
+        desc.textContent = `過去に【${maxStreak}日連続】達成できたあなたなら必ずできます。今日からまた新たな一歩を踏み出しましょう。`;
+        return;
+      }
+
+      banner.className = 'rounded-2xl p-4 border-2 border-emerald-300 bg-emerald-50 text-emerald-950 shadow-xs flex items-center gap-3.5';
+      icon.textContent = '✨';
+      title.textContent = `いい調子です！${currentStreak}日連続で「${habit.title}」が続いています！`;
+      desc.textContent = `歴代最高記録の【${maxStreak}日】まであと ${maxStreak - currentStreak} 日。この調子で1日ずつ重ねていきましょう。`;
+    }
+
+    /* =========================================================
+       6. カレンダー描画（境界線・土日背景・文字コントラスト強化版）
+       ========================================================= */
+    function getStampInnerHtml(style) {
+      if (style === 'ganbatta') {
+        return `
+          <div class="text-[9px] sm:text-[10px] font-bold tracking-tighter leading-none mb-0.5 text-rose-700">きょうも</div>
+          <div class="text-[11px] sm:text-[13px] font-black tracking-tight leading-none text-rose-600">よく</div>
+          <div class="text-[9px] sm:text-[10px] font-bold tracking-tighter leading-none mt-0.5 text-rose-700">頑張った</div>
+        `;
+      }
+      if (style === 'done') {
+        return `
+          <div class="text-[9px] sm:text-[10px] font-bold tracking-tighter leading-none mb-0.5 text-rose-700">目標</div>
+          <div class="text-[12px] sm:text-[14px] font-black tracking-tight leading-none text-rose-600">達成</div>
+          <div class="text-[9px] sm:text-[10px] font-bold tracking-tighter leading-none mt-0.5 text-rose-700">完了済</div>
+        `;
+      }
+      return `
+        <div class="text-[9px] sm:text-[10px] font-bold tracking-tighter leading-none mb-0.5 text-rose-700">たいへん</div>
+        <div class="text-[11px] sm:text-[13px] font-black tracking-tight leading-none text-rose-600">よく</div>
+        <div class="text-[9px] sm:text-[10px] font-bold tracking-tighter leading-none mt-0.5 text-rose-700">できました</div>
+      `;
+    }
+
+    function renderCalendar() {
+      const habit = getActiveHabit();
+      const grid = document.getElementById('calendar-grid');
+      grid.innerHTML = '';
+
+      const year = currentViewDate.getFullYear();
+      const month = currentViewDate.getMonth();
+      document.getElementById('calendar-title').textContent = `${year}年 ${month + 1}月`;
+
+      const todayStr = getTodayString();
+      const firstDayOfWeek = new Date(year, month, 1).getDay();
+      const startOffset = (firstDayOfWeek + 6) % 7;
+      const prevMonthLastDate = new Date(year, month, 0).getDate();
+      const lastDate = new Date(year, month + 1, 0).getDate();
+
+      // 前月のはみ出し
+      for (let i = startOffset - 1; i >= 0; i--) {
+        const day = prevMonthLastDate - i;
+        const cell = document.createElement('div');
+        cell.className = 'min-h-[76px] sm:min-h-[88px] p-1.5 rounded-2xl bg-slate-100/80 border border-slate-200 text-slate-400 text-xs font-bold flex flex-col select-none';
+        cell.innerHTML = `<span>${day}</span>`;
+        grid.appendChild(cell);
+      }
+
+      // 当月
+      for (let day = 1; day <= lastDate; day++) {
+        const dateStr = formatDate(year, month, day);
+        const dayOfWeek = new Date(year, month, day).getDay();
+        const isSaturday = (dayOfWeek === 6);
+        const isSunday = (dayOfWeek === 0);
+        const isToday = (dateStr === todayStr);
+        const future = isFutureDate(dateStr);
+        const holidayName = getJapaneseHolidayName(dateStr);
+        const autoOff = isAutoOffDay(habit, dateStr);
+        const recordState = habit.records[dateStr];
+
+        const cell = document.createElement('div');
+
+        // くっきり識別できるセル配色とボーダー
+        let bgClass = 'bg-white hover:bg-amber-50 border-slate-300';
+        if (future) {
+          bgClass = 'bg-slate-200/65 border-slate-300/80 cursor-not-allowed';
+        } else {
+          if (isSaturday) bgClass = 'bg-blue-100/65 hover:bg-blue-100 border-blue-300';
+          if (isSunday || holidayName) bgClass = 'bg-rose-100/65 hover:bg-rose-100 border-rose-300';
+          if (isToday) bgClass += ' ring-2 ring-blue-600 ring-offset-1';
+        }
+
+        const cursorClass = future ? 'cursor-not-allowed' : 'cursor-pointer group';
+        cell.className = `min-h-[76px] sm:min-h-[88px] p-1.5 rounded-2xl border ${bgClass} transition flex flex-col justify-between relative overflow-hidden ${cursorClass} shadow-2xs`;
+
+        if (!future) {
+          cell.onclick = () => cycleDateRecord(dateStr);
+        }
+
+        // 日付数字のコントラスト強化
+        let dateColor = 'text-slate-800 font-extrabold';
+        if (future) {
+          dateColor = 'text-slate-500 font-bold';
+          if (isSaturday) dateColor = 'text-blue-500/80 font-bold';
+          if (isSunday || holidayName) dateColor = 'text-rose-500/80 font-bold';
+        } else {
+          if (isSaturday) dateColor = 'text-blue-700 font-black';
+          if (isSunday || holidayName) dateColor = 'text-rose-700 font-black';
+        }
+
+        const todayBadge = isToday ? '<span class="ml-1 text-[9px] bg-blue-600 text-white px-1.5 py-0.2 rounded-full font-black shadow-2xs">今日</span>' : '';
+        const holidayTag = holidayName ? `<div class="text-[9px] sm:text-[10px] text-rose-700 font-extrabold truncate leading-tight mt-0.5">${holidayName}</div>` : '';
+
+        let centerHtml = '';
+        if (!future && recordState === 'done') {
+          centerHtml = `
+            <div class="stamp-badge absolute inset-0 flex items-center justify-center pointer-events-none p-1">
+              <div class="w-14 h-14 sm:w-16 sm:h-16 rounded-full border-2 border-dashed border-rose-600 text-rose-600 flex flex-col items-center justify-center p-1 stamp-ring bg-rose-50/50 backdrop-blur-[0.5px] font-stamp">
+                ${getStampInnerHtml(habit.stampStyle)}
+              </div>
+            </div>
+          `;
+        } else if (!future && recordState === 'rest') {
+          centerHtml = `
+            <div class="my-auto flex justify-center z-10">
+              <span class="px-2 py-1 rounded-xl bg-amber-200/90 border border-amber-400 text-amber-950 text-[10px] sm:text-xs font-black flex items-center gap-0.5 shadow-2xs">
+                ☕ 休暇
+              </span>
+            </div>
+          `;
+        } else if (autoOff) {
+          centerHtml = `
+            <div class="my-auto flex justify-center z-10">
+              <span class="px-1.5 py-0.5 rounded-lg bg-slate-200/90 border border-slate-300 text-slate-600 text-[9px] font-bold">
+                対象外
+              </span>
+            </div>
+          `;
+        }
+
+        cell.innerHTML = `
+          <div class="z-10">
+            <div class="flex items-center justify-between">
+              <span class="text-xs sm:text-sm ${dateColor}">${day}</span>
+              ${todayBadge}
+            </div>
+            ${holidayTag}
+          </div>
+          ${centerHtml}
+          <div class="text-[10px] text-right text-slate-400 ${future ? '' : 'group-hover:text-rose-600'} font-bold z-10 transition">
+            ${future ? '' : (recordState === 'done' ? '💮' : (recordState === 'rest' ? '☕' : '+'))}
+          </div>
+        `;
+
+        grid.appendChild(cell);
+      }
+
+      // 翌月のはみ出し（月末週でぴったり終了）
+      const totalCells = startOffset + lastDate;
+      const nextDays = (7 - (totalCells % 7)) % 7;
+      for (let d = 1; d <= nextDays; d++) {
+        const cell = document.createElement('div');
+        cell.className = 'min-h-[76px] sm:min-h-[88px] p-1.5 rounded-2xl bg-slate-100/80 border border-slate-200 text-slate-400 text-xs font-bold flex flex-col select-none';
+        cell.innerHTML = `<span>${d}</span>`;
+        grid.appendChild(cell);
+      }
+    }
+
+    function prevMonth() {
+      currentViewDate.setMonth(currentViewDate.getMonth() - 1);
+      renderCalendar();
+      updateDashboard();
+    }
+    function nextMonth() {
+      currentViewDate.setMonth(currentViewDate.getMonth() + 1);
+      renderCalendar();
+      updateDashboard();
+    }
+    function goToday() {
+      currentViewDate = new Date();
+      renderCalendar();
+      updateDashboard();
+    }
+
+    /* =========================================================
+       7. 習慣の新規追加・編集モーダル
+       ========================================================= */
+    const PRESETS = {
+      sobriety: { icon: '🍺', title: '禁酒', actionLabel: '今日 禁酒できた！', stampStyle: 'taihen', targetDays: [0,1,2,3,4,5,6], holidayIsRest: false },
+      nosmoke:  { icon: '🚭', title: '禁煙', actionLabel: '今日 禁煙できた！', stampStyle: 'taihen', targetDays: [0,1,2,3,4,5,6], holidayIsRest: false },
+      office:   { icon: '🏢', title: '出社', actionLabel: '今日 出社できた！', stampStyle: 'done', targetDays: [1,2,3,4,5], holidayIsRest: true },
+      shift:    { icon: '🏪', title: '出社(シフト)', actionLabel: '今日 出勤できた！', stampStyle: 'done', targetDays: [0,1,4,5,6], holidayIsRest: false },
+      workout:  { icon: '🏃', title: '運動', actionLabel: '今日 運動できた！', stampStyle: 'ganbatta', targetDays: [0,1,2,3,4,5,6], holidayIsRest: false },
+      study:    { icon: '📚', title: '勉強', actionLabel: '今日 勉強できた！', stampStyle: 'ganbatta', targetDays: [0,1,2,3,4,5,6], holidayIsRest: false }
+    };
+
+    function openHabitModal(isEdit) {
+      const modal = document.getElementById('habit-modal');
+      const delBtn = document.getElementById('btn-delete-habit');
+
+      if (isEdit) {
+        const h = getActiveHabit();
+        editingHabitId = h.id;
+        document.getElementById('habit-modal-title').textContent = `「${h.title}」の設定編集`;
+        document.getElementById('form-habit-icon').value = h.icon;
+        document.getElementById('form-habit-title').value = h.title;
+        document.getElementById('form-habit-action').value = h.actionLabel;
+        document.getElementById('form-habit-holiday-rest').checked = !!h.holidayIsRest;
+        formTargetDays = h.targetDays.slice();
+        selectStampStyle(h.stampStyle || 'taihen');
+        delBtn.classList.toggle('hidden', appState.habits.length <= 1);
+      } else {
+        if (appState.habits.length >= MAX_HABITS) return;
+        editingHabitId = null;
+        document.getElementById('habit-modal-title').textContent = `新しい習慣を追加 (${appState.habits.length + 1}/${MAX_HABITS})`;
+        applyPreset('workout');
+        delBtn.classList.add('hidden');
+      }
+
+      renderDayToggles();
+      modal.classList.remove('hidden');
+    }
+
+    function closeHabitModal() {
+      document.getElementById('habit-modal').classList.add('hidden');
+    }
+
+    function applyPreset(key) {
+      const p = PRESETS[key];
+      if (!p) return;
+      document.getElementById('form-habit-icon').value = p.icon;
+      document.getElementById('form-habit-title').value = p.title;
+      document.getElementById('form-habit-action').value = p.actionLabel;
+      document.getElementById('form-habit-holiday-rest').checked = p.holidayIsRest;
+      formTargetDays = p.targetDays.slice();
+      selectStampStyle(p.stampStyle);
+      renderDayToggles();
+    }
+
+    function selectStampStyle(style) {
+      formStampStyle = style;
+      document.querySelectorAll('.stamp-style-btn').forEach(btn => {
+        const active = btn.dataset.style === style;
+        btn.className = active
+          ? 'stamp-style-btn p-2 rounded-xl border-2 border-rose-500 bg-rose-50 text-rose-700 font-bold'
+          : 'stamp-style-btn p-2 rounded-xl border border-slate-300 bg-white text-slate-700 font-bold';
+      });
+    }
+
+    function setDaysPreset(daysArr) {
+      formTargetDays = daysArr.slice();
+      renderDayToggles();
+    }
+
+    function renderDayToggles() {
+      const container = document.getElementById('day-checkboxes');
+      container.innerHTML = '';
+      const order = [
+        { d: 1, label: '月' }, { d: 2, label: '火' }, { d: 3, label: '水' },
+        { d: 4, label: '木' }, { d: 5, label: '金' }, { d: 6, label: '土' }, { d: 0, label: '日' }
+      ];
+      order.forEach(item => {
+        const active = formTargetDays.includes(item.d);
+        const btn = document.createElement('button');
+        btn.type = 'button';
+        btn.textContent = item.label;
+        btn.className = active
+          ? 'py-2 rounded-xl bg-rose-600 text-white font-black shadow-2xs transition'
+          : 'py-2 rounded-xl bg-slate-200 text-slate-600 font-bold transition';
+        btn.onclick = () => {
+          if (formTargetDays.includes(item.d)) {
+            if (formTargetDays.length > 1) {
+              formTargetDays = formTargetDays.filter(x => x !== item.d);
+            }
+          } else {
+            formTargetDays.push(item.d);
+          }
+          renderDayToggles();
+        };
+        container.appendChild(btn);
+      });
+    }
+
+    function saveHabitForm() {
+      const icon = document.getElementById('form-habit-icon').value.trim() || '💮';
+      const title = document.getElementById('form-habit-title').value.trim();
+      if (!title) {
+        alert('目標・習慣名を入力してください');
+        return;
+      }
+      const actionLabel = document.getElementById('form-habit-action').value.trim() || `今日 ${title}できた！`;
+      const holidayIsRest = document.getElementById('form-habit-holiday-rest').checked;
+
+      if (editingHabitId) {
+        const target = appState.habits.find(h => h.id === editingHabitId);
+        if (target) {
+          target.icon = icon;
+          target.title = title;
+          target.actionLabel = actionLabel;
+          target.stampStyle = formStampStyle;
+          target.targetDays = formTargetDays.slice();
+          target.holidayIsRest = holidayIsRest;
+        }
+      } else {
+        const newId = 'h_' + Date.now();
+        appState.habits.push({
+          id: newId,
+          icon,
+          title,
+          actionLabel,
+          stampStyle: formStampStyle,
+          targetDays: formTargetDays.slice(),
+          holidayIsRest,
+          records: {}
+        });
+        appState.activeHabitId = newId;
+      }
+
+      saveAppState();
+      closeHabitModal();
+      renderHabitTabs();
+      renderAllForActiveHabit();
+    }
+
+    function deleteEditingHabit() {
+      if (appState.habits.length <= 1 || !editingHabitId) return;
+      if (!confirm('この習慣とすべてのスタンプ記録を削除しますか？')) return;
+      appState.habits = appState.habits.filter(h => h.id !== editingHabitId);
+      appState.activeHabitId = appState.habits[0].id;
+      saveAppState();
+      closeHabitModal();
+      renderHabitTabs();
+      renderAllForActiveHabit();
+    }
+
+    /* =========================================================
+       8. データ保護・JSON入出力
+       ========================================================= */
+    function openDataModal() {
+      document.getElementById('data-modal').classList.remove('hidden');
+    }
+    function closeDataModal() {
+      document.getElementById('data-modal').classList.add('hidden');
+    }
+
+    function exportJsonData() {
+      const blob = new Blob([JSON.stringify(appState, null, 2)], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `stamp-calendar-backup-${getTodayString()}.json`;
+      a.click();
+      URL.revokeObjectURL(url);
+    }
+
+    function importJsonData(event) {
+      const file = event.target.files[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = function(e) {
+        try {
+          const parsed = JSON.parse(e.target.result);
+          if (parsed && Array.isArray(parsed.habits) && parsed.habits.length > 0) {
+            appState = parsed;
+            saveAppState();
+            renderHabitTabs();
+            renderAllForActiveHabit();
+            alert('データを正常に復元しました！');
+            closeDataModal();
+          } else {
+            alert('有効なスタンプカレンダーのバックアップファイルではありません。');
+          }
+        } catch (err) {
+          alert('ファイルの読み込みに失敗しました。');
+        }
+      };
+      reader.readAsText(file);
+    }
+
+    function escapeHtml(str) {
+      return String(str).replace(/[&<>'"]/g, t => ({ '&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;' }[t] || t));
+    }
+
+    window.addEventListener('DOMContentLoaded', initApp);
+  </script>
+</body>
+</html>

@@ -1,0 +1,1629 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>マトリクス思考 4象限マッピング | Apps Hub</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700;800&family=Plus+Jakarta+Sans:wght@600;700;800&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #f4f6f9;
+  --sf: #ffffff;
+  --sf-sub: #f8fafc;
+  --ink: #172033;
+  --mute: #64748b;
+  --line: #e2e8f0;
+  --acc: #1f6f4a;
+  --blue: #4263eb;
+  --q1-bg: #fff2f0; --q1-bd: #fecaca; --q1-badge: #ffe0dd; --q1-ink: #b93832;
+  --q2-bg: #ecf9f1; --q2-bd: #86efac; --q2-badge: #d5f0df; --q2-ink: #147a4c;
+  --q3-bg: #fff8eb; --q3-bd: #fde68a; --q3-badge: #ffebc8; --q3-ink: #a65b08;
+  --q4-bg: #f1f5f9; --q4-bd: #cbd5e1; --q4-badge: #e2e8f0; --q4-ink: #475569;
+  --note-t: #ffffff;
+  --note-1: #ffe4e1;
+  --note-2: #dcfce7;
+  --note-3: #fef3c7;
+  --note-4: #e2e8f0;
+  --shadow: 0 4px 16px rgba(15, 23, 42, .05);
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #0f141c;
+    --sf: #18202c;
+    --sf-sub: #1e2736;
+    --ink: #e8edf5;
+    --mute: #94a3b8;
+    --line: #2d3848;
+    --acc: #4ade80;
+    --blue: #6b8afd;
+    --q1-bg: #2b1a1c; --q1-bd: #5c282c; --q1-badge: #472024; --q1-ink: #fca5a5;
+    --q2-bg: #152b22; --q2-bd: #245c43; --q2-badge: #1e4232; --q2-ink: #6ee7b7;
+    --q3-bg: #2b2316; --q3-bd: #5c4824; --q3-badge: #47371b; --q3-ink: #fcd34d;
+    --q4-bg: #1b222c; --q4-bd: #334155; --q4-badge: #283344; --q4-ink: #cbd5e1;
+    --note-t: #f8fafc;
+    --note-1: #fecdd3;
+    --note-2: #bbf7d0;
+    --note-3: #fde68a;
+    --note-4: #cbd5e1;
+    --shadow: 0 4px 20px rgba(0, 0, 0, .28);
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #0f141c; --sf: #18202c; --sf-sub: #1e2736; --ink: #e8edf5; --mute: #94a3b8;
+  --line: #2d3848; --acc: #4ade80; --blue: #6b8afd;
+  --q1-bg: #2b1a1c; --q1-bd: #5c282c; --q1-badge: #472024; --q1-ink: #fca5a5;
+  --q2-bg: #152b22; --q2-bd: #245c43; --q2-badge: #1e4232; --q2-ink: #6ee7b7;
+  --q3-bg: #2b2316; --q3-bd: #5c4824; --q3-badge: #47371b; --q3-ink: #fcd34d;
+  --q4-bg: #1b222c; --q4-bd: #334155; --q4-badge: #283344; --q4-ink: #cbd5e1;
+  --note-t: #f8fafc;
+  --note-1: #fecdd3;
+  --note-2: #bbf7d0;
+  --note-3: #fde68a;
+  --note-4: #cbd5e1;
+  --shadow: 0 4px 20px rgba(0, 0, 0, .28);
+}
+
+* { box-sizing: border-box; }
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--ink);
+  font-family: "Plus Jakarta Sans", "Noto Sans JP", system-ui, -apple-system, sans-serif;
+  font-size: 14px;
+  line-height: 1.5;
+  padding-top: env(safe-area-inset-top, 0px);
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+}
+button, input, textarea, select { font: inherit; color: inherit; }
+button { cursor: pointer; }
+:focus-visible { outline: 2px solid var(--blue); outline-offset: 2px; }
+
+.wrap { max-width: 1320px; margin: 0 auto; padding: 16px 16px 32px; }
+
+/* Header */
+.hub-bar {
+  display: flex; align-items: center; justify-content: space-between;
+  margin-bottom: 14px; gap: 12px;
+}
+.hub-back {
+  display: inline-flex; align-items: center; gap: 6px;
+  text-decoration: none; color: var(--mute); font-size: 12px; font-weight: 700;
+  padding: 6px 10px; border-radius: 8px; background: var(--sf); border: 1px solid var(--line);
+  transition: border-color .15s, color .15s;
+}
+.hub-back:hover { color: var(--ink); border-color: var(--mute); }
+
+.topbar {
+  display: flex; align-items: center; justify-content: space-between;
+  flex-wrap: wrap; gap: 14px; margin-bottom: 16px;
+}
+.brand { display: flex; align-items: center; gap: 12px; }
+.logo {
+  width: 42px; height: 42px; border-radius: 12px;
+  background: rgba(66, 99, 235, .12); color: var(--blue);
+  display: grid; place-items: center; font-weight: 800; font-size: 19px;
+}
+.brand h1 { font-size: 20px; margin: 0; font-weight: 800; letter-spacing: -.02em; }
+.brand p { margin: 2px 0 0; color: var(--mute); font-size: 12px; }
+
+.top-actions { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+
+/* Axis Switcher */
+.axis-switch {
+  display: inline-flex; background: var(--sf); border: 1px solid var(--line);
+  border-radius: 10px; padding: 3px; gap: 3px;
+}
+.axis-btn {
+  border: 0; background: transparent; color: var(--mute);
+  padding: 6px 12px; border-radius: 7px; font-size: 12px; font-weight: 700;
+  transition: background .15s, color .15s;
+}
+.axis-btn.active { background: var(--blue); color: #fff; }
+
+.btn {
+  background: var(--sf); border: 1px solid var(--line);
+  padding: 7px 12px; border-radius: 9px; font-size: 12px; font-weight: 700;
+  display: inline-flex; align-items: center; gap: 5px; transition: border-color .15s;
+}
+.btn:hover { border-color: var(--mute); }
+.btn.primary { background: var(--blue); border-color: var(--blue); color: #fff; }
+.btn.danger { color: #dc2626; }
+.btn.small { padding: 4px 9px; font-size: 11px; border-radius: 7px; }
+.btn.help-btn {
+  background: rgba(66, 99, 235, .10);
+  border-color: rgba(66, 99, 235, .32);
+  color: var(--blue);
+}
+
+/* Quick Add Bar */
+.quick-add {
+  background: var(--sf); border: 1px solid var(--line); border-radius: 14px;
+  padding: 12px; margin-bottom: 14px; box-shadow: var(--shadow);
+  display: flex; flex-wrap: wrap; gap: 8px; align-items: center;
+}
+.quick-add input[type="text"] {
+  flex: 1 1 240px; min-width: 0; background: var(--sf-sub);
+  border: 1px solid var(--line); border-radius: 8px; padding: 8px 11px;
+}
+.quick-add input[type="number"] {
+  width: 96px; background: var(--sf-sub);
+  border: 1px solid var(--line); border-radius: 8px; padding: 8px 10px;
+}
+.quick-add select {
+  background: var(--sf-sub); border: 1px solid var(--line);
+  border-radius: 8px; padding: 8px 10px; font-size: 12px; font-weight: 600;
+}
+
+/* Unclassified Tray */
+.tray {
+  background: var(--sf); border: 1.5px dashed var(--line); border-radius: 14px;
+  padding: 10px 14px; margin-bottom: 18px; transition: border-color .15s, background .15s;
+}
+.tray.over { border-color: var(--blue); background: rgba(66, 99, 235, .06); }
+.tray-head {
+  display: flex; justify-content: space-between; align-items: center;
+  margin-bottom: 8px; font-size: 12px;
+}
+.tray-head b { font-size: 13px; }
+.tray-head small { color: var(--mute); }
+.tray-items {
+  display: flex; flex-wrap: wrap; gap: 8px; min-height: 38px; align-items: center;
+}
+.tray-empty { color: var(--mute); font-size: 12px; }
+
+/* Matrix Grid */
+.matrix-wrap {
+  display: grid; grid-template-columns: 26px 1fr 1fr;
+  grid-template-rows: auto 1fr 1fr; gap: 10px; margin-bottom: 18px;
+}
+.col-label {
+  text-align: center; font-weight: 800; font-size: 12px;
+  color: var(--mute); letter-spacing: .04em;
+}
+.row-label {
+  writing-mode: vertical-rl; text-align: center; font-weight: 800;
+  font-size: 12px; color: var(--mute); letter-spacing: .08em;
+  display: flex; align-items: center; justify-content: center;
+}
+
+.quadrant {
+  background: var(--sf); border: 1px solid var(--line); border-radius: 16px;
+  overflow: hidden; min-height: 220px; display: flex; flex-direction: column;
+  box-shadow: var(--shadow); transition: box-shadow .15s, border-color .15s;
+}
+.quadrant.q2 { border: 2px solid var(--q2-bd); }
+.quadrant.over { box-shadow: 0 0 0 3px var(--blue); }
+
+.q-head {
+  padding: 11px 14px; display: flex; justify-content: space-between; align-items: center; gap: 8px;
+}
+.q1 .q-head { background: var(--q1-bg); }
+.q2 .q-head { background: var(--q2-bg); }
+.q3 .q-head { background: var(--q3-bg); }
+.q4 .q-head { background: var(--q4-bg); }
+
+.q-title { display: flex; align-items: center; gap: 9px; }
+.q-badge {
+  width: 32px; height: 32px; border-radius: 9px;
+  display: grid; place-items: center; font-weight: 800; font-size: 12px; flex: none;
+}
+.q1 .q-badge { background: var(--q1-badge); color: var(--q1-ink); }
+.q2 .q-badge { background: var(--q2-badge); color: var(--q2-ink); }
+.q3 .q-badge { background: var(--q3-badge); color: var(--q3-ink); }
+.q4 .q-badge { background: var(--q4-badge); color: var(--q4-ink); }
+
+.q-title h3 { margin: 0; font-size: 14px; font-weight: 800; }
+.q-title p { margin: 1px 0 0; font-size: 11px; color: var(--mute); }
+.q-meta { text-align: right; font-size: 11px; color: var(--mute); white-space: nowrap; font-weight: 700; }
+
+/* Auto-aligned Grid inside Quadrant */
+.q-body {
+  padding: 12px; flex: 1;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+  gap: 9px;
+  align-content: start;
+}
+.q-empty {
+  grid-column: 1 / -1;
+  border: 1px dashed var(--line); border-radius: 10px;
+  padding: 28px 12px; text-align: center; color: var(--mute); font-size: 12px;
+}
+
+/* Sticky Note Card */
+.note {
+  position: relative;
+  color: #172033;
+  background: var(--note-t);
+  border-radius: 9px;
+  padding: 9px 10px;
+  box-shadow: 0 2px 6px rgba(15, 23, 42, .10), inset 0 0 0 1px rgba(0, 0, 0, .10);
+  cursor: grab; user-select: none; -webkit-user-select: none; touch-action: none;
+  display: flex; flex-direction: column; justify-content: space-between; gap: 6px;
+  transition: background-color .2s ease, transform .1s, opacity .15s;
+}
+.note[data-zone-color="1"] { background: var(--note-1); }
+.note[data-zone-color="2"] { background: var(--note-2); }
+.note[data-zone-color="3"] { background: var(--note-3); }
+.note[data-zone-color="4"] { background: var(--note-4); }
+
+/* Reorder Drop Indicators */
+.note.insert-before::before,
+.note.insert-after::after {
+  content: '';
+  position: absolute;
+  top: 2px;
+  bottom: 2px;
+  width: 4px;
+  border-radius: 99px;
+  background: var(--blue);
+  box-shadow: 0 0 0 2px #fff;
+  pointer-events: none;
+  z-index: 5;
+}
+.note.insert-before::before { left: -6px; }
+.note.insert-after::after { right: -6px; }
+
+.tray-items .note { width: 190px; }
+.note:active { cursor: grabbing; }
+.note.lifting { opacity: .32; }
+
+.note-top { display: flex; align-items: flex-start; gap: 7px; }
+.note-chk {
+  margin-top: 2px; width: 15px; height: 15px; accent-color: #147a4c; flex: none; cursor: pointer;
+}
+.note-title { font-weight: 700; font-size: 13px; line-height: 1.38; word-break: break-word; flex: 1; }
+
+.note-memo {
+  font-size: 11px;
+  line-height: 1.4;
+  color: rgba(23, 32, 51, .78);
+  background: rgba(255, 255, 255, .45);
+  border-radius: 6px;
+  padding: 4px 6px;
+  word-break: break-word;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.note-info {
+  display: flex; flex-wrap: wrap; gap: 6px; font-size: 10.5px; color: rgba(23, 32, 51, .75); font-weight: 600;
+}
+.note-info .overdue { color: #b91c1c; font-weight: 800; }
+
+.note-ops {
+  display: flex; align-items: center; gap: 4px;
+  border-top: 1px solid rgba(0, 0, 0, .08); padding-top: 5px;
+}
+.note-ops button {
+  background: rgba(255, 255, 255, .72); border: 1px solid rgba(0, 0, 0, .14);
+  color: #172033; border-radius: 5px; padding: 1px 6px; font-size: 11px; font-weight: 700;
+}
+.note-ops button:hover { background: #fff; }
+.note-ops select {
+  margin-left: auto; background: rgba(255, 255, 255, .72);
+  border: 1px solid rgba(0, 0, 0, .14); color: #172033;
+  border-radius: 5px; padding: 1px 4px; font-size: 11px; font-weight: 700;
+}
+
+.drag-ghost {
+  position: fixed; z-index: 999; pointer-events: none;
+  transform: rotate(2deg) scale(1.03);
+  box-shadow: 0 14px 28px rgba(0, 0, 0, .28);
+}
+
+/* Insights & Analytics */
+.analytics {
+  display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-top: 18px;
+}
+.panel {
+  background: var(--sf); border: 1px solid var(--line); border-radius: 16px;
+  padding: 16px; box-shadow: var(--shadow);
+}
+.panel h3 { margin: 0 0 10px; font-size: 14px; font-weight: 800; }
+.kpi-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 12px; }
+.kpi-box { background: var(--sf-sub); border-radius: 11px; padding: 11px 13px; }
+.kpi-label { font-size: 11px; color: var(--mute); font-weight: 700; }
+.kpi-val { font-size: 24px; font-weight: 800; color: var(--acc); margin: 2px 0; }
+.kpi-sub { font-size: 11px; color: var(--mute); }
+
+.dist-bar {
+  display: grid; grid-template-columns: 7.5em 1fr 3em; gap: 8px;
+  align-items: center; font-size: 12px; margin-top: 7px;
+}
+.dist-track { height: 8px; background: var(--line); border-radius: 99px; overflow: hidden; }
+.dist-fill { height: 100%; border-radius: 99px; transition: width .25s; }
+.dist-fill.c1 { background: #e66b65; }
+.dist-fill.c2 { background: #269b68; }
+.dist-fill.c3 { background: #d88a28; }
+.dist-fill.c4 { background: #7b8493; }
+
+.bars {
+  height: 110px; display: flex; align-items: flex-end; gap: 8px;
+  border-bottom: 1px solid var(--line); padding: 0 4px; margin-top: 8px;
+}
+.bar-col {
+  flex: 1; display: flex; flex-direction: column; align-items: center;
+  justify-content: flex-end; height: 100%; gap: 4px;
+}
+.bar { width: min(30px, 75%); min-height: 2px; background: var(--acc); border-radius: 4px 4px 0 0; }
+.bar-val { font-size: 10px; color: var(--mute); font-weight: 700; }
+.bar-lbl { font-size: 10px; color: var(--mute); }
+
+/* Completed Archive Drawer */
+.archive-box {
+  margin-top: 18px;
+  background: var(--sf);
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  box-shadow: var(--shadow);
+  overflow: hidden;
+}
+.archive-box summary {
+  padding: 14px 16px;
+  cursor: pointer;
+  font-weight: 800;
+  font-size: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  list-style: none;
+  user-select: none;
+}
+.archive-box summary::-webkit-details-marker { display: none; }
+.archive-summary-left { display: flex; align-items: center; gap: 8px; }
+.archive-chevron { transition: transform .2s; font-size: 11px; color: var(--mute); }
+.archive-box[open] .archive-chevron { transform: rotate(90deg); }
+
+.archive-body {
+  padding: 14px 16px 16px;
+  border-top: 1px solid var(--line);
+  background: var(--sf-sub);
+}
+.archive-toolbar {
+  display: flex; flex-wrap: wrap; justify-content: space-between;
+  align-items: center; gap: 8px; margin-bottom: 12px;
+}
+.archive-controls { display: flex; flex-wrap: wrap; gap: 7px; align-items: center; }
+.archive-controls select {
+  background: var(--sf); border: 1px solid var(--line);
+  border-radius: 8px; padding: 5px 9px; font-size: 12px; font-weight: 600;
+}
+
+.archive-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 9px;
+}
+.archive-item {
+  background: var(--sf);
+  border: 1px solid var(--line);
+  border-radius: 11px;
+  padding: 10px 12px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: 8px;
+}
+.archive-item-head {
+  display: flex; align-items: flex-start; justify-content: space-between; gap: 8px;
+}
+.archive-title {
+  font-weight: 700; font-size: 13px; color: var(--mute);
+  text-decoration: line-through; word-break: break-word;
+}
+.q-pill {
+  font-size: 10.5px; font-weight: 800; padding: 2px 7px;
+  border-radius: 6px; white-space: nowrap; flex: none;
+}
+.q-pill.z1 { background: var(--q1-badge); color: var(--q1-ink); }
+.q-pill.z2 { background: var(--q2-badge); color: var(--q2-ink); }
+.q-pill.z3 { background: var(--q3-badge); color: var(--q3-ink); }
+.q-pill.z4 { background: var(--q4-badge); color: var(--q4-ink); }
+.q-pill.zt { background: var(--line); color: var(--mute); }
+
+.archive-memo {
+  font-size: 11.5px;
+  line-height: 1.45;
+  color: var(--ink);
+  background: var(--sf-sub);
+  border-radius: 7px;
+  padding: 6px 8px;
+  word-break: break-word;
+  white-space: pre-wrap;
+}
+
+.archive-meta {
+  display: flex; flex-wrap: wrap; gap: 8px; font-size: 11px; color: var(--mute); font-weight: 600;
+}
+.archive-actions {
+  display: flex; justify-content: flex-end; gap: 6px;
+  border-top: 1px solid var(--line); padding-top: 7px;
+}
+
+/* Modal & Guide Styles */
+.backdrop {
+  position: fixed; inset: 0; background: rgba(15, 23, 42, .55);
+  display: none; align-items: center; justify-content: center; padding: 16px; z-index: 50;
+}
+.backdrop.open { display: flex; }
+.modal {
+  width: min(480px, 100%); max-height: 90vh; overflow-y: auto;
+  background: var(--sf); border: 1px solid var(--line);
+  border-radius: 18px; padding: 20px; box-shadow: 0 20px 50px rgba(0, 0, 0, .3);
+}
+.modal.guide-modal { width: min(680px, 100%); }
+.modal-head {
+  display: flex; align-items: center; justify-content: space-between;
+  gap: 12px; margin-bottom: 14px; padding-bottom: 10px; border-bottom: 1px solid var(--line);
+}
+.modal-head h2 { margin: 0; font-size: 17px; font-weight: 800; }
+
+.guide-section { margin-bottom: 18px; }
+.guide-section:last-child { margin-bottom: 0; }
+.guide-section h3 {
+  font-size: 13.5px; font-weight: 800; margin: 0 0 8px;
+  display: flex; align-items: center; gap: 6px; color: var(--blue);
+}
+.guide-steps {
+  display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px;
+}
+.guide-step {
+  background: var(--sf-sub); border: 1px solid var(--line);
+  border-radius: 11px; padding: 10px 11px; font-size: 12px;
+}
+.guide-step b { display: block; margin-bottom: 3px; font-size: 12.5px; }
+.guide-step p { margin: 0; color: var(--mute); font-size: 11.5px; line-height: 1.45; }
+
+.guide-grid {
+  display: grid; grid-template-columns: 1fr 1fr; gap: 8px;
+}
+.guide-card {
+  border-radius: 10px; padding: 9px 11px; font-size: 11.5px;
+  border: 1px solid var(--line); background: var(--sf-sub);
+}
+.guide-card .g-tag {
+  display: inline-block; font-weight: 800; font-size: 11px;
+  padding: 1px 6px; border-radius: 5px; margin-bottom: 4px;
+}
+.guide-card.g1 .g-tag { background: var(--q1-badge); color: var(--q1-ink); }
+.guide-card.g2 .g-tag { background: var(--q2-badge); color: var(--q2-ink); }
+.guide-card.g3 .g-tag { background: var(--q3-badge); color: var(--q3-ink); }
+.guide-card.g4 .g-tag { background: var(--q4-badge); color: var(--q4-ink); }
+.guide-card p { margin: 0; color: var(--mute); line-height: 1.45; }
+
+.guide-note {
+  background: var(--sf-sub); border-left: 3px solid var(--acc);
+  padding: 9px 12px; border-radius: 0 9px 9px 0;
+  font-size: 11.5px; color: var(--mute); line-height: 1.5;
+}
+
+.form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 11px; }
+.field { display: flex; flex-direction: column; gap: 5px; }
+.field.full { grid-column: 1 / -1; }
+.field label { font-size: 11px; font-weight: 700; color: var(--mute); }
+.field input, .field select, .field textarea {
+  background: var(--sf-sub); border: 1px solid var(--line);
+  border-radius: 8px; padding: 8px 10px; width: 100%;
+}
+.field textarea { min-height: 76px; resize: vertical; }
+.modal-foot { display: flex; justify-content: space-between; gap: 8px; margin-top: 16px; }
+
+/* Toast & Footer */
+.toast {
+  position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%);
+  background: #1e293b; color: #fff; padding: 9px 16px; border-radius: 10px;
+  font-size: 12px; font-weight: 700; z-index: 100; opacity: 0; pointer-events: none;
+  transition: opacity .2s;
+}
+.toast.show { opacity: 1; }
+.footer {
+  margin-top: 28px; padding-top: 14px; border-top: 1px solid var(--line);
+  text-align: center; color: var(--mute); font-size: 11px;
+}
+
+@media (max-width: 820px) {
+  .matrix-wrap { grid-template-columns: 1fr; grid-template-rows: auto; }
+  .col-label, .row-label { display: none; }
+  .analytics { grid-template-columns: 1fr; }
+}
+@media (max-width: 560px) {
+  .guide-steps, .guide-grid { grid-template-columns: 1fr; }
+}
+@media (max-width: 480px) {
+  .q-body { grid-template-columns: 1fr; }
+  .tray-items .note { width: 100%; }
+  .form-grid { grid-template-columns: 1fr; }
+  .archive-list { grid-template-columns: 1fr; }
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="hub-bar">
+    <a href="../" class="hub-back">← Apps Hub</a>
+    <div style="display:flex;gap:8px;align-items:center">
+      <button type="button" class="btn help-btn" id="helpBtn">？ 使い方・考え方</button>
+      <button type="button" class="btn" id="themeBtn" title="配色切替">🌓 テーマ</button>
+    </div>
+  </div>
+
+  <header class="topbar">
+    <div class="brand">
+      <div class="logo">四</div>
+      <div>
+        <h1>マトリクス思考 4象限マッピング</h1>
+        <p>付箋をドラッグで仕分け＆並べ替え、優先順位を一目で決着。</p>
+      </div>
+    </div>
+    <div class="top-actions">
+      <div class="axis-switch" role="group" aria-label="評価軸モード切替">
+        <button type="button" class="axis-btn active" data-mode="eisenhower">緊急度 × 重要度</button>
+        <button type="button" class="axis-btn" data-mode="impact">効果 × 手間</button>
+      </div>
+      <button type="button" class="btn" id="pngBtn">🖼 画像保存</button>
+      <button type="button" class="btn" id="exportBtn">↓ JSON</button>
+      <button type="button" class="btn" id="importBtn">↑ 復元</button>
+      <input type="file" id="importFile" accept="application/json,.json" hidden>
+    </div>
+  </header>
+
+  <!-- Quick Add -->
+  <form class="quick-add" id="quickForm">
+    <input type="text" id="qTitle" placeholder="タスク・アイデアを入力して追加…" maxlength="100" required aria-label="タスク名">
+    <input type="number" id="qMins" min="1" max="9999" placeholder="所要(分)" aria-label="所要時間（分）">
+    <select id="qZone" aria-label="配置先">
+      <option value="t">未分類トレイへ</option>
+      <option value="1">第1象限へ</option>
+      <option value="2">第2象限へ</option>
+      <option value="3">第3象限へ</option>
+      <option value="4">第4象限へ</option>
+    </select>
+    <button type="submit" class="btn primary">＋ 追加</button>
+  </form>
+
+  <!-- Unclassified Tray -->
+  <section class="tray" data-zone="t" aria-label="未分類トレイ">
+    <div class="tray-head">
+      <span><b>📥 未分類トレイ（ブレインダンプ）</b> <small>— ドラッグで4象限へ仕分け、枠内での順番入れ替えも自由に行えます</small></span>
+      <span id="trayCount" style="font-weight:700;color:var(--mute)">0件</span>
+    </div>
+    <div class="tray-items" id="zone-t"></div>
+  </section>
+
+  <!-- 4 Quadrant Matrix -->
+  <main class="matrix-wrap" id="matrixGrid">
+    <div></div>
+    <div class="col-label" id="col1Label">緊急である</div>
+    <div class="col-label" id="col2Label">緊急ではない</div>
+
+    <div class="row-label" id="row1Label">重要である</div>
+    <section class="quadrant q1" data-zone="1">
+      <div class="q-head">
+        <div class="q-title">
+          <div class="q-badge">Q1</div>
+          <div><h3 id="q1Title">すぐやる</h3><p id="q1Sub">重要 × 緊急</p></div>
+        </div>
+        <div class="q-meta" id="meta-1">0件</div>
+      </div>
+      <div class="q-body" id="zone-1"></div>
+    </section>
+
+    <section class="quadrant q2" data-zone="2">
+      <div class="q-head">
+        <div class="q-title">
+          <div class="q-badge">Q2</div>
+          <div><h3 id="q2Title">計画する（投資領域）</h3><p id="q2Sub">重要 × 緊急ではない</p></div>
+        </div>
+        <div class="q-meta" id="meta-2">0件</div>
+      </div>
+      <div class="q-body" id="zone-2"></div>
+    </section>
+
+    <div class="row-label" id="row2Label">重要ではない</div>
+    <section class="quadrant q3" data-zone="3">
+      <div class="q-head">
+        <div class="q-title">
+          <div class="q-badge">Q3</div>
+          <div><h3 id="q3Title">任せる・効率化</h3><p id="q3Sub">重要ではない × 緊急</p></div>
+        </div>
+        <div class="q-meta" id="meta-3">0件</div>
+      </div>
+      <div class="q-body" id="zone-3"></div>
+    </section>
+
+    <section class="quadrant q4" data-zone="4">
+      <div class="q-head">
+        <div class="q-title">
+          <div class="q-badge">Q4</div>
+          <div><h3 id="q4Title">捨てる・やめる</h3><p id="q4Sub">重要ではない × 緊急ではない</p></div>
+        </div>
+        <div class="q-meta" id="meta-4">0件</div>
+      </div>
+      <div class="q-body" id="zone-4"></div>
+    </section>
+  </main>
+
+  <!-- Analytics -->
+  <section class="analytics">
+    <div class="panel">
+      <h3 id="insightHeading">第2象限（計画・投資領域）への集中度</h3>
+      <div class="kpi-row">
+        <div class="kpi-box">
+          <div class="kpi-label">タスク件数比率</div>
+          <div class="kpi-val" id="kpiTaskPct">0%</div>
+          <div class="kpi-sub" id="kpiTaskSub">0 / 0 件（未完了ベース）</div>
+        </div>
+        <div class="kpi-box">
+          <div class="kpi-label">予定時間比率</div>
+          <div class="kpi-val" id="kpiTimePct">—</div>
+          <div class="kpi-sub" id="kpiTimeSub">所要時間入力で算出</div>
+        </div>
+      </div>
+      <div id="distBars"></div>
+    </div>
+
+    <div class="panel">
+      <h3>第2象限 投資比率の週間推移</h3>
+      <div class="bars" id="historyChart"></div>
+      <p style="margin:10px 0 0;font-size:11px;color:var(--mute)">
+        ※操作時のスナップショットを週単位でローカル自動記録します（最大12週分）。
+      </p>
+    </div>
+  </section>
+
+  <!-- Completed Archive Drawer -->
+  <details class="archive-box" id="archiveDrawer">
+    <summary>
+      <div class="archive-summary-left">
+        <span class="archive-chevron">▶</span>
+        <span>✅ 完了済みアーカイブ</span>
+        <span id="archiveTotalBadge" style="font-size:12px;color:var(--mute);font-weight:700">(0件)</span>
+      </div>
+      <span style="font-size:11px;color:var(--mute);font-weight:600">クリックで開閉（完了日・象限別に振り返り）</span>
+    </summary>
+    <div class="archive-body">
+      <div class="archive-toolbar">
+        <div class="archive-controls">
+          <select id="archZoneFilter" aria-label="完了時の象限で絞り込み">
+            <option value="all">すべての象限</option>
+            <option value="1">Q1（すぐやる / 最優先）</option>
+            <option value="2">Q2（計画する / 計画投資）</option>
+            <option value="3">Q3（任せる / スキマ時間）</option>
+            <option value="4">Q4（捨てる / やらない）</option>
+            <option value="t">未分類から完了</option>
+          </select>
+          <select id="archSortSelect" aria-label="アーカイブの並び替え">
+            <option value="completedDesc">完了日が新しい順</option>
+            <option value="completedAsc">完了日が古い順</option>
+            <option value="zoneAsc">象限順（Q1 → Q4）</option>
+          </select>
+        </div>
+        <button type="button" class="btn small danger" id="clearArchiveBtn">🗑 すべて削除</button>
+      </div>
+      <div class="archive-list" id="archiveList"></div>
+    </div>
+  </details>
+
+  <footer class="footer">
+    ※個人開発プロトタイプにつき無保証・自己責任にてご利用ください（データは端末内完結・サポート対象外）
+  </footer>
+</div>
+
+<!-- Help & Concept Modal -->
+<div class="backdrop" id="helpModal">
+  <div class="modal guide-modal" role="dialog" aria-modal="true" aria-labelledby="helpHeading">
+    <div class="modal-head">
+      <h2 id="helpHeading">📖 マトリクス思考の使い方・考え方</h2>
+      <button type="button" class="btn small" id="helpCloseBtn">✕ 閉じる</button>
+    </div>
+
+    <div class="guide-section">
+      <h3>1. 基本の使い方（3ステップ）</h3>
+      <div class="guide-steps">
+        <div class="guide-step">
+          <b>① 頭の中を書き出す</b>
+          <p>まずは分類を気にせず、思いついたタスクやアイデアを上部の「未分類トレイ」にポンポン追加します。</p>
+        </div>
+        <div class="guide-step">
+          <b>② 4象限へ仕分け＆並べ替え</b>
+          <p>付箋をドラッグして4つの枠へ配置します。枠内での順番入れ替えや、各付箋の「✎ 編集」からメモ・期限も追加できます。</p>
+        </div>
+        <div class="guide-step">
+          <b>③ 完了チェックでアーカイブ</b>
+          <p>終わった付箋にチェックを入れるとマトリクスから消え、下部の「完了済みアーカイブ」に完了日・象限付きで記録されます。</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="guide-section">
+      <h3>2. 考え方①：緊急度 × 重要度（アイゼンハワー・マトリクス）</h3>
+      <p style="font-size:12px;color:var(--mute);margin:0 0 8px">
+        日々のタスクや業務に追われているとき、<strong>「時間軸（いつやるか）」</strong>で優先順位を決めるフレームワークです。
+      </p>
+      <div class="guide-grid">
+        <div class="guide-card g1">
+          <span class="g-tag">Q1：すぐやる（重要 × 緊急）</span>
+          <p>締切間近の仕事やトラブル対応など、最優先で今すぐ片付けるべき領域です。</p>
+        </div>
+        <div class="guide-card g2">
+          <span class="g-tag">Q2：計画する（重要 × 緊急でない）</span>
+          <p>仕組み化・学習・健康・将来の準備など、<strong>最も価値を生む投資領域</strong>です。下部のグラフでこの比率を追跡します。</p>
+        </div>
+        <div class="guide-card g3">
+          <span class="g-tag">Q3：任せる・効率化（重要でない × 緊急）</span>
+          <p>急ぎに見えるが自分の目標には直結しない雑務や連絡。自動化や委譲、時短を検討します。</p>
+        </div>
+        <div class="guide-card g4">
+          <span class="g-tag">Q4：捨てる・やめる（重要でない × 緊急でない）</span>
+          <p>惰性で続けている作業や無目的な時間。勇気を出して手放す対象です。</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="guide-section">
+      <h3>3. 考え方②：効果 × 手間（インパクト・マトリクス）</h3>
+      <p style="font-size:12px;color:var(--mute);margin:0 0 8px">
+        企画アイデア出しや改善案の中から、<strong>「コスパ（労力に対するリターン）」</strong>で採否を決めたいときに切り替えて使います。
+      </p>
+      <div class="guide-grid">
+        <div class="guide-card g1">
+          <span class="g-tag">Q1：最優先（高効果 × 低手間）</span>
+          <p>少ない労力ですぐ大きな成果が出る「おいしい施策（Quick Wins）」。迷わず真っ先に実行します。</p>
+        </div>
+        <div class="guide-card g2">
+          <span class="g-tag">Q2：計画投資（高効果 × 高手間）</span>
+          <p>時間と労力はかかるが、やり遂げれば大きなリターンがある「中長期プロジェクト」。細分化して取り組みます。</p>
+        </div>
+        <div class="guide-card g3">
+          <span class="g-tag">Q3：スキマ時間・任せる（低効果 × 低手間）</span>
+          <p>効果は小さいがすぐ終わる細かい改善。メイン作業の合間にサッと片付けます。</p>
+        </div>
+        <div class="guide-card g4">
+          <span class="g-tag">Q4：やらない・捨てる（低効果 × 高手間）</span>
+          <p>労力ばかりかかって見返りが薄い「徒労」。今はやらないと決断する領域です。</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="guide-note">
+      <strong>🔒 データ保存について：</strong>入力した付箋は外部サーバーへ送信されず、お使いのブラウザ内部（localStorage）に自動保存されます。ブラウザの履歴消去や端末移行に備える場合は、右上の「↓ JSON」からバックアップファイルを保存できます。
+    </div>
+  </div>
+</div>
+
+<!-- Edit Modal -->
+<div class="backdrop" id="editModal">
+  <div class="modal" role="dialog" aria-modal="true" aria-labelledby="modalHeading">
+    <h2 id="modalHeading">付箋の詳細編集</h2>
+    <form id="editForm">
+      <div class="form-grid">
+        <div class="field full">
+          <label for="mTitle">タスク名 *</label>
+          <input type="text" id="mTitle" maxlength="100" required>
+        </div>
+        <div class="field full">
+          <label for="mZone">配置象限（配置先に応じて色が自動連動します）</label>
+          <select id="mZone">
+            <option value="t">未分類トレイ</option>
+            <option value="1">第1象限</option>
+            <option value="2">第2象限</option>
+            <option value="3">第3象限</option>
+            <option value="4">第4象限</option>
+          </select>
+        </div>
+        <div class="field">
+          <label for="mDue">期限（任意）</label>
+          <input type="date" id="mDue">
+        </div>
+        <div class="field">
+          <label for="mMins">予定時間（分）</label>
+          <input type="number" id="mMins" min="0" max="99999" step="5">
+        </div>
+        <div class="field full">
+          <label for="mMemo">メモ・補足</label>
+          <textarea id="mMemo" maxlength="1000" placeholder="具体的な進め方やメモ"></textarea>
+        </div>
+      </div>
+      <div class="modal-foot">
+        <button type="button" class="btn danger" id="mDeleteBtn">削除</button>
+        <div style="display:flex;gap:8px">
+          <button type="button" class="btn" id="mCancelBtn">キャンセル</button>
+          <button type="submit" class="btn primary">保存する</button>
+        </div>
+      </div>
+    </form>
+  </div>
+</div>
+
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+<script>
+(() => {
+  'use strict';
+  const STORAGE_KEY = 'selfup_quadrant_v1';
+  const $ = id => document.getElementById(id);
+
+  const MODES = {
+    eisenhower: {
+      col1: '緊急である', col2: '緊急ではない',
+      row1: '重要である', row2: '重要ではない',
+      q1: ['すぐやる', '重要 × 緊急'],
+      q2: ['計画する（投資領域）', '重要 × 緊急ではない'],
+      q3: ['任せる・効率化', '重要ではない × 緊急'],
+      q4: ['捨てる・やめる', '重要ではない × 緊急ではない'],
+      insight: '第2象限（計画・投資領域）への集中度'
+    },
+    impact: {
+      col1: '手間が小さい', col2: '手間が大きい',
+      row1: '効果が高い', row2: '効果が低い',
+      q1: ['最優先（Quick Wins）', '高効果 × 低手間'],
+      q2: ['計画投資（Major Projects）', '高効果 × 高手間'],
+      q3: ['スキマ時間・任せる', '低効果 × 低手間'],
+      q4: ['やらない・捨てる', '低効果 × 高手間'],
+      insight: '第2象限（高効果・計画投資）へのリソース比率'
+    }
+  };
+
+  let state = {
+    version: 1,
+    mode: 'eisenhower',
+    theme: 'auto',
+    tasks: [],
+    history: []
+  };
+  let editingId = null;
+  let dragState = null;
+  let toastTimer = null;
+
+  const todayStr = () => {
+    const d = new Date();
+    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+  };
+  const weekStartStr = () => {
+    const d = new Date();
+    const diff = (d.getDay() + 6) % 7;
+    d.setDate(d.getDate() - diff);
+    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+  };
+  const uid = () => `n_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 6)}`;
+  const fmtMins = m => {
+    m = Number(m) || 0;
+    if (m < 60) return `${m}分`;
+    const h = Math.floor(m / 60), r = m % 60;
+    return r ? `${h}時間${r}分` : `${h}時間`;
+  };
+
+  function notify(msg) {
+    const el = $('toast');
+    el.textContent = msg;
+    el.classList.add('show');
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(() => el.classList.remove('show'), 2400);
+  }
+
+  function load() {
+    try {
+      const raw = localStorage.getItem(STORAGE_KEY);
+      if (raw) {
+        const parsed = JSON.parse(raw);
+        if (parsed && Array.isArray(parsed.tasks)) {
+          state = Object.assign(state, parsed);
+          state.tasks.forEach(t => {
+            if (t.done) {
+              if (!t.completedAt) t.completedAt = (t.createdAt || '').slice(0, 10) || todayStr();
+              if (!t.completedZone) t.completedZone = t.zone || 't';
+            }
+          });
+        }
+      }
+    } catch (e) { /* ignore */ }
+    applyTheme();
+  }
+
+  function save() {
+    recordHistory();
+    try {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+    } catch (e) {
+      notify('保存容量の上限に達しました');
+    }
+  }
+
+  function applyTheme() {
+    if (state.theme === 'dark' || state.theme === 'light') {
+      document.documentElement.setAttribute('data-theme', state.theme);
+    } else {
+      document.documentElement.removeAttribute('data-theme');
+    }
+  }
+
+  function recordHistory() {
+    const classified = state.tasks.filter(t => t.zone !== 't' && !t.done);
+    const q2 = classified.filter(t => t.zone === '2');
+    const ratio = classified.length ? Math.round((q2.length / classified.length) * 100) : 0;
+    const ws = weekStartStr();
+    const idx = state.history.findIndex(h => h.week === ws);
+    const entry = { week: ws, ratio };
+    if (idx >= 0) state.history[idx] = entry;
+    else state.history.push(entry);
+    state.history.sort((a, b) => a.week.localeCompare(b.week));
+    if (state.history.length > 12) state.history = state.history.slice(-12);
+  }
+
+  function applyModeUI() {
+    const m = MODES[state.mode] || MODES.eisenhower;
+    document.querySelectorAll('.axis-btn').forEach(b => {
+      b.classList.toggle('active', b.dataset.mode === state.mode);
+    });
+    $('col1Label').textContent = m.col1;
+    $('col2Label').textContent = m.col2;
+    $('row1Label').textContent = m.row1;
+    $('row2Label').textContent = m.row2;
+    for (let i = 1; i <= 4; i++) {
+      $(`q${i}Title`).textContent = m[`q${i}`][0];
+      $(`q${i}Sub`).textContent = m[`q${i}`][1];
+    }
+    $('insightHeading').textContent = m.insight;
+  }
+
+  function moveTaskToZoneEnd(task, newZone) {
+    state.tasks = state.tasks.filter(t => t.id !== task.id);
+    task.zone = newZone;
+    state.tasks.push(task);
+  }
+
+  function moveTaskRelative(task, newZone, targetId, position) {
+    state.tasks = state.tasks.filter(t => t.id !== task.id);
+    task.zone = newZone;
+    const targetIdx = state.tasks.findIndex(t => t.id === targetId);
+    if (targetIdx === -1) {
+      state.tasks.push(task);
+    } else {
+      const insertIdx = position === 'after' ? targetIdx + 1 : targetIdx;
+      state.tasks.splice(insertIdx, 0, task);
+    }
+  }
+
+  function completeTask(t) {
+    t.done = true;
+    t.completedAt = todayStr();
+    t.completedTimestamp = Date.now();
+    t.completedZone = t.zone || 't';
+    save();
+    render();
+    notify('完了済みアーカイブへ移動しました');
+  }
+
+  function restoreTask(t) {
+    t.done = false;
+    const targetZone = t.completedZone || 't';
+    delete t.completedAt;
+    delete t.completedTimestamp;
+    delete t.completedZone;
+    moveTaskToZoneEnd(t, targetZone);
+    save();
+    render();
+    notify('未完了としてマトリクスに戻しました');
+  }
+
+  function createNoteEl(t) {
+    const el = document.createElement('div');
+    el.className = 'note';
+    el.dataset.id = t.id;
+    el.dataset.zoneColor = t.zone || 't';
+
+    const top = document.createElement('div');
+    top.className = 'note-top';
+
+    const chk = document.createElement('input');
+    chk.type = 'checkbox';
+    chk.className = 'note-chk';
+    chk.checked = false;
+    chk.setAttribute('aria-label', '完了にする');
+    chk.addEventListener('change', () => {
+      if (chk.checked) completeTask(t);
+    });
+
+    const title = document.createElement('div');
+    title.className = 'note-title';
+    title.textContent = t.title;
+
+    top.append(chk, title);
+    el.append(top);
+
+    if (t.memo) {
+      const memoEl = document.createElement('div');
+      memoEl.className = 'note-memo';
+      memoEl.textContent = t.memo;
+      memoEl.title = t.memo;
+      el.append(memoEl);
+    }
+
+    if (t.due || t.mins > 0) {
+      const info = document.createElement('div');
+      info.className = 'note-info';
+      if (t.due) {
+        const overdue = t.due < todayStr();
+        const sp = document.createElement('span');
+        if (overdue) sp.className = 'overdue';
+        sp.textContent = (overdue ? '期限切れ ' : '期限 ') + t.due.slice(5);
+        info.append(sp);
+      }
+      if (t.mins > 0) {
+        const sp = document.createElement('span');
+        sp.textContent = `⏱ ${fmtMins(t.mins)}`;
+        info.append(sp);
+      }
+      el.append(info);
+    }
+
+    const ops = document.createElement('div');
+    ops.className = 'note-ops';
+
+    const editBtn = document.createElement('button');
+    editBtn.type = 'button';
+    editBtn.textContent = '✎ 編集';
+    editBtn.addEventListener('click', () => openModal(t.id));
+
+    const sel = document.createElement('select');
+    sel.setAttribute('aria-label', '移動先');
+    [['t', '未分類'], ['1', 'Q1'], ['2', 'Q2'], ['3', 'Q3'], ['4', 'Q4']].forEach(([val, lbl]) => {
+      const opt = document.createElement('option');
+      opt.value = val;
+      opt.textContent = lbl;
+      if (val === t.zone) opt.selected = true;
+      sel.append(opt);
+    });
+    sel.addEventListener('change', () => {
+      moveTaskToZoneEnd(t, sel.value);
+      save();
+      render();
+    });
+
+    ops.append(editBtn, sel);
+    el.append(ops);
+    return el;
+  }
+
+  function render() {
+    applyModeUI();
+    const activeTasks = state.tasks.filter(t => !t.done);
+
+    // Unclassified tray
+    const trayList = activeTasks.filter(t => t.zone === 't');
+    const trayEl = $('zone-t');
+    $('trayCount').textContent = `${trayList.length}件`;
+    if (trayList.length) {
+      trayEl.replaceChildren(...trayList.map(createNoteEl));
+    } else {
+      trayEl.innerHTML = '<span class="tray-empty">未分類の付箋はありません</span>';
+    }
+
+    // Quadrants 1..4
+    for (let i = 1; i <= 4; i++) {
+      const zKey = String(i);
+      const list = activeTasks.filter(t => t.zone === zKey);
+      const totalMins = list.reduce((acc, t) => acc + (Number(t.mins) || 0), 0);
+      $(`meta-${i}`).textContent = totalMins > 0 ? `${list.length}件 / ${fmtMins(totalMins)}` : `${list.length}件`;
+      const body = $(`zone-${i}`);
+      if (list.length) {
+        body.replaceChildren(...list.map(createNoteEl));
+      } else {
+        body.innerHTML = '<div class="q-empty">ここへ付箋をドラッグ＆ドロップ</div>';
+      }
+    }
+
+    renderAnalytics();
+    renderArchive();
+  }
+
+  function renderArchive() {
+    const allDone = state.tasks.filter(t => t.done);
+    $('archiveTotalBadge').textContent = `(${allDone.length}件)`;
+
+    const zoneFilter = $('archZoneFilter').value;
+    const sortMode = $('archSortSelect').value;
+
+    let list = allDone.filter(t => {
+      const z = t.completedZone || t.zone || 't';
+      return zoneFilter === 'all' || z === zoneFilter;
+    });
+
+    list.sort((a, b) => {
+      const da = a.completedAt || '';
+      const db = b.completedAt || '';
+      const ta = a.completedTimestamp || 0;
+      const tb = b.completedTimestamp || 0;
+      if (sortMode === 'completedAsc') {
+        return da.localeCompare(db) || (ta - tb);
+      }
+      if (sortMode === 'zoneAsc') {
+        const order = { '1': 1, '2': 2, '3': 3, '4': 4, 't': 5 };
+        const za = order[a.completedZone || a.zone || 't'] || 9;
+        const zb = order[b.completedZone || b.zone || 't'] || 9;
+        return za - zb || db.localeCompare(da) || (tb - ta);
+      }
+      return db.localeCompare(da) || (tb - ta);
+    });
+
+    const container = $('archiveList');
+    if (!list.length) {
+      container.innerHTML = `<div style="grid-column:1/-1;text-align:center;color:var(--mute);font-size:12px;padding:18px 8px;">${
+        allDone.length ? '条件に一致する完了済みタスクはありません' : '完了済みのタスクはまだありません'
+      }</div>`;
+      return;
+    }
+
+    const m = MODES[state.mode];
+    const zoneLabel = z => {
+      if (z === '1') return `Q1: ${m.q1[0]}`;
+      if (z === '2') return `Q2: ${m.q2[0]}`;
+      if (z === '3') return `Q3: ${m.q3[0]}`;
+      if (z === '4') return `Q4: ${m.q4[0]}`;
+      return '未分類';
+    };
+
+    container.replaceChildren(...list.map(t => {
+      const z = t.completedZone || t.zone || 't';
+      const item = document.createElement('div');
+      item.className = 'archive-item';
+
+      const head = document.createElement('div');
+      head.className = 'archive-item-head';
+
+      const title = document.createElement('div');
+      title.className = 'archive-title';
+      title.textContent = t.title;
+
+      const pill = document.createElement('span');
+      pill.className = `q-pill z${z}`;
+      pill.textContent = zoneLabel(z);
+
+      head.append(title, pill);
+      item.append(head);
+
+      if (t.memo) {
+        const memoEl = document.createElement('div');
+        memoEl.className = 'archive-memo';
+        memoEl.textContent = t.memo;
+        item.append(memoEl);
+      }
+
+      const meta = document.createElement('div');
+      meta.className = 'archive-meta';
+      const compDate = document.createElement('span');
+      compDate.textContent = `📅 完了日: ${t.completedAt || '不明'}`;
+      meta.append(compDate);
+
+      if (t.mins > 0) {
+        const sp = document.createElement('span');
+        sp.textContent = `⏱ ${fmtMins(t.mins)}`;
+        meta.append(sp);
+      }
+      item.append(meta);
+
+      const actions = document.createElement('div');
+      actions.className = 'archive-actions';
+
+      const restoreBtn = document.createElement('button');
+      restoreBtn.type = 'button';
+      restoreBtn.className = 'btn small';
+      restoreBtn.textContent = '↩ 未完了に戻す';
+      restoreBtn.addEventListener('click', () => restoreTask(t));
+
+      const delBtn = document.createElement('button');
+      delBtn.type = 'button';
+      delBtn.className = 'btn small danger';
+      delBtn.textContent = '🗑 削除';
+      delBtn.addEventListener('click', () => {
+        state.tasks = state.tasks.filter(x => x.id !== t.id);
+        save();
+        render();
+        notify('アーカイブから削除しました');
+      });
+
+      actions.append(restoreBtn, delBtn);
+      item.append(actions);
+      return item;
+    }));
+  }
+
+  function renderAnalytics() {
+    const active = state.tasks.filter(t => t.zone !== 't' && !t.done);
+    const total = active.length;
+    const q2 = active.filter(t => t.zone === '2');
+    const taskPct = total ? Math.round((q2.length / total) * 100) : 0;
+
+    $('kpiTaskPct').textContent = `${taskPct}%`;
+    $('kpiTaskSub').textContent = `${q2.length} / ${total} 件（未完了ベース）`;
+
+    const timed = active.filter(t => Number(t.mins) > 0);
+    const totalM = timed.reduce((s, t) => s + Number(t.mins), 0);
+    const q2M = q2.filter(t => Number(t.mins) > 0).reduce((s, t) => s + Number(t.mins), 0);
+    if (totalM > 0) {
+      $('kpiTimePct').textContent = `${Math.round((q2M / totalM) * 100)}%`;
+      $('kpiTimeSub').textContent = `${fmtMins(q2M)} / ${fmtMins(totalM)}`;
+    } else {
+      $('kpiTimePct').textContent = '—';
+      $('kpiTimeSub').textContent = '所要時間入力で算出';
+    }
+
+    const m = MODES[state.mode];
+    $('distBars').innerHTML = [1, 2, 3, 4].map(i => {
+      const cnt = active.filter(t => t.zone === String(i)).length;
+      const pct = total ? Math.round((cnt / total) * 100) : 0;
+      return `
+        <div class="dist-bar">
+          <span>Q${i} ${m['q' + i][0].slice(0, 5)}</span>
+          <div class="dist-track"><div class="dist-fill c${i}" style="width:${pct}%"></div></div>
+          <span style="text-align:right;font-weight:700">${pct}%</span>
+        </div>`;
+    }).join('');
+
+    const hist = state.history.slice(-8);
+    $('historyChart').innerHTML = hist.length
+      ? hist.map(h => `
+          <div class="bar-col">
+            <span class="bar-val">${h.ratio}%</span>
+            <div class="bar" style="height:${Math.max(3, h.ratio)}%"></div>
+            <span class="bar-lbl">${h.week.slice(5).replace('-', '/')}</span>
+          </div>`).join('')
+      : '<div style="margin:auto;color:var(--mute);font-size:12px">週次データがここに蓄積されます</div>';
+  }
+
+  /* Quick Add */
+  $('quickForm').addEventListener('submit', e => {
+    e.preventDefault();
+    const title = $('qTitle').value.trim();
+    if (!title) return;
+    const mins = parseInt($('qMins').value, 10) || 0;
+    const zone = $('qZone').value;
+    state.tasks.push({
+      id: uid(),
+      title,
+      zone,
+      mins,
+      due: '',
+      memo: '',
+      done: false,
+      createdAt: new Date().toISOString()
+    });
+    $('qTitle').value = '';
+    $('qMins').value = '';
+    save();
+    render();
+    notify('付箋を追加しました');
+  });
+
+  /* Axis Mode Switch */
+  document.querySelectorAll('.axis-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      state.mode = btn.dataset.mode;
+      save();
+      render();
+    });
+  });
+
+  /* Theme Toggle */
+  $('themeBtn').addEventListener('click', () => {
+    const isDark = document.documentElement.getAttribute('data-theme') === 'dark' ||
+      (!document.documentElement.getAttribute('data-theme') && matchMedia('(prefers-color-scheme: dark)').matches);
+    state.theme = isDark ? 'light' : 'dark';
+    applyTheme();
+    save();
+  });
+
+  /* Help Modal */
+  const openHelp = () => $('helpModal').classList.add('open');
+  const closeHelp = () => $('helpModal').classList.remove('open');
+  $('helpBtn').addEventListener('click', openHelp);
+  $('helpCloseBtn').addEventListener('click', closeHelp);
+  $('helpModal').addEventListener('click', e => { if (e.target === $('helpModal')) closeHelp(); });
+
+  /* Archive Controls */
+  ['archZoneFilter', 'archSortSelect'].forEach(id => {
+    $(id).addEventListener('change', renderArchive);
+  });
+
+  let clearConfirmTimer = null;
+  $('clearArchiveBtn').addEventListener('click', () => {
+    const doneCount = state.tasks.filter(t => t.done).length;
+    if (!doneCount) {
+      notify('削除する完了済みタスクがありません');
+      return;
+    }
+    const btn = $('clearArchiveBtn');
+    if (btn.dataset.confirm !== '1') {
+      btn.dataset.confirm = '1';
+      btn.textContent = `⚠ 本当に${doneCount}件すべて削除する`;
+      clearConfirmTimer = setTimeout(() => {
+        btn.dataset.confirm = '';
+        btn.textContent = '🗑 すべて削除';
+      }, 3500);
+      return;
+    }
+    clearTimeout(clearConfirmTimer);
+    btn.dataset.confirm = '';
+    btn.textContent = '🗑 すべて削除';
+    state.tasks = state.tasks.filter(t => !t.done);
+    save();
+    render();
+    notify('完了済みアーカイブをすべて削除しました');
+  });
+
+  /* Pointer Drag & Drop */
+  function clearDropIndicators() {
+    document.querySelectorAll('.over').forEach(el => el.classList.remove('over'));
+    document.querySelectorAll('.insert-before, .insert-after').forEach(el => {
+      el.classList.remove('insert-before', 'insert-after');
+    });
+  }
+
+  function detectDropTarget(x, y) {
+    const el = document.elementFromPoint(x, y);
+    if (!el) return null;
+    const zoneEl = el.closest('[data-zone]');
+    if (!zoneEl) return null;
+
+    const noteEl = el.closest('.note');
+    if (noteEl && !noteEl.classList.contains('lifting') && zoneEl.contains(noteEl)) {
+      const rect = noteEl.getBoundingClientRect();
+      const pos = (x < rect.left + rect.width / 2) ? 'before' : 'after';
+      return { zone: zoneEl.dataset.zone, zoneEl, targetId: noteEl.dataset.id, noteEl, pos };
+    }
+    return { zone: zoneEl.dataset.zone, zoneEl, targetId: null, noteEl: null, pos: null };
+  }
+
+  document.addEventListener('pointerdown', e => {
+    const note = e.target.closest('.note');
+    if (!note || e.target.closest('button, select, input') || (e.pointerType === 'mouse' && e.button !== 0)) return;
+    const rect = note.getBoundingClientRect();
+    const ghost = note.cloneNode(true);
+    ghost.classList.add('drag-ghost');
+    ghost.style.width = `${rect.width}px`;
+    document.body.append(ghost);
+    dragState = {
+      id: note.dataset.id,
+      note,
+      ghost,
+      dx: e.clientX - rect.left,
+      dy: e.clientY - rect.top
+    };
+    note.classList.add('lifting');
+    moveGhost(e.clientX, e.clientY);
+    e.preventDefault();
+  });
+
+  function moveGhost(x, y) {
+    if (!dragState) return;
+    dragState.ghost.style.left = `${x - dragState.dx}px`;
+    dragState.ghost.style.top = `${y - dragState.dy}px`;
+
+    clearDropIndicators();
+    const target = detectDropTarget(x, y);
+    if (!target) return;
+
+    target.zoneEl.classList.add('over');
+    if (target.noteEl && target.pos) {
+      target.noteEl.classList.add(target.pos === 'before' ? 'insert-before' : 'insert-after');
+    }
+  }
+
+  document.addEventListener('pointermove', e => {
+    if (dragState) moveGhost(e.clientX, e.clientY);
+  });
+
+  function finishDrag(e, commit) {
+    if (!dragState) return;
+    const target = commit ? detectDropTarget(e.clientX, e.clientY) : null;
+    const task = state.tasks.find(t => t.id === dragState.id);
+    dragState.ghost.remove();
+    dragState.note.classList.remove('lifting');
+    clearDropIndicators();
+    dragState = null;
+
+    if (!target || !task) return;
+
+    const prevZone = task.zone;
+    if (target.targetId && target.targetId !== task.id) {
+      moveTaskRelative(task, target.zone, target.targetId, target.pos);
+      save();
+      render();
+      if (prevZone !== target.zone) {
+        notify(target.zone === 't' ? '未分類トレイへ戻しました' : `第${target.zone}象限へ配置しました`);
+      } else {
+        notify('順番を入れ替えました');
+      }
+    } else if (prevZone !== target.zone) {
+      moveTaskToZoneEnd(task, target.zone);
+      save();
+      render();
+      notify(target.zone === 't' ? '未分類トレイへ戻しました' : `第${target.zone}象限へ配置しました`);
+    }
+  }
+
+  document.addEventListener('pointerup', e => finishDrag(e, true));
+  document.addEventListener('pointercancel', e => finishDrag(e, false));
+
+  /* Edit Modal */
+  function openModal(id) {
+    const t = state.tasks.find(x => x.id === id);
+    if (!t) return;
+    editingId = id;
+    $('mTitle').value = t.title;
+    $('mZone').value = t.zone;
+    $('mDue').value = t.due || '';
+    $('mMins').value = t.mins || '';
+    $('mMemo').value = t.memo || '';
+    $('editModal').classList.add('open');
+    setTimeout(() => $('mTitle').focus(), 20);
+  }
+  function closeModal() {
+    $('editModal').classList.remove('open');
+    editingId = null;
+  }
+
+  $('mCancelBtn').addEventListener('click', closeModal);
+  $('editModal').addEventListener('click', e => { if (e.target === $('editModal')) closeModal(); });
+  document.addEventListener('keydown', e => {
+    if (e.key === 'Escape') {
+      closeModal();
+      closeHelp();
+    }
+  });
+
+  $('editForm').addEventListener('submit', e => {
+    e.preventDefault();
+    const t = state.tasks.find(x => x.id === editingId);
+    if (!t) return;
+    t.title = $('mTitle').value.trim() || t.title;
+    const nextZone = $('mZone').value;
+    t.due = $('mDue').value;
+    t.mins = parseInt($('mMins').value, 10) || 0;
+    t.memo = $('mMemo').value.trim();
+    if (t.zone !== nextZone) {
+      moveTaskToZoneEnd(t, nextZone);
+    }
+    save();
+    closeModal();
+    render();
+    notify('付箋を更新しました');
+  });
+
+  $('mDeleteBtn').addEventListener('click', () => {
+    if (!editingId) return;
+    state.tasks = state.tasks.filter(t => t.id !== editingId);
+    save();
+    closeModal();
+    render();
+    notify('付箋を削除しました');
+  });
+
+  /* JSON Backup & Restore */
+  $('exportBtn').addEventListener('click', () => {
+    const blob = new Blob([JSON.stringify(state, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `matrix-quadrant-${todayStr()}.json`;
+    a.click();
+    URL.revokeObjectURL(url);
+    notify('JSONバックアップを書き出しました');
+  });
+
+  $('importBtn').addEventListener('click', () => $('importFile').click());
+  $('importFile').addEventListener('change', async e => {
+    const f = e.target.files[0];
+    if (!f) return;
+    try {
+      const parsed = JSON.parse(await f.text());
+      if (!parsed || !Array.isArray(parsed.tasks)) throw new Error('invalid');
+      state = Object.assign(state, parsed);
+      save();
+      render();
+      notify(`${parsed.tasks.length}件のデータを復元しました`);
+    } catch (err) {
+      notify('不正なJSONファイルです');
+    } finally {
+      e.target.value = '';
+    }
+  });
+
+  /* PNG Export (Canvas Renderer) */
+  $('pngBtn').addEventListener('click', () => {
+    const m = MODES[state.mode];
+    const W = 1280, H = 860, pad = 36, headerH = 84, gap = 18;
+    const qW = (W - pad * 2 - gap) / 2;
+    const qH = (H - pad * 2 - headerH - gap) / 2;
+
+    const canvas = document.createElement('canvas');
+    canvas.width = W;
+    canvas.height = H;
+    const ctx = canvas.getContext('2d');
+
+    ctx.fillStyle = '#f4f6f9';
+    ctx.fillRect(0, 0, W, H);
+
+    ctx.fillStyle = '#172033';
+    ctx.font = 'bold 26px sans-serif';
+    ctx.fillText(`マトリクス思考 4象限マッピング（${state.mode === 'eisenhower' ? '緊急度 × 重要度' : '効果 × 手間'}）`, pad, pad + 32);
+
+    ctx.fillStyle = '#64748b';
+    ctx.font = '14px sans-serif';
+    ctx.fillText(`出力日: ${todayStr()}`, pad, pad + 56);
+
+    const configs = [
+      { q: '1', x: pad, y: pad + headerH, bg: '#fff2f0', bd: '#fecaca', ink: '#b93832', noteBg: '#ffe4e1' },
+      { q: '2', x: pad + qW + gap, y: pad + headerH, bg: '#ecf9f1', bd: '#86efac', ink: '#147a4c', noteBg: '#dcfce7' },
+      { q: '3', x: pad, y: pad + headerH + qH + gap, bg: '#fff8eb', bd: '#fde68a', ink: '#a65b08', noteBg: '#fef3c7' },
+      { q: '4', x: pad + qW + gap, y: pad + headerH + qH + gap, bg: '#f1f5f9', bd: '#cbd5e1', ink: '#475569', noteBg: '#e2e8f0' }
+    ];
+
+    configs.forEach(c => {
+      ctx.fillStyle = '#ffffff';
+      ctx.strokeStyle = c.bd;
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.roundRect(c.x, c.y, qW, qH, 16);
+      ctx.fill();
+      ctx.stroke();
+
+      ctx.fillStyle = c.bg;
+      ctx.beginPath();
+      ctx.roundRect(c.x + 1, c.y + 1, qW - 2, 54, [15, 15, 0, 0]);
+      ctx.fill();
+
+      ctx.fillStyle = c.ink;
+      ctx.font = 'bold 18px sans-serif';
+      ctx.fillText(`Q${c.q}: ${m['q' + c.q][0]}`, c.x + 18, c.y + 26);
+      ctx.fillStyle = '#64748b';
+      ctx.font = '12px sans-serif';
+      ctx.fillText(m['q' + c.q][1], c.x + 18, c.y + 44);
+
+      const items = state.tasks.filter(t => t.zone === c.q && !t.done);
+      const cols = 3, cardGap = 10;
+      const cardW = (qW - 36 - cardGap * (cols - 1)) / cols;
+      const cardH = 58;
+
+      items.slice(0, 12).forEach((t, idx) => {
+        const col = idx % cols;
+        const row = Math.floor(idx / cols);
+        const cx = c.x + 18 + col * (cardW + cardGap);
+        const cy = c.y + 68 + row * (cardH + cardGap);
+
+        ctx.fillStyle = c.noteBg;
+        ctx.beginPath();
+        ctx.roundRect(cx, cy, cardW, cardH, 8);
+        ctx.fill();
+
+        ctx.fillStyle = '#172033';
+        ctx.font = 'bold 13px sans-serif';
+        const txt = t.title.length > 14 ? t.title.slice(0, 13) + '…' : t.title;
+        ctx.fillText(txt, cx + 10, cy + 25);
+
+        if (t.mins > 0) {
+          ctx.fillStyle = '#475569';
+          ctx.font = '11px sans-serif';
+          ctx.fillText(`⏱ ${fmtMins(t.mins)}`, cx + 10, cy + 45);
+        }
+      });
+    });
+
+    const a = document.createElement('a');
+    a.href = canvas.toDataURL('image/png');
+    a.download = `matrix-${state.mode}-${todayStr()}.png`;
+    a.click();
+    notify('マトリクス画像をPNG保存しました');
+  });
+
+  load();
+  render();
+})();
+</script>
+</body>
+</html>

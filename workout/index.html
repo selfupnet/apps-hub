@@ -1,0 +1,1529 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>週間運動ルーティン＆デイリー実施トラッカー - Workout Routine</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@600;700;800&family=Noto+Sans+JP:wght@400;500;700;900&family=Plus+Jakarta+Sans:wght@600;700;800&display=swap');
+    body {
+      font-family: 'Plus Jakarta Sans', 'Noto Sans JP', sans-serif;
+    }
+    .font-mono-num {
+      font-family: 'JetBrains Mono', monospace;
+    }
+    @keyframes popIn {
+      0% { transform: scale(0.94); opacity: 0; }
+      75% { transform: scale(1.02); opacity: 1; }
+      100% { transform: scale(1); opacity: 1; }
+    }
+    .animate-pop {
+      animation: popIn 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+    }
+  </style>
+</head>
+<body class="bg-slate-50 text-slate-800 min-h-screen flex flex-col justify-between selection:bg-emerald-600 selection:text-white">
+
+  <!-- ヘッダー -->
+  <header class="bg-white border-b border-slate-200 sticky top-0 z-30 shadow-2xs">
+    <div class="max-w-4xl mx-auto px-4 py-3 flex items-center justify-between gap-2">
+      <a href="../" class="inline-flex items-center gap-1.5 text-xs font-semibold text-slate-500 hover:text-slate-900 transition py-1.5 px-3 rounded-xl bg-slate-100 hover:bg-slate-200">
+        <i class="fa-solid fa-arrow-left text-[10px]"></i>
+        <span>Apps Hub</span>
+      </a>
+
+      <div class="flex items-center gap-2 min-w-0">
+        <div class="w-7 h-7 rounded-lg bg-emerald-600 text-white flex items-center justify-center text-sm shadow-2xs shrink-0">
+          <i class="fa-solid fa-dumbbell"></i>
+        </div>
+        <h1 class="text-sm sm:text-base font-black text-slate-900 tracking-tight truncate">週間運動ルーティン</h1>
+      </div>
+
+      <div class="flex items-center gap-1.5 shrink-0">
+        <button id="btn-sound-toggle" onclick="toggleSound()" class="w-8 h-8 rounded-xl flex items-center justify-center text-slate-600 hover:text-slate-900 bg-slate-100 hover:bg-slate-200 transition text-xs" title="効果音のオン/オフ">
+          <i id="icon-sound" class="fa-solid fa-volume-high text-emerald-600"></i>
+        </button>
+        <button onclick="openDataModal()" class="inline-flex items-center gap-1.5 text-xs font-bold text-slate-600 hover:text-slate-900 bg-slate-100 hover:bg-slate-200 px-3 py-1.5 rounded-xl transition" title="データ保護・バックアップ">
+          <i class="fa-solid fa-shield-halved text-emerald-600"></i>
+          <span class="hidden sm:inline">データ保護・JSON</span>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- メインコンテンツ -->
+  <main class="max-w-4xl mx-auto px-3 sm:px-6 py-5 space-y-5 flex-1 w-full">
+
+    <!-- ① 週間スケジュール設計（月〜日の7曜日バー） -->
+    <section class="bg-white rounded-3xl p-4 sm:p-6 border border-slate-200/80 shadow-xs space-y-3.5">
+      <div class="flex items-center justify-between gap-2">
+        <div class="flex items-center gap-2">
+          <span class="w-6 h-6 rounded-lg bg-emerald-50 text-emerald-600 flex items-center justify-center text-xs font-bold">
+            <i class="fa-solid fa-calendar-week"></i>
+          </span>
+          <h2 class="text-sm sm:text-base font-black text-slate-900">マイルーティン（月〜日）</h2>
+        </div>
+        <button onclick="openPlanModal()" class="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-white text-xs font-bold transition shadow-2xs">
+          <i class="fa-solid fa-pen-to-square"></i>
+          <span>ルーティン編集</span>
+        </button>
+      </div>
+
+      <!-- 7曜日コンパクトバー -->
+      <div id="weekly-plan-bar" class="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-7 gap-2">
+        <!-- JSで描画 -->
+      </div>
+
+      <p class="text-[11px] text-slate-400 flex items-center gap-1.5">
+        <i class="fa-solid fa-circle-info text-slate-400"></i>
+        <span>各曜日カードをタップすると、複数メニューの追加・削除やテンプレート切り替えが行えます。</span>
+      </p>
+    </section>
+
+    <!-- ② 本日のメニュー表示（複数メニュー対応）＆ クイック結果登録 -->
+    <section class="bg-white rounded-3xl p-5 sm:p-7 border border-slate-200/80 shadow-xs space-y-5">
+      <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-3 border-b border-slate-100">
+        <div>
+          <div class="flex items-center gap-2 flex-wrap">
+            <span id="today-date-label" class="text-xs font-bold text-slate-500">2026年11月20日 (金)</span>
+            <span id="today-recorded-badge" class="hidden px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
+              記録済み
+            </span>
+          </div>
+          <h2 class="text-base sm:text-lg font-black text-slate-900 mt-1">本日の予定メニュー</h2>
+        </div>
+        <div id="today-plan-type-pill" class="self-start sm:self-center px-3 py-1 rounded-full text-xs font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
+          💪 筋トレ
+        </div>
+      </div>
+
+      <!-- 本日の予定メニューリストボックス -->
+      <div class="rounded-2xl p-4 sm:p-5 bg-slate-50 border border-slate-200/80 space-y-3">
+        <div class="flex items-center justify-between">
+          <span class="text-xs font-bold text-slate-500 flex items-center gap-1.5">
+            <span id="today-menu-emoji" class="text-base">💪</span>
+            <span id="today-menu-summary">全 2 メニュー</span>
+          </span>
+          <button type="button" onclick="openPlanModal(new Date().getDay())" class="text-[11px] font-bold text-emerald-700 hover:underline">
+            メニューを変更
+          </button>
+        </div>
+        <ul id="today-menu-list" class="space-y-2">
+          <!-- JSで複数メニューを描画 -->
+        </ul>
+      </div>
+
+      <!-- 4段階ワンタップ実施ステータス選択 -->
+      <div class="space-y-2">
+        <label class="block text-xs font-bold text-slate-600">今日の実施結果を選択してください</label>
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5" id="status-selector-grid">
+          <button type="button" onclick="selectTodayStatus('done')" data-status="done" class="status-choice-btn p-3.5 rounded-2xl border-2 border-slate-200 bg-white hover:border-emerald-400 text-left transition flex items-center gap-3">
+            <span class="text-2xl shrink-0">🟢</span>
+            <div>
+              <div class="text-sm font-black text-slate-900">達成できた！</div>
+              <div class="text-[11px] text-slate-500">予定通り完遂（達成率 100%）</div>
+            </div>
+          </button>
+
+          <button type="button" onclick="selectTodayStatus('partial')" data-status="partial" class="status-choice-btn p-3.5 rounded-2xl border-2 border-slate-200 bg-white hover:border-amber-400 text-left transition flex items-center gap-3">
+            <span class="text-2xl shrink-0">🟡</span>
+            <div>
+              <div class="text-sm font-black text-slate-900">少しだけやった</div>
+              <div class="text-[11px] text-slate-500">縮退運転・5分だけ実施（達成率 50%）</div>
+            </div>
+          </button>
+
+          <button type="button" onclick="selectTodayStatus('rest')" data-status="rest" class="status-choice-btn p-3.5 rounded-2xl border-2 border-slate-200 bg-white hover:border-sky-400 text-left transition flex items-center gap-3">
+            <span class="text-2xl shrink-0">☕</span>
+            <div>
+              <div class="text-sm font-black text-slate-900">しっかり休養した</div>
+              <div class="text-[11px] text-slate-500">休息日遵守・体調優先（達成率 100%）</div>
+            </div>
+          </button>
+
+          <button type="button" onclick="selectTodayStatus('skip')" data-status="skip" class="status-choice-btn p-3.5 rounded-2xl border-2 border-slate-200 bg-white hover:border-slate-400 text-left transition flex items-center gap-3">
+            <span class="text-2xl shrink-0">⚪</span>
+            <div>
+              <div class="text-sm font-black text-slate-900">できなかった・スキップ</div>
+              <div class="text-[11px] text-slate-500">急用・見送り（達成率 0%）</div>
+            </div>
+          </button>
+        </div>
+      </div>
+
+      <!-- ひとことメモ ＆ 記録ボタン -->
+      <div class="space-y-3 pt-1">
+        <div>
+          <label for="today-log-note" class="block text-xs font-bold text-slate-600 mb-1">ひとことメモ（回数・セット数・体調など任意）</label>
+          <input type="text" id="today-log-note" maxlength="120" placeholder="例：腕立て15回×3セット完了、最後のストレッチが気持ちよかった" class="w-full px-3.5 py-2.5 rounded-2xl border border-slate-200 bg-slate-50 focus:bg-white focus:border-emerald-500 focus:outline-none text-sm text-slate-800 transition">
+        </div>
+
+        <button type="button" onclick="saveTodayLog()" id="btn-save-today" class="w-full py-3.5 rounded-2xl bg-emerald-600 hover:bg-emerald-700 text-white font-black text-sm shadow-md shadow-emerald-600/20 active:scale-[0.99] transition flex items-center justify-center gap-2">
+          <i class="fa-solid fa-check-circle"></i>
+          <span id="btn-save-today-label">記録する</span>
+        </button>
+
+        <!-- 保存フィードバックバナー -->
+        <div id="save-toast" class="hidden rounded-2xl p-3.5 bg-emerald-50 border border-emerald-200 text-emerald-900 text-xs font-bold flex items-center justify-between animate-pop">
+          <div class="flex items-center gap-2">
+            <span class="text-base">✨</span>
+            <span id="save-toast-text">本日の実施結果を保存しました！</span>
+          </div>
+          <button type="button" onclick="document.getElementById('save-toast').classList.add('hidden')" class="text-emerald-600 hover:text-emerald-800 px-1">✕</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- ③ 継続統計ダッシュボード（3カード） -->
+    <section class="grid grid-cols-1 md:grid-cols-3 gap-3.5">
+      <!-- 1) 今週のルーティン達成率 -->
+      <div class="bg-white rounded-3xl p-5 border border-slate-200/80 shadow-xs flex flex-col justify-between">
+        <div>
+          <div class="flex items-center justify-between">
+            <span class="text-xs font-bold text-slate-400">今週のルーティン達成率</span>
+            <span class="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700">休養100%換算</span>
+          </div>
+          <div class="mt-2 flex items-baseline gap-1">
+            <span id="stat-week-rate" class="text-4xl font-black text-emerald-600 font-mono-num">0</span>
+            <span class="text-sm font-bold text-slate-500">%</span>
+          </div>
+        </div>
+        <div class="mt-3 pt-3 border-t border-slate-100">
+          <div class="w-full h-2 bg-slate-100 rounded-full overflow-hidden">
+            <div id="stat-week-bar" class="h-full bg-emerald-500 rounded-full transition-all duration-300" style="width: 0%"></div>
+          </div>
+          <p id="stat-week-sub" class="text-[11px] text-slate-500 mt-1.5">今週（月〜今日）達成スコア: 0 / 0日</p>
+        </div>
+      </div>
+
+      <!-- 2) 現在の連続継続日数 -->
+      <div class="bg-white rounded-3xl p-5 border border-slate-200/80 shadow-xs flex flex-col justify-between">
+        <div>
+          <div class="flex items-center justify-between">
+            <span class="text-xs font-bold text-slate-400">現在の連続継続日数</span>
+            <span id="badge-best-streak" class="hidden text-[10px] font-bold px-2 py-0.5 rounded-full bg-amber-100 text-amber-800">最長更新中</span>
+          </div>
+          <div class="mt-2 flex items-baseline gap-1.5">
+            <span id="stat-current-streak" class="text-4xl font-black text-slate-900 font-mono-num">0</span>
+            <span class="text-sm font-bold text-slate-500">日連続</span>
+          </div>
+        </div>
+        <div class="mt-3 pt-3 border-t border-slate-100 flex items-center justify-between text-xs">
+          <span class="text-slate-500">歴代最長記録</span>
+          <span class="font-bold text-amber-600 font-mono-num">🏆 <span id="stat-max-streak">0</span>日</span>
+        </div>
+      </div>
+
+      <!-- 3) 今月の活動バランス -->
+      <div class="bg-white rounded-3xl p-5 border border-slate-200/80 shadow-xs flex flex-col justify-between">
+        <div>
+          <span class="text-xs font-bold text-slate-400">今月の活動バランス</span>
+          <div class="mt-2.5 grid grid-cols-3 gap-1.5 text-center">
+            <div class="bg-emerald-50/70 rounded-xl p-2 border border-emerald-100">
+              <div class="text-xs">🟢 完遂</div>
+              <div class="text-lg font-black text-emerald-700 font-mono-num mt-0.5"><span id="stat-month-done">0</span><span class="text-[10px] font-bold ml-0.5">日</span></div>
+            </div>
+            <div class="bg-amber-50/70 rounded-xl p-2 border border-amber-100">
+              <div class="text-xs">🟡 縮退</div>
+              <div class="text-lg font-black text-amber-700 font-mono-num mt-0.5"><span id="stat-month-partial">0</span><span class="text-[10px] font-bold ml-0.5">日</span></div>
+            </div>
+            <div class="bg-sky-50/70 rounded-xl p-2 border border-sky-100">
+              <div class="text-xs">☕ 休養</div>
+              <div class="text-lg font-black text-sky-700 font-mono-num mt-0.5"><span id="stat-month-rest">0</span><span class="text-[10px] font-bold ml-0.5">日</span></div>
+            </div>
+          </div>
+        </div>
+        <div class="mt-3 pt-3 border-t border-slate-100 flex items-center justify-between text-xs text-slate-500">
+          <span>今月の継続率（完遂+縮退+休養）</span>
+          <span class="font-black text-slate-800 font-mono-num"><span id="stat-month-rate">0</span>%</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- ④ 月間達成カレンダー -->
+    <section class="bg-white rounded-3xl p-4 sm:p-6 border border-slate-200/80 shadow-xs space-y-4">
+      <div class="flex items-center justify-between">
+        <h2 id="calendar-month-title" class="text-lg sm:text-xl font-black text-slate-900">2026年 11月</h2>
+        <div class="flex items-center gap-1 bg-slate-100 p-1 rounded-2xl">
+          <button type="button" onclick="changeMonth(-1)" class="w-8 h-8 flex items-center justify-center rounded-xl hover:bg-white text-slate-600 transition" aria-label="前月">
+            <i class="fa-solid fa-chevron-left text-xs"></i>
+          </button>
+          <button type="button" onclick="resetToCurrentMonth()" class="px-3 py-1 text-xs font-bold rounded-xl hover:bg-white text-slate-700 transition">
+            今月
+          </button>
+          <button type="button" onclick="changeMonth(1)" class="w-8 h-8 flex items-center justify-center rounded-xl hover:bg-white text-slate-600 transition" aria-label="翌月">
+            <i class="fa-solid fa-chevron-right text-xs"></i>
+          </button>
+        </div>
+      </div>
+
+      <!-- 曜日ヘッダー（月曜始まり、土曜=青、日曜=赤） -->
+      <div class="grid grid-cols-7 gap-1 sm:gap-2 text-center text-xs font-bold">
+        <div class="py-1.5 text-slate-500">月</div>
+        <div class="py-1.5 text-slate-500">火</div>
+        <div class="py-1.5 text-slate-500">水</div>
+        <div class="py-1.5 text-slate-500">木</div>
+        <div class="py-1.5 text-slate-500">金</div>
+        <div class="py-1.5 text-blue-600 bg-blue-50/70 rounded-lg">土</div>
+        <div class="py-1.5 text-rose-600 bg-rose-50/70 rounded-lg">日</div>
+      </div>
+
+      <!-- カレンダーグリッド -->
+      <div id="calendar-grid" class="grid grid-cols-7 gap-1 sm:gap-2">
+        <!-- JSで描画 -->
+      </div>
+
+      <!-- 凡例ガイド -->
+      <div class="pt-3 border-t border-slate-100 flex flex-wrap items-center justify-between gap-2 text-[11px] text-slate-500">
+        <div class="flex flex-wrap items-center gap-3">
+          <span>🟢 達成</span>
+          <span>🟡 少しだけ</span>
+          <span>☕ しっかり休養</span>
+          <span>⚪ スキップ</span>
+        </div>
+        <span class="text-slate-400">※当日・過去日のマスをタップして記録確認・修正が可能</span>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- 統一免責フッター（正式定型文のみ・コピーライト禁止） -->
+  <footer class="mt-8 py-6 text-center border-t border-slate-200">
+    <div class="max-w-4xl mx-auto px-4">
+      <p class="text-[11px] text-slate-400">
+        ※個人開発プロトタイプにつき無保証・自己責任にてご利用ください（データは端末内完結・サポート対象外）
+      </p>
+    </div>
+  </footer>
+
+  <!-- =========================================================
+       モーダル1: 週間ルーティン設定モーダル（月〜日・複数メニュー対応）
+       ========================================================= -->
+  <div id="plan-modal" class="fixed inset-0 bg-slate-900/50 backdrop-blur-xs z-50 hidden flex items-center justify-center p-4">
+    <div class="bg-white rounded-3xl p-5 sm:p-6 max-w-2xl w-full max-h-[90vh] flex flex-col space-y-4 shadow-2xl">
+      <div class="flex items-center justify-between pb-3 border-b border-slate-100">
+        <div>
+          <h3 class="font-black text-base text-slate-900">週間ルーティン設定（月〜日）</h3>
+          <p class="text-[11px] text-slate-500">曜日ごとにカテゴリと複数メニュー（追加・削除自在）を設定できます</p>
+        </div>
+        <button type="button" onclick="closePlanModal()" class="w-8 h-8 rounded-full flex items-center justify-center text-slate-400 hover:bg-slate-100">✕</button>
+      </div>
+
+      <!-- クイックテンプレート適用バー -->
+      <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 bg-slate-50 p-3 rounded-2xl border border-slate-200/70 text-xs">
+        <span class="font-bold text-slate-600">クイックテンプレート:</span>
+        <div class="flex items-center gap-1.5 flex-wrap">
+          <button type="button" onclick="applyWeeklyPreset('standard')" class="px-3 py-1.5 rounded-xl bg-white border border-slate-200 hover:border-emerald-500 hover:text-emerald-700 font-bold text-slate-700 transition shadow-2xs">標準バランス</button>
+          <button type="button" onclick="applyWeeklyPreset('light3')" class="px-3 py-1.5 rounded-xl bg-white border border-slate-200 hover:border-emerald-500 hover:text-emerald-700 font-bold text-slate-700 transition shadow-2xs">ゆるめ週3運動</button>
+          <button type="button" onclick="applyWeeklyPreset('dailyLight')" class="px-3 py-1.5 rounded-xl bg-white border border-slate-200 hover:border-emerald-500 hover:text-emerald-700 font-bold text-slate-700 transition shadow-2xs">毎日軽運動</button>
+        </div>
+      </div>
+
+      <!-- 7曜日フォームリスト -->
+      <div id="plan-editor-list" class="flex-1 overflow-y-auto space-y-3.5 pr-1">
+        <!-- JSで描画 -->
+      </div>
+
+      <div class="flex items-center gap-2 pt-2 border-t border-slate-100">
+        <button type="button" onclick="closePlanModal()" class="px-4 py-3 rounded-2xl bg-slate-100 hover:bg-slate-200 text-slate-600 font-bold text-xs transition">
+          キャンセル
+        </button>
+        <button type="button" onclick="saveWeeklyPlanForm()" class="flex-1 py-3 rounded-2xl bg-emerald-600 hover:bg-emerald-700 text-white font-black text-xs shadow-md transition">
+          週間ルーティンを保存する
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- =========================================================
+       モーダル2: 日付別記録・履歴モーダル（過去・当日修正用）
+       ========================================================= -->
+  <div id="day-log-modal" class="fixed inset-0 bg-slate-900/50 backdrop-blur-xs z-50 hidden flex items-center justify-center p-4">
+    <div class="bg-white rounded-3xl p-5 sm:p-6 max-w-md w-full max-h-[90vh] overflow-y-auto space-y-4 shadow-2xl">
+      <div class="flex items-center justify-between pb-2 border-b border-slate-100">
+        <div>
+          <span id="modal-day-date" class="text-xs font-bold text-emerald-600 font-mono-num">2026-11-20</span>
+          <h3 id="modal-day-title" class="font-black text-base text-slate-900">実施記録の確認・編集</h3>
+        </div>
+        <button type="button" onclick="closeDayLogModal()" class="w-8 h-8 rounded-full flex items-center justify-center text-slate-400 hover:bg-slate-100">✕</button>
+      </div>
+
+      <!-- その日の対象メニュー履歴表示 -->
+      <div class="p-3 rounded-2xl bg-slate-50 border border-slate-200/80 space-y-1.5">
+        <div class="text-[11px] font-bold text-slate-500">対象メニュー履歴</div>
+        <ul id="modal-day-menu-list" class="space-y-1 text-xs font-bold text-slate-800">
+          <!-- JSで描画 -->
+        </ul>
+      </div>
+
+      <!-- 4段階ステータス選択 -->
+      <div class="space-y-1.5">
+        <label class="text-xs font-bold text-slate-600">実施ステータス</label>
+        <div class="grid grid-cols-2 gap-2" id="modal-day-status-grid">
+          <button type="button" onclick="selectModalDayStatus('done')" data-mstatus="done" class="modal-status-btn p-2.5 rounded-xl border-2 border-slate-200 text-xs font-bold flex items-center gap-2 transition">
+            <span>🟢</span><span>達成できた</span>
+          </button>
+          <button type="button" onclick="selectModalDayStatus('partial')" data-mstatus="partial" class="modal-status-btn p-2.5 rounded-xl border-2 border-slate-200 text-xs font-bold flex items-center gap-2 transition">
+            <span>🟡</span><span>少しだけやった</span>
+          </button>
+          <button type="button" onclick="selectModalDayStatus('rest')" data-mstatus="rest" class="modal-status-btn p-2.5 rounded-xl border-2 border-slate-200 text-xs font-bold flex items-center gap-2 transition">
+            <span>☕</span><span>しっかり休養</span>
+          </button>
+          <button type="button" onclick="selectModalDayStatus('skip')" data-mstatus="skip" class="modal-status-btn p-2.5 rounded-xl border-2 border-slate-200 text-xs font-bold flex items-center gap-2 transition">
+            <span>⚪</span><span>スキップ</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- メモ -->
+      <div class="space-y-1">
+        <label class="text-xs font-bold text-slate-600">メモ（任意）</label>
+        <input type="text" id="modal-day-note" maxlength="120" placeholder="回数・時間・体調メモなど" class="w-full px-3 py-2 rounded-xl border border-slate-200 text-sm text-slate-800 bg-slate-50 focus:bg-white focus:border-emerald-500 focus:outline-none">
+      </div>
+
+      <div class="flex items-center gap-2 pt-2">
+        <button type="button" id="btn-delete-day-log" onclick="deleteDayLog()" class="px-3.5 py-2.5 rounded-xl bg-slate-100 hover:bg-rose-50 text-slate-500 hover:text-rose-600 font-bold text-xs transition hidden">
+          記録削除
+        </button>
+        <button type="button" onclick="saveModalDayLog()" class="flex-1 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-black text-xs shadow-sm transition">
+          この内容で保存
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- =========================================================
+       モーダル3: データ保護・JSONバックアップ＆Safari対策ガイド
+       ========================================================= -->
+  <div id="data-modal" class="fixed inset-0 bg-slate-900/50 backdrop-blur-xs z-50 hidden flex items-center justify-center p-4">
+    <div class="bg-white rounded-3xl p-5 sm:p-6 max-w-md w-full space-y-4 shadow-2xl">
+      <div class="flex items-center justify-between pb-2 border-b border-slate-100">
+        <h3 class="font-black text-base text-slate-900 flex items-center gap-2">
+          <i class="fa-solid fa-shield-halved text-emerald-600"></i>
+          データ保護・バックアップ
+        </h3>
+        <button type="button" onclick="closeDataModal()" class="w-8 h-8 rounded-full flex items-center justify-center text-slate-400 hover:bg-slate-100">✕</button>
+      </div>
+
+      <div class="space-y-2 text-xs">
+        <p class="font-bold text-slate-700">週間ルーティン ＆ 全実施履歴のJSON書き出し／復元</p>
+        <div class="flex gap-2">
+          <button type="button" onclick="exportJsonData()" class="flex-1 py-2.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-white font-bold transition flex items-center justify-center gap-1.5">
+            <i class="fa-solid fa-download"></i> JSON保存
+          </button>
+          <label class="flex-1 py-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-center cursor-pointer transition flex items-center justify-center gap-1.5">
+            <i class="fa-solid fa-upload"></i> JSON復元
+            <input type="file" accept=".json" onchange="importJsonData(event)" class="hidden">
+          </label>
+        </div>
+        <div id="data-modal-feedback" class="hidden p-2.5 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-800 font-bold text-[11px]"></div>
+      </div>
+
+      <!-- Safari 7日間ITP自動消去対策ガイド -->
+      <div class="p-3.5 rounded-2xl bg-amber-50 border border-amber-200/80 space-y-1.5 text-[11px] text-amber-950">
+        <p class="font-bold flex items-center gap-1.5 text-amber-800">
+          <i class="fa-solid fa-triangle-exclamation"></i>
+          iPhone / Safari をご利用の方へ（データ消失防止）
+        </p>
+        <p class="leading-relaxed opacity-90">
+          ブラウザの仕様により、<strong>7日間アクセスがないと保存データが自動消去</strong>される場合があります。大切な記録を守るため、以下の対策をおすすめします：
+        </p>
+        <ul class="list-disc pl-4 space-y-0.5 opacity-90">
+          <li>共有ボタンから<strong>「ホーム画面に追加」</strong>してアプリ化する</li>
+          <li>週末などの節目ごとに上の「JSON保存」でバックアップファイルを残す</li>
+        </ul>
+      </div>
+
+      <button type="button" onclick="closeDataModal()" class="w-full py-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs transition">
+        閉じる
+      </button>
+    </div>
+  </div>
+
+  <script>
+    /* =========================================================
+       1. 定数・マスター定義
+       ========================================================= */
+    const STORAGE_KEY = 'appshub_workout_v1';
+
+    const TYPE_META = {
+      strength: { label: '筋トレ', emoji: '💪', badgeClass: 'bg-rose-50 text-rose-700 border-rose-200' },
+      cardio:   { label: '有酸素', emoji: '🏃', badgeClass: 'bg-emerald-50 text-emerald-700 border-emerald-200' },
+      light:    { label: 'ストレッチ・軽運動', emoji: '🧘', badgeClass: 'bg-amber-50 text-amber-700 border-amber-200' },
+      rest:     { label: '完全休養日', emoji: '☕', badgeClass: 'bg-sky-50 text-sky-700 border-sky-200' }
+    };
+
+    const STATUS_META = {
+      done:    { label: '達成できた！', short: '達成', emoji: '🟢', score: 1.0, active: true },
+      partial: { label: '少しだけやった', short: '少し', emoji: '🟡', score: 0.5, active: true },
+      rest:    { label: 'しっかり休養した', short: '休養', emoji: '☕', score: 1.0, active: true },
+      skip:    { label: 'スキップ', short: '見送り', emoji: '⚪', score: 0.0, active: false }
+    };
+
+    const WEEKDAY_ORDER = [
+      { dow: 1, name: '月曜日', short: '月' },
+      { dow: 2, name: '火曜日', short: '火' },
+      { dow: 3, name: '水曜日', short: '水' },
+      { dow: 4, name: '木曜日', short: '木' },
+      { dow: 5, name: '金曜日', short: '金' },
+      { dow: 6, name: '土曜日', short: '土' },
+      { dow: 0, name: '日曜日', short: '日' }
+    ];
+
+    /* 3種類のクイックテンプレート（複数メニュー配列対応） */
+    const PRESETS = {
+      standard: {
+        "1": {
+          type: "strength",
+          items: [
+            { title: "腕立て伏せ", detail: "15回 × 3セット" },
+            { title: "ダンベルプレス / フライ", detail: "10回 × 3セット" },
+            { title: "肩・胸ストレッチ", detail: "5分" }
+          ]
+        },
+        "2": {
+          type: "cardio",
+          items: [
+            { title: "軽いジョギング・早歩き", detail: "30分（会話できるペース）" },
+            { title: "ふくらはぎ・股関節ストレッチ", detail: "5分" }
+          ]
+        },
+        "3": {
+          type: "rest",
+          items: [
+            { title: "完全休養日（超回復）", detail: "湯船に浸かって早めに就寝" }
+          ]
+        },
+        "4": {
+          type: "strength",
+          items: [
+            { title: "プランク", detail: "1分 × 3セット" },
+            { title: "バックエクステンション", detail: "15回 × 3セット" },
+            { title: "クランチ（腹筋）", detail: "15回 × 2セット" }
+          ]
+        },
+        "5": {
+          type: "light",
+          items: [
+            { title: "ウォーキング", detail: "20分" },
+            { title: "全身リラックスストレッチ", detail: "10分" }
+          ]
+        },
+        "6": {
+          type: "cardio",
+          items: [
+            { title: "ワイドスクワット", detail: "15回 × 3セット" },
+            { title: "サイクリング or 散歩", detail: "30分" }
+          ]
+        },
+        "0": {
+          type: "rest",
+          items: [
+            { title: "完全休養日（心身リセット）", detail: "来週に向けてしっかり休息" }
+          ]
+        }
+      },
+      light3: {
+        "1": {
+          type: "strength",
+          items: [
+            { title: "自重スクワット", detail: "12回 × 2セット" },
+            { title: "膝つき腕立て伏せ", detail: "10回 × 2セット" }
+          ]
+        },
+        "2": {
+          type: "rest",
+          items: [
+            { title: "完全休養日", detail: "無理せず休む" }
+          ]
+        },
+        "3": {
+          type: "cardio",
+          items: [
+            { title: "ウォーキング", detail: "20分（外の空気を吸う）" }
+          ]
+        },
+        "4": {
+          type: "rest",
+          items: [
+            { title: "完全休養日", detail: "無理せず休む" }
+          ]
+        },
+        "5": {
+          type: "light",
+          items: [
+            { title: "肩甲骨・股関節ストレッチ", detail: "10分" }
+          ]
+        },
+        "6": {
+          type: "rest",
+          items: [
+            { title: "完全休養日", detail: "自由時間・リフレッシュ" }
+          ]
+        },
+        "0": {
+          type: "rest",
+          items: [
+            { title: "完全休養日", detail: "早めに寝て体調を整える" }
+          ]
+        }
+      },
+      dailyLight: {
+        "1": {
+          type: "light",
+          items: [
+            { title: "朝のラジオ体操", detail: "第1・第2（約6分）" },
+            { title: "寝る前ストレッチ", detail: "5分" }
+          ]
+        },
+        "2": {
+          type: "cardio",
+          items: [
+            { title: "一駅分ウォーキング", detail: "15〜20分" }
+          ]
+        },
+        "3": {
+          type: "light",
+          items: [
+            { title: "肩こり・腰痛ほぐし", detail: "10分" },
+            { title: "深呼吸・姿勢リセット", detail: "3分" }
+          ]
+        },
+        "4": {
+          type: "strength",
+          items: [
+            { title: "ゆる腹筋・プランク", detail: "30秒 × 2セット" },
+            { title: "かかと上げ運動", detail: "20回" }
+          ]
+        },
+        "5": {
+          type: "cardio",
+          items: [
+            { title: "リフレッシュ散歩", detail: "20分" }
+          ]
+        },
+        "6": {
+          type: "light",
+          items: [
+            { title: "ヨガ・全身ストレッチ", detail: "15分" }
+          ]
+        },
+        "0": {
+          type: "rest",
+          items: [
+            { title: "完全休養日", detail: "週1回の完全オフ日" }
+          ]
+        }
+      }
+    };
+
+    /* =========================================================
+       2. アプリ状態管理 ＆ 後方互換データ正規化
+       ========================================================= */
+    let appData = {
+      soundEnabled: true,
+      weeklyPlan: JSON.parse(JSON.stringify(PRESETS.standard)),
+      logs: {} // { "YYYY-MM-DD": { status, items: [{title, detail}], note } }
+    };
+
+    let selectedTodayStatus = 'done';
+    let calendarViewDate = new Date();
+    let editingDateStr = null;
+    let modalSelectedStatus = 'done';
+    let draftPlan = null; // ルーティン編集モーダル内の作業用コピー
+
+    function initApp() {
+      loadStorage();
+      updateSoundIcon();
+      renderWeeklyPlanBar();
+      setupTodaySection();
+      updateStatsDashboard();
+      renderCalendar();
+    }
+
+    /* 後方互換対応：古い1行形式（title/note）や欠損データを配列形式へ自動変換 */
+    function normalizeDayPlan(rawDay, fallbackDay) {
+      const validType = TYPE_META[rawDay?.type] ? rawDay.type : fallbackDay.type;
+      let items = [];
+
+      if (Array.isArray(rawDay?.items)) {
+        items = rawDay.items
+          .filter(it => it && typeof it === 'object')
+          .map(it => ({
+            title: typeof it.title === 'string' ? it.title.trim() : '',
+            detail: typeof it.detail === 'string' ? it.detail.trim() : ''
+          }))
+          .filter(it => it.title !== '' || it.detail !== '');
+      } else if (typeof rawDay?.title === 'string' && rawDay.title.trim() !== '') {
+        // 旧1行形式からのマイグレーション
+        items = [{
+          title: rawDay.title.trim(),
+          detail: typeof rawDay.note === 'string' ? rawDay.note.trim() : ''
+        }];
+      }
+
+      if (items.length === 0) {
+        items = JSON.parse(JSON.stringify(fallbackDay.items));
+      }
+
+      return { type: validType, items };
+    }
+
+    function normalizeAppData(raw) {
+      const normalized = {
+        soundEnabled: typeof raw?.soundEnabled === 'boolean' ? raw.soundEnabled : true,
+        weeklyPlan: {},
+        logs: {}
+      };
+
+      for (let d = 0; d <= 6; d++) {
+        const key = String(d);
+        normalized.weeklyPlan[key] = normalizeDayPlan(raw?.weeklyPlan?.[key], PRESETS.standard[key]);
+      }
+
+      if (raw?.logs && typeof raw.logs === 'object') {
+        Object.keys(raw.logs).forEach(dateKey => {
+          if (!/^\d{4}-\d{2}-\d{2}$/.test(dateKey)) return;
+          const item = raw.logs[dateKey];
+          if (!item || typeof item !== 'object') return;
+          const validStatus = STATUS_META[item.status] ? item.status : 'done';
+
+          let logItems = [];
+          if (Array.isArray(item.items)) {
+            logItems = item.items
+              .filter(it => it && typeof it === 'object')
+              .map(it => ({
+                title: typeof it.title === 'string' ? it.title : '',
+                detail: typeof it.detail === 'string' ? it.detail : ''
+              }))
+              .filter(it => it.title !== '');
+          } else if (typeof item.planTitle === 'string' && item.planTitle.trim() !== '') {
+            // 旧形式ログのスナップショット互換
+            logItems = [{ title: item.planTitle.trim(), detail: '' }];
+          }
+
+          normalized.logs[dateKey] = {
+            status: validStatus,
+            items: logItems,
+            note: typeof item.note === 'string' ? item.note : ''
+          };
+        });
+      }
+
+      return normalized;
+    }
+
+    function loadStorage() {
+      try {
+        const raw = localStorage.getItem(STORAGE_KEY);
+        if (raw) {
+          appData = normalizeAppData(JSON.parse(raw));
+        } else {
+          appData = normalizeAppData({});
+          saveStorage();
+        }
+      } catch (e) {
+        appData = normalizeAppData({});
+      }
+    }
+
+    function saveStorage() {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(appData));
+    }
+
+    /* =========================================================
+       3. 日付ユーティリティ
+       ========================================================= */
+    function formatDateStr(dateObj) {
+      const y = dateObj.getFullYear();
+      const m = String(dateObj.getMonth() + 1).padStart(2, '0');
+      const d = String(dateObj.getDate()).padStart(2, '0');
+      return `${y}-${m}-${d}`;
+    }
+
+    function parseDateStr(dateStr) {
+      const [y, m, d] = dateStr.split('-').map(Number);
+      return new Date(y, m - 1, d);
+    }
+
+    function getTodayStr() {
+      return formatDateStr(new Date());
+    }
+
+    function isFutureDate(dateStr) {
+      return dateStr > getTodayStr();
+    }
+
+    function getPlanSummaryTitle(plan) {
+      if (!plan || !Array.isArray(plan.items) || plan.items.length === 0) return 'メニュー未設定';
+      if (plan.items.length === 1) return plan.items[0].title;
+      return `${plan.items[0].title} 他${plan.items.length - 1}件`;
+    }
+
+    /* =========================================================
+       4. Web Audio API 達成チャイム
+       ========================================================= */
+    function toggleSound() {
+      appData.soundEnabled = !appData.soundEnabled;
+      saveStorage();
+      updateSoundIcon();
+      if (appData.soundEnabled) {
+        playSuccessChime('done');
+      }
+    }
+
+    function updateSoundIcon() {
+      const icon = document.getElementById('icon-sound');
+      if (appData.soundEnabled) {
+        icon.className = 'fa-solid fa-volume-high text-emerald-600';
+      } else {
+        icon.className = 'fa-solid fa-volume-xmark text-slate-400';
+      }
+    }
+
+    function playSuccessChime(status) {
+      if (!appData.soundEnabled) return;
+      try {
+        const AudioCtx = window.AudioContext || window.webkitAudioContext;
+        if (!AudioCtx) return;
+        const ctx = new AudioCtx();
+        const now = ctx.currentTime;
+
+        const notes = status === 'skip'
+          ? [392.00, 349.23]
+          : status === 'rest'
+            ? [440.00, 554.37, 659.25]
+            : [523.25, 659.25, 783.99, 1046.50];
+
+        notes.forEach((freq, idx) => {
+          const osc = ctx.createOscillator();
+          const gain = ctx.createGain();
+          osc.type = 'sine';
+          osc.frequency.setValueAtTime(freq, now + idx * 0.08);
+
+          gain.gain.setValueAtTime(0.001, now + idx * 0.08);
+          gain.gain.exponentialRampToValueAtTime(0.11, now + idx * 0.08 + 0.02);
+          gain.gain.exponentialRampToValueAtTime(0.0001, now + idx * 0.08 + 0.34);
+
+          osc.connect(gain);
+          gain.connect(ctx.destination);
+          osc.start(now + idx * 0.08);
+          osc.stop(now + idx * 0.08 + 0.36);
+        });
+      } catch (e) {}
+    }
+
+    /* =========================================================
+       5. ① 週間ルーティンバー描画 ＆ 複数メニュー編集モーダル
+       ========================================================= */
+    function renderWeeklyPlanBar() {
+      const container = document.getElementById('weekly-plan-bar');
+      container.innerHTML = '';
+      const todayDow = new Date().getDay();
+
+      WEEKDAY_ORDER.forEach(dayInfo => {
+        const plan = appData.weeklyPlan[String(dayInfo.dow)];
+        const meta = TYPE_META[plan.type] || TYPE_META.strength;
+        const isToday = (dayInfo.dow === todayDow);
+
+        const card = document.createElement('button');
+        card.type = 'button';
+        card.onclick = () => openPlanModal(dayInfo.dow);
+
+        let borderClass = 'border-slate-200/80 bg-slate-50/70 hover:bg-white hover:border-emerald-300';
+        if (isToday) {
+          borderClass = 'border-emerald-500 bg-emerald-50/60 ring-2 ring-emerald-500/20 shadow-xs';
+        }
+
+        const dayColor = dayInfo.dow === 6
+          ? 'text-blue-600'
+          : dayInfo.dow === 0
+            ? 'text-rose-600'
+            : 'text-slate-600';
+
+        const countBadge = plan.items.length > 1
+          ? `<span class="inline-block mt-1 text-[9px] font-bold px-1.5 py-0.2 rounded bg-white/90 border border-slate-200 text-slate-600 font-mono-num">${plan.items.length}項目</span>`
+          : '';
+
+        card.className = `p-2.5 rounded-2xl border ${borderClass} text-left transition flex flex-col justify-between min-h-[90px]`;
+        card.innerHTML = `
+          <div class="flex items-center justify-between gap-1 w-full">
+            <span class="text-xs font-black ${dayColor}">${dayInfo.short}</span>
+            ${isToday ? '<span class="text-[9px] font-black bg-emerald-600 text-white px-1.5 py-0.2 rounded-full">今日</span>' : `<span class="text-xs">${meta.emoji}</span>`}
+          </div>
+          <div class="mt-1.5">
+            <div class="text-[11px] font-bold text-slate-900 line-clamp-2 leading-snug">${escapeHtml(plan.items[0]?.title || meta.label)}</div>
+            ${countBadge}
+          </div>
+        `;
+        container.appendChild(card);
+      });
+    }
+
+    function openPlanModal(focusDow = null) {
+      draftPlan = JSON.parse(JSON.stringify(appData.weeklyPlan));
+      renderPlanEditorList(focusDow);
+      document.getElementById('plan-modal').classList.remove('hidden');
+
+      if (focusDow !== null) {
+        setTimeout(() => {
+          const targetEl = document.getElementById(`plan-card-${focusDow}`);
+          if (targetEl) targetEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }, 60);
+      }
+    }
+
+    function closePlanModal() {
+      document.getElementById('plan-modal').classList.add('hidden');
+      draftPlan = null;
+    }
+
+    function syncDraftInputsFromDom() {
+      if (!draftPlan) return;
+      WEEKDAY_ORDER.forEach(dayInfo => {
+        const key = String(dayInfo.dow);
+        const typeEl = document.getElementById(`plan-type-${key}`);
+        if (typeEl) draftPlan[key].type = typeEl.value;
+
+        const rows = document.querySelectorAll(`[data-plan-row="${key}"]`);
+        const updatedItems = [];
+        rows.forEach(row => {
+          const titleVal = row.querySelector('.item-title-input')?.value || '';
+          const detailVal = row.querySelector('.item-detail-input')?.value || '';
+          updatedItems.push({ title: titleVal, detail: detailVal });
+        });
+        if (updatedItems.length > 0) {
+          draftPlan[key].items = updatedItems;
+        }
+      });
+    }
+
+    function renderPlanEditorList(focusDow = null) {
+      const list = document.getElementById('plan-editor-list');
+      list.innerHTML = '';
+
+      WEEKDAY_ORDER.forEach(dayInfo => {
+        const key = String(dayInfo.dow);
+        const plan = draftPlan[key];
+        const isFocus = focusDow === dayInfo.dow;
+        const dayColor = dayInfo.dow === 6 ? 'text-blue-600' : dayInfo.dow === 0 ? 'text-rose-600' : 'text-slate-800';
+
+        const card = document.createElement('div');
+        card.id = `plan-card-${dayInfo.dow}`;
+        card.className = `p-3.5 sm:p-4 rounded-2xl border ${isFocus ? 'border-emerald-500 bg-emerald-50/30' : 'border-slate-200 bg-slate-50/60'} space-y-2.5`;
+
+        let itemsHtml = '';
+        plan.items.forEach((it, idx) => {
+          const canDelete = plan.items.length > 1;
+          itemsHtml += `
+            <div data-plan-row="${key}" class="flex items-center gap-1.5">
+              <span class="text-[11px] font-bold text-slate-400 font-mono-num w-4 text-center shrink-0">${idx + 1}.</span>
+              <div class="flex-1 grid grid-cols-1 sm:grid-cols-2 gap-1.5">
+                <input type="text" value="${escapeAttr(it.title)}" maxlength="40" placeholder="メニュー名（例：腕立て伏せ）" class="item-title-input w-full px-2.5 py-1.5 rounded-xl border border-slate-200 bg-white text-xs font-bold text-slate-800 focus:border-emerald-500 focus:outline-none">
+                <input type="text" value="${escapeAttr(it.detail)}" maxlength="60" placeholder="補足メモ・目安（例：15回×3セット）" class="item-detail-input w-full px-2.5 py-1.5 rounded-xl border border-slate-200 bg-white text-xs text-slate-600 focus:border-emerald-500 focus:outline-none">
+              </div>
+              <button type="button" onclick="removePlanItemRow('${key}', ${idx})" ${canDelete ? '' : 'disabled'} class="w-7 h-7 rounded-lg flex items-center justify-center text-xs shrink-0 transition ${canDelete ? 'text-slate-400 hover:text-rose-600 hover:bg-rose-50' : 'text-slate-200 cursor-not-allowed'}" title="この行を削除">
+                <i class="fa-solid fa-xmark"></i>
+              </button>
+            </div>
+          `;
+        });
+
+        card.innerHTML = `
+          <div class="flex items-center justify-between gap-2">
+            <span class="text-xs sm:text-sm font-black ${dayColor}">${dayInfo.name}</span>
+            <select id="plan-type-${key}" onchange="changeDraftDayType('${key}', this.value)" class="text-xs font-bold px-2.5 py-1.5 rounded-xl border border-slate-200 bg-white text-slate-700 focus:border-emerald-500 focus:outline-none">
+              <option value="strength" ${plan.type === 'strength' ? 'selected' : ''}>💪 筋トレ</option>
+              <option value="cardio" ${plan.type === 'cardio' ? 'selected' : ''}>🏃 有酸素</option>
+              <option value="light" ${plan.type === 'light' ? 'selected' : ''}>🧘 ストレッチ・軽運動</option>
+              <option value="rest" ${plan.type === 'rest' ? 'selected' : ''}>☕ 完全休養日</option>
+            </select>
+          </div>
+          <div class="space-y-2">
+            ${itemsHtml}
+          </div>
+          <div class="pt-0.5">
+            <button type="button" onclick="addPlanItemRow('${key}')" class="inline-flex items-center gap-1 px-2.5 py-1 rounded-xl bg-white border border-dashed border-slate-300 hover:border-emerald-500 text-[11px] font-bold text-slate-600 hover:text-emerald-700 transition">
+              <i class="fa-solid fa-plus text-[10px]"></i>
+              <span>メニューを追加</span>
+            </button>
+          </div>
+        `;
+
+        list.appendChild(card);
+      });
+    }
+
+    function changeDraftDayType(key, newType) {
+      syncDraftInputsFromDom();
+      draftPlan[key].type = newType;
+    }
+
+    function addPlanItemRow(key) {
+      syncDraftInputsFromDom();
+      draftPlan[key].items.push({ title: '', detail: '' });
+      renderPlanEditorList();
+    }
+
+    function removePlanItemRow(key, index) {
+      syncDraftInputsFromDom();
+      if (draftPlan[key].items.length <= 1) return;
+      draftPlan[key].items.splice(index, 1);
+      renderPlanEditorList();
+    }
+
+    function applyWeeklyPreset(presetKey) {
+      const preset = PRESETS[presetKey] || PRESETS.standard;
+      draftPlan = JSON.parse(JSON.stringify(preset));
+      renderPlanEditorList();
+    }
+
+    function saveWeeklyPlanForm() {
+      syncDraftInputsFromDom();
+
+      WEEKDAY_ORDER.forEach(dayInfo => {
+        const key = String(dayInfo.dow);
+        const dayObj = draftPlan[key];
+        const cleanedItems = dayObj.items
+          .map(it => ({ title: it.title.trim(), detail: it.detail.trim() }))
+          .filter(it => it.title !== '' || it.detail !== '');
+
+        if (cleanedItems.length === 0) {
+          const fallbackTitle = TYPE_META[dayObj.type]?.label || 'メニュー';
+          cleanedItems.push({ title: fallbackTitle, detail: '' });
+        } else {
+          cleanedItems.forEach(it => {
+            if (!it.title) it.title = it.detail;
+          });
+        }
+
+        appData.weeklyPlan[key] = {
+          type: dayObj.type,
+          items: cleanedItems
+        };
+      });
+
+      saveStorage();
+      closePlanModal();
+      renderWeeklyPlanBar();
+      setupTodaySection();
+      updateStatsDashboard();
+      renderCalendar();
+    }
+
+    /* =========================================================
+       6. ② 本日のメニュー表示（複数メニュー）＆ クイック結果登録
+       ========================================================= */
+    function setupTodaySection() {
+      const now = new Date();
+      const todayStr = getTodayStr();
+      const dow = now.getDay();
+      const dayNames = ['日', '月', '火', '水', '木', '金', '土'];
+
+      document.getElementById('today-date-label').textContent =
+        `${now.getFullYear()}年${now.getMonth() + 1}月${now.getDate()}日 (${dayNames[dow]})`;
+
+      const plan = appData.weeklyPlan[String(dow)];
+      const typeMeta = TYPE_META[plan.type] || TYPE_META.strength;
+
+      const typePill = document.getElementById('today-plan-type-pill');
+      typePill.textContent = `${typeMeta.emoji} ${typeMeta.label}`;
+      typePill.className = `self-start sm:self-center px-3 py-1 rounded-full text-xs font-bold border ${typeMeta.badgeClass}`;
+
+      document.getElementById('today-menu-emoji').textContent = typeMeta.emoji;
+      document.getElementById('today-menu-summary').textContent = `${dayNames[dow]}曜日のメニュー（全 ${plan.items.length} 項目）`;
+
+      const listEl = document.getElementById('today-menu-list');
+      listEl.innerHTML = '';
+      plan.items.forEach((it, idx) => {
+        const li = document.createElement('li');
+        li.className = 'flex items-start justify-between gap-2 bg-white px-3.5 py-2.5 rounded-xl border border-slate-200/70 shadow-2xs';
+        li.innerHTML = `
+          <div class="flex items-start gap-2.5 min-w-0">
+            <span class="w-5 h-5 rounded-full bg-emerald-50 text-emerald-700 text-[11px] font-black font-mono-num flex items-center justify-center shrink-0 mt-0.5">${idx + 1}</span>
+            <div class="min-w-0">
+              <div class="text-sm font-black text-slate-900 leading-snug">${escapeHtml(it.title)}</div>
+              ${it.detail ? `<div class="text-xs text-slate-500 mt-0.5">${escapeHtml(it.detail)}</div>` : ''}
+            </div>
+          </div>
+        `;
+        listEl.appendChild(li);
+      });
+
+      const existingLog = appData.logs[todayStr];
+      const badge = document.getElementById('today-recorded-badge');
+      const btnLabel = document.getElementById('btn-save-today-label');
+
+      if (existingLog) {
+        const stMeta = STATUS_META[existingLog.status] || STATUS_META.done;
+        badge.classList.remove('hidden');
+        badge.textContent = `${stMeta.emoji} 本日記録済み（${stMeta.short}）`;
+        btnLabel.textContent = '本日の記録を上書き更新する';
+        selectTodayStatus(existingLog.status);
+        document.getElementById('today-log-note').value = existingLog.note || '';
+      } else {
+        badge.classList.add('hidden');
+        btnLabel.textContent = '記録する';
+        const defaultStatus = plan.type === 'rest' ? 'rest' : 'done';
+        selectTodayStatus(defaultStatus);
+        document.getElementById('today-log-note').value = '';
+      }
+    }
+
+    function selectTodayStatus(status) {
+      selectedTodayStatus = status;
+      document.querySelectorAll('.status-choice-btn').forEach(btn => {
+        const s = btn.dataset.status;
+        const active = (s === status);
+        if (!active) {
+          btn.className = 'status-choice-btn p-3.5 rounded-2xl border-2 border-slate-200 bg-white hover:border-slate-300 text-left transition flex items-center gap-3 opacity-80 hover:opacity-100';
+          return;
+        }
+        if (s === 'done') {
+          btn.className = 'status-choice-btn p-3.5 rounded-2xl border-2 border-emerald-500 bg-emerald-50/70 text-left transition flex items-center gap-3 shadow-2xs';
+        } else if (s === 'partial') {
+          btn.className = 'status-choice-btn p-3.5 rounded-2xl border-2 border-amber-500 bg-amber-50/70 text-left transition flex items-center gap-3 shadow-2xs';
+        } else if (s === 'rest') {
+          btn.className = 'status-choice-btn p-3.5 rounded-2xl border-2 border-sky-500 bg-sky-50/70 text-left transition flex items-center gap-3 shadow-2xs';
+        } else {
+          btn.className = 'status-choice-btn p-3.5 rounded-2xl border-2 border-slate-600 bg-slate-100 text-left transition flex items-center gap-3 shadow-2xs';
+        }
+      });
+    }
+
+    function saveTodayLog() {
+      const now = new Date();
+      const todayStr = getTodayStr();
+      const dow = now.getDay();
+      const plan = appData.weeklyPlan[String(dow)];
+      const note = document.getElementById('today-log-note').value.trim();
+
+      appData.logs[todayStr] = {
+        status: selectedTodayStatus,
+        items: JSON.parse(JSON.stringify(plan.items)),
+        note: note
+      };
+
+      saveStorage();
+      playSuccessChime(selectedTodayStatus);
+      setupTodaySection();
+      updateStatsDashboard();
+      renderCalendar();
+
+      const toast = document.getElementById('save-toast');
+      const toastText = document.getElementById('save-toast-text');
+      const messages = {
+        done: '達成記録を保存しました！予定通り完遂、素晴らしいです！',
+        partial: '少しだけ実施を記録しました！ゼロにしない継続が大きな力になります！',
+        rest: 'しっかり休養を記録しました！計画的な休息も立派なミッション達成です！',
+        skip: '本日のステータスを記録しました。また次の予定から無理なく再開しましょう！'
+      };
+      toastText.textContent = messages[selectedTodayStatus] || '保存しました！';
+      toast.classList.remove('hidden');
+    }
+
+    /* =========================================================
+       7. ③ 継続統計ダッシュボード計算
+       ========================================================= */
+    function updateStatsDashboard() {
+      const now = new Date();
+      const todayStr = getTodayStr();
+
+      // 1) 今週（月曜〜今日までの経過日数）のルーティン達成率
+      const currentDow = now.getDay();
+      const diffFromMonday = (currentDow + 6) % 7; // 月=0 ... 日=6
+      const mondayDate = new Date(now.getFullYear(), now.getMonth(), now.getDate() - diffFromMonday);
+
+      let weekScoreSum = 0;
+      const weekElapsedDays = diffFromMonday + 1;
+
+      for (let i = 0; i < weekElapsedDays; i++) {
+        const d = new Date(mondayDate.getFullYear(), mondayDate.getMonth(), mondayDate.getDate() + i);
+        const dStr = formatDateStr(d);
+        const log = appData.logs[dStr];
+        if (log && STATUS_META[log.status]) {
+          weekScoreSum += STATUS_META[log.status].score;
+        }
+      }
+
+      const weekRate = weekElapsedDays > 0 ? Math.round((weekScoreSum / weekElapsedDays) * 100) : 0;
+      document.getElementById('stat-week-rate').textContent = weekRate;
+      document.getElementById('stat-week-bar').style.width = `${Math.min(100, weekRate)}%`;
+      document.getElementById('stat-week-sub').textContent =
+        `今週（月〜今日）達成スコア: ${weekScoreSum.toFixed(1).replace(/\.0$/, '')} / ${weekElapsedDays}日`;
+
+      // 2) 現在の連続継続日数（done, partial, rest が続いている日数） & 歴代最長
+      const allKeys = Object.keys(appData.logs).sort();
+      let maxStreak = 0;
+      if (allKeys.length > 0) {
+        const startDt = parseDateStr(allKeys[0]);
+        const endDt = parseDateStr(todayStr);
+        let running = 0;
+        for (let dt = new Date(startDt); dt <= endDt; dt.setDate(dt.getDate() + 1)) {
+          const k = formatDateStr(dt);
+          const log = appData.logs[k];
+          if (log && STATUS_META[log.status]?.active) {
+            running++;
+            if (running > maxStreak) maxStreak = running;
+          } else {
+            running = 0;
+          }
+        }
+      }
+
+      let currentStreak = 0;
+      const checkDt = parseDateStr(todayStr);
+      const todayLog = appData.logs[todayStr];
+      if (!todayLog || !STATUS_META[todayLog.status]?.active) {
+        checkDt.setDate(checkDt.getDate() - 1);
+      }
+      for (let i = 0; i < 3650; i++) {
+        const k = formatDateStr(checkDt);
+        const log = appData.logs[k];
+        if (log && STATUS_META[log.status]?.active) {
+          currentStreak++;
+        } else {
+          break;
+        }
+        checkDt.setDate(checkDt.getDate() - 1);
+      }
+
+      document.getElementById('stat-current-streak').textContent = currentStreak;
+      document.getElementById('stat-max-streak').textContent = maxStreak;
+      const bestBadge = document.getElementById('badge-best-streak');
+      if (currentStreak > 0 && currentStreak >= maxStreak) {
+        bestBadge.classList.remove('hidden');
+      } else {
+        bestBadge.classList.add('hidden');
+      }
+
+      // 3) 今月の活動バランス
+      const curYear = now.getFullYear();
+      const curMonth = now.getMonth();
+      const curTodayDay = now.getDate();
+
+      let countDone = 0;
+      let countPartial = 0;
+      let countRest = 0;
+
+      for (let day = 1; day <= curTodayDay; day++) {
+        const dStr = formatDateStr(new Date(curYear, curMonth, day));
+        const log = appData.logs[dStr];
+        if (!log) continue;
+        if (log.status === 'done') countDone++;
+        else if (log.status === 'partial') countPartial++;
+        else if (log.status === 'rest') countRest++;
+      }
+
+      document.getElementById('stat-month-done').textContent = countDone;
+      document.getElementById('stat-month-partial').textContent = countPartial;
+      document.getElementById('stat-month-rest').textContent = countRest;
+
+      const activeDays = countDone + countPartial + countRest;
+      const monthRate = curTodayDay > 0 ? Math.round((activeDays / curTodayDay) * 100) : 0;
+      document.getElementById('stat-month-rate').textContent = monthRate;
+    }
+
+    /* =========================================================
+       8. ④ 月間達成カレンダー描画 ＆ 日付モーダル
+       ========================================================= */
+    function renderCalendar() {
+      const grid = document.getElementById('calendar-grid');
+      grid.innerHTML = '';
+
+      const year = calendarViewDate.getFullYear();
+      const month = calendarViewDate.getMonth();
+      document.getElementById('calendar-month-title').textContent = `${year}年 ${month + 1}月`;
+
+      const todayStr = getTodayStr();
+      const firstDow = new Date(year, month, 1).getDay();
+      const startOffset = (firstDow + 6) % 7; // 月曜始まり
+      const prevMonthLastDate = new Date(year, month, 0).getDate();
+      const lastDate = new Date(year, month + 1, 0).getDate();
+
+      // 前月のはみ出し
+      for (let i = startOffset - 1; i >= 0; i--) {
+        const d = prevMonthLastDate - i;
+        const cell = document.createElement('div');
+        cell.className = 'min-h-[70px] sm:min-h-[84px] p-1.5 rounded-2xl bg-slate-50/40 text-slate-300 text-xs font-bold select-none opacity-40';
+        cell.innerHTML = `<span>${d}</span>`;
+        grid.appendChild(cell);
+      }
+
+      // 当月
+      for (let day = 1; day <= lastDate; day++) {
+        const dt = new Date(year, month, day);
+        const dateStr = formatDateStr(dt);
+        const dow = dt.getDay();
+        const isSat = dow === 6;
+        const isSun = dow === 0;
+        const isToday = dateStr === todayStr;
+        const future = isFutureDate(dateStr);
+        const log = appData.logs[dateStr];
+        const plan = appData.weeklyPlan[String(dow)];
+
+        const cell = document.createElement('div');
+
+        let bgClass = 'bg-white hover:bg-emerald-50/40 border-slate-100';
+        if (future) {
+          bgClass = 'bg-slate-100/60 border-slate-100 opacity-55 cursor-not-allowed';
+        } else {
+          if (isSat) bgClass = 'bg-blue-50/35 hover:bg-blue-50/70 border-blue-100/70';
+          if (isSun) bgClass = 'bg-rose-50/35 hover:bg-rose-50/70 border-rose-100/70';
+          if (isToday) bgClass += ' ring-2 ring-emerald-500';
+        }
+
+        cell.className = `min-h-[70px] sm:min-h-[84px] p-1.5 rounded-2xl border ${bgClass} transition flex flex-col justify-between relative overflow-hidden ${future ? 'cursor-not-allowed' : 'cursor-pointer'}`;
+
+        if (!future) {
+          cell.onclick = () => openDayLogModal(dateStr);
+        }
+
+        let numColor = 'text-slate-700';
+        if (future) numColor = 'text-slate-400';
+        else if (isSat) numColor = 'text-blue-600';
+        else if (isSun) numColor = 'text-rose-600';
+
+        let centerContent = '';
+        let footerMenu = '';
+
+        if (!future && log && STATUS_META[log.status]) {
+          const st = STATUS_META[log.status];
+          const logSummary = (Array.isArray(log.items) && log.items.length > 0)
+            ? getPlanSummaryTitle({ items: log.items })
+            : getPlanSummaryTitle(plan);
+
+          centerContent = `
+            <div class="my-auto flex items-center justify-center">
+              <span class="text-lg sm:text-xl leading-none">${st.emoji}</span>
+            </div>
+          `;
+          footerMenu = `
+            <div class="text-[9px] text-slate-500 font-bold truncate leading-tight">
+              ${escapeHtml(logSummary)}
+            </div>
+          `;
+        } else if (future) {
+          const pMeta = TYPE_META[plan.type] || TYPE_META.strength;
+          centerContent = `
+            <div class="my-auto flex items-center justify-center opacity-50">
+              <span class="text-xs">${pMeta.emoji}</span>
+            </div>
+          `;
+          footerMenu = `<div class="text-[9px] text-slate-400 truncate leading-tight">${escapeHtml(getPlanSummaryTitle(plan))}</div>`;
+        } else {
+          footerMenu = `<div class="text-[9px] text-slate-300 truncate leading-tight">${escapeHtml(getPlanSummaryTitle(plan))}</div>`;
+        }
+
+        cell.innerHTML = `
+          <div class="flex items-center justify-between">
+            <span class="text-xs font-bold ${numColor}">${day}</span>
+            ${isToday ? '<span class="text-[8px] bg-emerald-600 text-white px-1 py-0.2 rounded-full font-bold">今日</span>' : ''}
+          </div>
+          ${centerContent}
+          ${footerMenu}
+        `;
+
+        grid.appendChild(cell);
+      }
+
+      // 翌月のはみ出し
+      const totalCells = startOffset + lastDate;
+      const nextDays = (7 - (totalCells % 7)) % 7;
+      for (let d = 1; d <= nextDays; d++) {
+        const cell = document.createElement('div');
+        cell.className = 'min-h-[70px] sm:min-h-[84px] p-1.5 rounded-2xl bg-slate-50/40 text-slate-300 text-xs font-bold select-none opacity-40';
+        cell.innerHTML = `<span>${d}</span>`;
+        grid.appendChild(cell);
+      }
+    }
+
+    function changeMonth(delta) {
+      calendarViewDate.setMonth(calendarViewDate.getMonth() + delta);
+      renderCalendar();
+    }
+
+    function resetToCurrentMonth() {
+      calendarViewDate = new Date();
+      renderCalendar();
+    }
+
+    function openDayLogModal(dateStr) {
+      if (isFutureDate(dateStr)) return;
+      editingDateStr = dateStr;
+
+      const dt = parseDateStr(dateStr);
+      const dow = dt.getDay();
+      const dayNames = ['日', '月', '火', '水', '木', '金', '土'];
+      const plan = appData.weeklyPlan[String(dow)];
+      const log = appData.logs[dateStr];
+
+      document.getElementById('modal-day-date').textContent = `${dateStr} (${dayNames[dow]})`;
+      document.getElementById('modal-day-title').textContent = log ? '実施記録の確認・編集' : '過去の実施記録を追加';
+
+      const displayItems = (log && Array.isArray(log.items) && log.items.length > 0) ? log.items : plan.items;
+      const menuListEl = document.getElementById('modal-day-menu-list');
+      menuListEl.innerHTML = '';
+      displayItems.forEach((it, idx) => {
+        const li = document.createElement('li');
+        li.className = 'flex items-center justify-between gap-2 bg-white px-2.5 py-1.5 rounded-lg border border-slate-200/60';
+        li.innerHTML = `
+          <span class="truncate">${idx + 1}. ${escapeHtml(it.title)}</span>
+          ${it.detail ? `<span class="text-[10px] font-normal text-slate-500 shrink-0">${escapeHtml(it.detail)}</span>` : ''}
+        `;
+        menuListEl.appendChild(li);
+      });
+
+      document.getElementById('modal-day-note').value = log?.note || '';
+
+      const initStatus = log?.status || (plan.type === 'rest' ? 'rest' : 'done');
+      selectModalDayStatus(initStatus);
+
+      const delBtn = document.getElementById('btn-delete-day-log');
+      delBtn.classList.toggle('hidden', !log);
+
+      document.getElementById('day-log-modal').classList.remove('hidden');
+    }
+
+    function closeDayLogModal() {
+      document.getElementById('day-log-modal').classList.add('hidden');
+      editingDateStr = null;
+    }
+
+    function selectModalDayStatus(status) {
+      modalSelectedStatus = status;
+      document.querySelectorAll('.modal-status-btn').forEach(btn => {
+        const active = btn.dataset.mstatus === status;
+        btn.className = active
+          ? 'modal-status-btn p-2.5 rounded-xl border-2 border-emerald-500 bg-emerald-50 text-emerald-900 text-xs font-black flex items-center gap-2 transition'
+          : 'modal-status-btn p-2.5 rounded-xl border-2 border-slate-200 bg-white text-slate-600 text-xs font-bold flex items-center gap-2 transition';
+      });
+    }
+
+    function saveModalDayLog() {
+      if (!editingDateStr) return;
+      const dt = parseDateStr(editingDateStr);
+      const dow = dt.getDay();
+      const plan = appData.weeklyPlan[String(dow)];
+      const existingLog = appData.logs[editingDateStr];
+      const note = document.getElementById('modal-day-note').value.trim();
+
+      const itemsToSave = (existingLog && Array.isArray(existingLog.items) && existingLog.items.length > 0)
+        ? existingLog.items
+        : JSON.parse(JSON.stringify(plan.items));
+
+      appData.logs[editingDateStr] = {
+        status: modalSelectedStatus,
+        items: itemsToSave,
+        note: note
+      };
+
+      saveStorage();
+      playSuccessChime(modalSelectedStatus);
+      closeDayLogModal();
+      setupTodaySection();
+      updateStatsDashboard();
+      renderCalendar();
+    }
+
+    function deleteDayLog() {
+      if (!editingDateStr) return;
+      delete appData.logs[editingDateStr];
+      saveStorage();
+      closeDayLogModal();
+      setupTodaySection();
+      updateStatsDashboard();
+      renderCalendar();
+    }
+
+    /* =========================================================
+       9. データ保護・JSONエクスポート／インポート（命名規則準拠）
+       ========================================================= */
+    function openDataModal() {
+      document.getElementById('data-modal-feedback').classList.add('hidden');
+      document.getElementById('data-modal').classList.remove('hidden');
+    }
+
+    function closeDataModal() {
+      document.getElementById('data-modal').classList.add('hidden');
+    }
+
+    function showDataFeedback(msg, isError = false) {
+      const el = document.getElementById('data-modal-feedback');
+      el.textContent = msg;
+      el.className = isError
+        ? 'p-2.5 rounded-xl bg-rose-50 border border-rose-200 text-rose-800 font-bold text-[11px]'
+        : 'p-2.5 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-800 font-bold text-[11px]';
+      el.classList.remove('hidden');
+    }
+
+    function exportJsonData() {
+      const now = new Date();
+      const yyyy = now.getFullYear();
+      const mm = String(now.getMonth() + 1).padStart(2, '0');
+      const dd = String(now.getDate()).padStart(2, '0');
+      const hh = String(now.getHours()).padStart(2, '0');
+      const min = String(now.getMinutes()).padStart(2, '0');
+      const fileName = `workout-backup-${yyyy}-${mm}-${dd}-${hh}${min}.json`;
+
+      const blob = new Blob([JSON.stringify(appData, null, 2)], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = fileName;
+      a.click();
+      URL.revokeObjectURL(url);
+
+      showDataFeedback(`バックアップファイル（${fileName}）を保存しました。`);
+    }
+
+    function importJsonData(event) {
+      const file = event.target.files[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = function(e) {
+        try {
+          const parsed = JSON.parse(e.target.result);
+          if (!parsed || typeof parsed !== 'object' || (!parsed.weeklyPlan && !parsed.logs)) {
+            showDataFeedback('有効なバックアップJSONファイルではありません。', true);
+            return;
+          }
+          appData = normalizeAppData(parsed);
+          saveStorage();
+          renderWeeklyPlanBar();
+          setupTodaySection();
+          updateStatsDashboard();
+          renderCalendar();
+          showDataFeedback('JSONデータから週間ルーティンと記録を安全に復元しました！');
+        } catch (err) {
+          showDataFeedback('JSONファイルの読み込みに失敗しました。', true);
+        } finally {
+          event.target.value = '';
+        }
+      };
+      reader.readAsText(file);
+    }
+
+    /* =========================================================
+       10. エスケープ処理
+       ========================================================= */
+    function escapeHtml(str) {
+      return String(str).replace(/[&<>'"]/g, tag => ({
+        '&': '&amp;',
+        '<': '&lt;',
+        '>': '&gt;',
+        "'": '&#39;',
+        '"': '&quot;'
+      }[tag] || tag));
+    }
+
+    function escapeAttr(str) {
+      return escapeHtml(str).replace(/\n/g, ' ');
+    }
+
+    window.addEventListener('DOMContentLoaded', initApp);
+  </script>
+</body>
+</html>

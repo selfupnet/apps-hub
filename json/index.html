@@ -1,0 +1,959 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>JSON Studio - 安全・完全ローカルのJSON解析・整形・相互変換</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=BIZ+UDPGothic:wght@400;700&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    body {
+      font-family: 'BIZ UDPGothic', sans-serif;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .font-mono {
+      font-family: 'JetBrains Mono', monospace;
+    }
+    ::-webkit-scrollbar {
+      width: 6px;
+      height: 6px;
+    }
+    ::-webkit-scrollbar-track {
+      background: #f1f5f9;
+    }
+    ::-webkit-scrollbar-thumb {
+      background: #cbd5e1;
+      border-radius: 9999px;
+    }
+    ::-webkit-scrollbar-thumb:hover {
+      background: #94a3b8;
+    }
+    .json-key { color: #0284c7; font-weight: 600; }
+    .json-string { color: #16a34a; }
+    .json-number { color: #d97706; }
+    .json-boolean { color: #9333ea; font-weight: 600; }
+    .json-null { color: #64748b; font-style: italic; }
+    
+    .tree-node {
+      position: relative;
+      padding-left: 1.25rem;
+    }
+    .tree-node::before {
+      content: "";
+      position: absolute;
+      top: 0;
+      left: 0.5rem;
+      bottom: 0;
+      width: 1px;
+      background-color: #e2e8f0;
+    }
+    .tree-children.collapsed {
+      display: none;
+    }
+  </style>
+</head>
+<body class="bg-slate-50 text-slate-800 min-h-screen flex flex-col justify-between antialiased">
+
+  <!-- ヘッダー (Apps Hub 統一規格) -->
+  <header class="bg-white border-b border-slate-200 sticky top-0 z-30 shadow-xs">
+    <div class="max-w-7xl mx-auto px-4 h-14 flex items-center justify-between">
+      <div class="flex items-center gap-3">
+        <a href="../" class="text-xs font-bold text-slate-500 hover:text-slate-800 bg-slate-100 hover:bg-slate-200 px-2.5 py-1.5 rounded-lg transition flex items-center gap-1.5">
+          <i class="fa-solid fa-arrow-left"></i> Apps Hub
+        </a>
+        <div class="h-4 w-px bg-slate-200"></div>
+        <h1 class="text-base font-bold text-slate-800 flex items-center gap-2">
+          <span class="w-7 h-7 rounded-lg bg-indigo-600 text-white flex items-center justify-center text-xs font-mono font-bold shadow-xs">
+            { }
+          </span>
+          JSON Studio
+        </h1>
+      </div>
+      
+      <!-- プライバシーステータスバッジ -->
+      <div class="text-[11px] font-bold text-emerald-700 bg-emerald-50 border border-emerald-200 px-3 py-1 rounded-full flex items-center gap-1.5">
+        <i class="fa-solid fa-shield-halved text-emerald-600"></i>
+        <span>完全ローカル・通信ゼロ</span>
+      </div>
+    </div>
+  </header>
+
+  <!-- メインワークスペース -->
+  <main class="max-w-7xl mx-auto px-4 py-4 w-full flex-1 flex flex-col gap-3">
+
+    <!-- ツールバー -->
+    <div class="bg-white p-2.5 rounded-2xl border border-slate-200 shadow-2xs flex flex-wrap items-center justify-between gap-3">
+      
+      <!-- 左：整形・加工操作 -->
+      <div class="flex items-center gap-1.5">
+        <span class="text-xs font-bold text-slate-500 px-1">整形:</span>
+        <button onclick="formatJSON(2)" class="px-2.5 py-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold transition flex items-center gap-1">
+          <i class="fa-solid fa-align-left text-slate-400"></i> 2スペース
+        </button>
+        <button onclick="formatJSON(4)" class="px-2.5 py-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold transition flex items-center gap-1">
+          <i class="fa-solid fa-indent text-slate-400"></i> 4スペース
+        </button>
+        <button onclick="minifyJSON()" class="px-2.5 py-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold transition flex items-center gap-1">
+          <i class="fa-solid fa-compress text-slate-400"></i> 圧縮 (Minify)
+        </button>
+      </div>
+
+      <!-- 右：クリア・サンプル・コピー・保存 -->
+      <div class="flex items-center gap-1.5">
+        <button onclick="loadSample()" class="px-2.5 py-1.5 rounded-lg bg-indigo-50 hover:bg-indigo-100 text-indigo-700 text-xs font-bold transition flex items-center gap-1">
+          <i class="fa-solid fa-lightbulb"></i> サンプル
+        </button>
+        <button onclick="clearAll()" class="px-2.5 py-1.5 rounded-lg border border-slate-200 hover:bg-slate-50 text-slate-600 text-xs font-bold transition flex items-center gap-1">
+          <i class="fa-solid fa-trash-can"></i> クリア
+        </button>
+        <div class="h-4 w-px bg-slate-200 mx-1"></div>
+        <button onclick="copyOutput()" class="px-3 py-1.5 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold transition shadow-xs flex items-center gap-1.5">
+          <i class="fa-solid fa-copy"></i> 結果をコピー
+        </button>
+        <button onclick="downloadOutput()" class="p-1.5 rounded-lg border border-slate-200 hover:bg-slate-50 text-slate-600 text-xs font-bold transition" title="結果をファイル保存">
+          <i class="fa-solid fa-download"></i>
+        </button>
+      </div>
+
+    </div>
+
+    <!-- 2ペインメインエリア -->
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-4 flex-1 min-h-[580px]">
+      
+      <!-- 左ペイン：入力 (Input) -->
+      <div class="bg-white rounded-2xl border border-slate-200 shadow-sm flex flex-col overflow-hidden">
+        
+        <!-- 入力ヘッダー -->
+        <div class="px-4 py-2.5 bg-slate-50/80 border-b border-slate-200 flex flex-wrap items-center justify-between gap-2">
+          <div class="flex items-center gap-2">
+            <span class="text-xs font-bold text-slate-700 flex items-center gap-1.5">
+              <i class="fa-solid fa-right-to-bracket text-indigo-500"></i> 入力形式:
+            </span>
+            
+            <!-- 形式選択・自動判別セレクト -->
+            <select id="forceInputMode" onchange="analyzeInput()" class="text-xs font-bold bg-white border border-slate-200 rounded-lg px-2 py-1 text-slate-700 focus:outline-none focus:border-indigo-500 shadow-2xs">
+              <option value="auto">✨ 自動判別</option>
+              <option value="json">JSON として解釈</option>
+              <option value="csv">CSV として解釈</option>
+              <option value="tsv">TSV として解釈</option>
+              <option value="yaml">YAML として解釈</option>
+            </select>
+
+            <!-- 判定結果ラベル -->
+            <span id="detectedFormatBadge" class="text-[11px] font-bold font-mono px-2 py-0.5 rounded-md bg-slate-200 text-slate-600">
+              未入力
+            </span>
+          </div>
+
+          <div class="flex items-center gap-2">
+            <span id="inputStats" class="text-[11px] font-mono text-slate-400 hidden sm:inline">0 字 / 0 行</span>
+            <label class="cursor-pointer text-[11px] font-bold text-indigo-600 hover:text-indigo-800 flex items-center gap-1">
+              <i class="fa-solid fa-folder-open"></i> ファイル読込
+              <input type="file" id="fileInput" onchange="handleFileSelect(event)" accept=".json,.csv,.tsv,.yaml,.yml,.txt" class="hidden">
+            </label>
+          </div>
+        </div>
+
+        <!-- テキストエリア / ドロップゾーン -->
+        <div id="dropZone" class="relative flex-1 flex flex-col p-2">
+          <textarea id="rawInput" spellcheck="false" placeholder="ここにJSON、CSV、YAML、TSVを貼り付けるか、ファイルをドラッグ＆ドロップしてください..."
+            class="w-full flex-1 p-3 font-mono text-xs text-slate-800 bg-transparent resize-none focus:outline-none leading-relaxed placeholder:text-slate-300"></textarea>
+          
+          <div id="dragOverlay" class="absolute inset-0 bg-indigo-50/90 border-2 border-dashed border-indigo-400 rounded-xl flex items-center justify-center pointer-events-none hidden">
+            <p class="text-sm font-bold text-indigo-700 flex items-center gap-2">
+              <i class="fa-solid fa-file-import text-lg"></i> ファイルをドロップして読み込み
+            </p>
+          </div>
+        </div>
+      </div>
+
+      <!-- 右ペイン：出力 (Output) -->
+      <div class="bg-white rounded-2xl border border-slate-200 shadow-sm flex flex-col overflow-hidden">
+        
+        <!-- 出力ヘッダー -->
+        <div class="px-4 py-2 bg-slate-50/80 border-b border-slate-200 flex flex-wrap items-center justify-between gap-2">
+          
+          <!-- 表示形式タブ（コード / ツリー / テーブル） -->
+          <div class="flex items-center gap-1 bg-slate-200/70 p-0.5 rounded-lg">
+            <button onclick="setViewMode('code')" id="tabCode" class="px-2.5 py-1 rounded-md text-xs font-bold bg-white text-indigo-600 shadow-2xs transition flex items-center gap-1">
+              <i class="fa-solid fa-code"></i> コード
+            </button>
+            <button onclick="setViewMode('tree')" id="tabTree" class="px-2.5 py-1 rounded-md text-xs font-bold text-slate-600 hover:text-slate-900 transition flex items-center gap-1">
+              <i class="fa-solid fa-folder-tree"></i> ツリー
+            </button>
+            <button onclick="setViewMode('table')" id="tabTable" class="px-2.5 py-1 rounded-md text-xs font-bold text-slate-600 hover:text-slate-900 transition flex items-center gap-1">
+              <i class="fa-solid fa-table"></i> テーブル
+            </button>
+          </div>
+
+          <!-- 変換先フォーマット選択 -->
+          <div class="flex items-center gap-1.5">
+            <span class="text-[11px] font-bold text-slate-500">出力形式:</span>
+            <div class="inline-flex bg-slate-200/70 p-0.5 rounded-lg text-xs font-bold">
+              <button onclick="changeTargetFormat('json')" id="fmt-json" class="px-2.5 py-1 rounded-md bg-white text-indigo-600 shadow-2xs transition">JSON</button>
+              <button onclick="changeTargetFormat('csv')" id="fmt-csv" class="px-2.5 py-1 rounded-md text-slate-600 hover:text-slate-900 transition">CSV</button>
+              <button onclick="changeTargetFormat('tsv')" id="fmt-tsv" class="px-2.5 py-1 rounded-md text-slate-600 hover:text-slate-900 transition">TSV</button>
+              <button onclick="changeTargetFormat('markdown')" id="fmt-markdown" class="px-2.5 py-1 rounded-md text-slate-600 hover:text-slate-900 transition">MD表</button>
+              <button onclick="changeTargetFormat('yaml')" id="fmt-yaml" class="px-2.5 py-1 rounded-md text-slate-600 hover:text-slate-900 transition">YAML</button>
+            </div>
+          </div>
+
+        </div>
+
+        <!-- ビュー表示エリア -->
+        <div class="relative flex-1 overflow-auto p-4 bg-slate-900/2">
+          <!-- 1. コードビュー -->
+          <pre id="viewCode" class="font-mono text-xs leading-relaxed text-slate-800 whitespace-pre-wrap break-all select-text m-0"></pre>
+
+          <!-- 2. ツリービュー -->
+          <div id="viewTree" class="font-mono text-xs space-y-1 hidden select-none"></div>
+
+          <!-- 3. テーブルビュー -->
+          <div id="viewTable" class="hidden overflow-x-auto">
+            <table class="w-full text-left text-xs border border-slate-200 rounded-lg overflow-hidden bg-white">
+              <thead id="tableHead" class="bg-slate-100 border-b border-slate-200 text-slate-700 font-bold font-mono"></thead>
+              <tbody id="tableBody" class="divide-y divide-slate-100 font-mono"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- ステータスバー -->
+    <div id="statusBar" class="bg-white p-3 rounded-2xl border border-slate-200 shadow-2xs flex items-center justify-between text-xs">
+      <div id="statusMessage" class="flex items-center gap-2 text-slate-500 font-medium">
+        <i class="fa-solid fa-circle-info text-slate-400"></i>
+        <span>入力待機中...</span>
+      </div>
+      <div id="statusDetails" class="text-[11px] font-mono text-slate-400"></div>
+    </div>
+
+  </main>
+
+  <!-- コピー通知トースト -->
+  <div id="toast" class="fixed bottom-12 left-1/2 -translate-x-1/2 bg-slate-900 text-white px-4 py-2 rounded-xl text-xs font-bold shadow-lg transition-opacity duration-200 opacity-0 pointer-events-none z-50 flex items-center gap-2">
+    <i class="fa-solid fa-check text-emerald-400"></i>
+    <span id="toastMsg">クリップボードにコピーしました</span>
+  </div>
+
+  <!-- Apps Hub 共通フッター -->
+  <footer class="py-4 text-center border-t border-slate-200 bg-white">
+    <div class="max-w-4xl mx-auto px-4">
+      <p class="text-[11px] text-slate-400">
+        ※個人開発プロトタイプにつき無保証・自己責任にてご利用ください（データは端末内完結・サポート対象外）
+      </p>
+    </div>
+  </footer>
+
+  <script>
+    let currentParsedData = null; // 内部正規化データ (ObjectまたはArray)
+    let targetFormat = 'json';
+    let currentRawOutput = "";
+    let currentView = 'code';
+
+    const inputArea = document.getElementById('rawInput');
+    const badgeFormat = document.getElementById('detectedFormatBadge');
+    const forceSelect = document.getElementById('forceInputMode');
+    const viewCode = document.getElementById('viewCode');
+    const viewTree = document.getElementById('viewTree');
+    const viewTable = document.getElementById('viewTable');
+    const statusBar = document.getElementById('statusBar');
+    const statusMsg = document.getElementById('statusMessage');
+    const statusDetails = document.getElementById('statusDetails');
+
+    let debounceTimer = null;
+    inputArea.addEventListener('input', () => {
+      updateInputStats();
+      clearTimeout(debounceTimer);
+      debounceTimer = setTimeout(() => {
+        analyzeInput();
+      }, 150);
+    });
+
+    function updateInputStats() {
+      const text = inputArea.value;
+      const chars = text.length;
+      const lines = text ? text.split('\n').length : 0;
+      document.getElementById('inputStats').innerText = `${chars.toLocaleString()} 字 / ${lines.toLocaleString()} 行`;
+    }
+
+    // 入力判別エンジン（改行入りCSV・TSV・YAML完全対応）
+    function analyzeInput() {
+      const raw = inputArea.value.trim();
+      const mode = forceSelect.value;
+
+      if (!raw) {
+        badgeFormat.textContent = '未入力';
+        badgeFormat.className = 'text-[11px] font-bold font-mono px-2 py-0.5 rounded-md bg-slate-200 text-slate-600';
+        currentParsedData = null;
+        currentRawOutput = "";
+        clearViews();
+        resetStatus();
+        return;
+      }
+
+      let parsed = null;
+      let detectedType = '';
+
+      // 強制指定または自動判別
+      if (mode === 'json' || mode === 'auto') {
+        try {
+          parsed = JSON.parse(raw);
+          detectedType = 'json';
+        } catch (e) {
+          if (mode === 'json') {
+            showErrorStatus("JSON構文エラー", locateErrorLine(raw, e.message));
+            return;
+          }
+        }
+      }
+
+      // CSV判定（RFC 4180準拠パーサーで解析を試みる）
+      if (!detectedType && (mode === 'csv' || mode === 'auto')) {
+        try {
+          const csvResult = parseRFC4180CSV(raw);
+          if (csvResult && csvResult.length > 0 && Object.keys(csvResult[0]).length >= 2) {
+            parsed = csvResult;
+            detectedType = 'csv';
+          }
+        } catch (e) {
+          if (mode === 'csv') {
+            showErrorStatus("CSV解析エラー", e.message);
+            return;
+          }
+        }
+      }
+
+      // TSV判定
+      if (!detectedType && (mode === 'tsv' || mode === 'auto')) {
+        if (raw.includes('\t')) {
+          try {
+            const tsvResult = parseDelimited(raw, '\t');
+            if (tsvResult && tsvResult.length > 0 && Object.keys(tsvResult[0]).length >= 2) {
+              parsed = tsvResult;
+              detectedType = 'tsv';
+            }
+          } catch (e) {}
+        }
+      }
+
+      // YAML判定
+      if (!detectedType && (mode === 'yaml' || mode === 'auto')) {
+        if (raw.includes(':') || raw.trim().startsWith('- ')) {
+          try {
+            const yamlResult = parseSimpleYAML(raw);
+            if (yamlResult && typeof yamlResult === 'object' && Object.keys(yamlResult).length > 0) {
+              parsed = yamlResult;
+              detectedType = 'yaml';
+            }
+          } catch (e) {}
+        }
+      }
+
+      // 判定成功時の反映
+      if (detectedType && parsed !== null) {
+        currentParsedData = parsed;
+        const isArr = Array.isArray(parsed);
+
+        if (detectedType === 'json') {
+          badgeFormat.textContent = isArr ? `JSON (配列 ${parsed.length}件)` : 'JSON (オブジェクト)';
+          badgeFormat.className = 'text-[11px] font-bold font-mono px-2 py-0.5 rounded-md bg-emerald-100 text-emerald-800';
+          statusMsg.innerHTML = `<i class="fa-solid fa-circle-check text-emerald-500"></i> <span class="text-emerald-700 font-bold">有効な JSON データを検出しました</span>`;
+          statusDetails.innerText = isArr ? `${parsed.length} アイテム` : `${Object.keys(parsed).length} キー`;
+          statusBar.className = "bg-emerald-50/70 p-3 rounded-2xl border border-emerald-200 shadow-2xs flex items-center justify-between text-xs";
+        } else if (detectedType === 'csv') {
+          badgeFormat.textContent = `CSV (${parsed.length}行)`;
+          badgeFormat.className = 'text-[11px] font-bold font-mono px-2 py-0.5 rounded-md bg-sky-100 text-sky-800';
+          statusMsg.innerHTML = `<i class="fa-solid fa-file-csv text-sky-500"></i> <span class="text-sky-800 font-bold">CSV データを検出・解析しました</span>`;
+          statusDetails.innerText = `${parsed.length} 行のレコード`;
+          statusBar.className = "bg-sky-50/70 p-3 rounded-2xl border border-sky-200 shadow-2xs flex items-center justify-between text-xs";
+        } else if (detectedType === 'tsv') {
+          badgeFormat.textContent = `TSV (${parsed.length}行)`;
+          badgeFormat.className = 'text-[11px] font-bold font-mono px-2 py-0.5 rounded-md bg-amber-100 text-amber-800';
+          statusMsg.innerHTML = `<i class="fa-solid fa-table text-amber-500"></i> <span class="text-amber-800 font-bold">TSV（タブ区切り）データを検出しました</span>`;
+          statusDetails.innerText = `${parsed.length} 行`;
+          statusBar.className = "bg-amber-50/70 p-3 rounded-2xl border border-amber-200 shadow-2xs flex items-center justify-between text-xs";
+        } else if (detectedType === 'yaml') {
+          badgeFormat.textContent = 'YAML 形式';
+          badgeFormat.className = 'text-[11px] font-bold font-mono px-2 py-0.5 rounded-md bg-purple-100 text-purple-800';
+          statusMsg.innerHTML = `<i class="fa-solid fa-file-code text-purple-500"></i> <span class="text-purple-800 font-bold">YAML データを検出しました</span>`;
+          statusDetails.innerText = isArr ? `${parsed.length} アイテム` : `${Object.keys(parsed).length} プロパティ`;
+          statusBar.className = "bg-purple-50/70 p-3 rounded-2xl border border-purple-200 shadow-2xs flex items-center justify-between text-xs";
+        }
+
+        convertAndRender();
+      } else {
+        // 全判定失敗（構文エラーまたは未知の形式）
+        currentParsedData = null;
+        currentRawOutput = raw;
+        showErrorStatus("構文エラー / 解析不能", "カンマ・クォート・括弧などの構文をご確認ください");
+        renderCurrentView();
+      }
+    }
+
+    function showErrorStatus(title, detail) {
+      badgeFormat.textContent = '解析エラー';
+      badgeFormat.className = 'text-[11px] font-bold font-mono px-2 py-0.5 rounded-md bg-rose-100 text-rose-800';
+      statusMsg.innerHTML = `<i class="fa-solid fa-circle-xmark text-rose-500"></i> <span class="text-rose-700 font-bold">${escapeHtml(title)}</span>`;
+      statusDetails.innerText = detail || "";
+      statusBar.className = "bg-rose-50/70 p-3 rounded-2xl border border-rose-200 shadow-2xs flex items-center justify-between text-xs";
+    }
+
+    function locateErrorLine(text, msg) {
+      const posMatch = msg.match(/position\s+(\d+)/i);
+      if (posMatch) {
+        const pos = parseInt(posMatch[1], 10);
+        return `推定 ${text.substring(0, pos).split('\n').length} 行目`;
+      }
+      return msg;
+    }
+
+    // RFC 4180完全準拠CSVパーサー（改行やJSONがセルに含まれていても完全抽出）
+    function parseRFC4180CSV(text) {
+      const rows = [];
+      let row = [];
+      let field = '';
+      let inQuotes = false;
+
+      for (let i = 0; i < text.length; i++) {
+        const c = text[i];
+        const next = text[i + 1];
+
+        if (c === '"') {
+          if (inQuotes && next === '"') {
+            field += '"';
+            i++;
+          } else {
+            inQuotes = !inQuotes;
+          }
+        } else if (c === ',' && !inQuotes) {
+          row.push(field);
+          field = '';
+        } else if ((c === '\r' || c === '\n') && !inQuotes) {
+          if (c === '\r' && next === '\n') i++;
+          row.push(field);
+          if (row.some(f => f.trim().length > 0)) rows.push(row);
+          row = [];
+          field = '';
+        } else {
+          field += c;
+        }
+      }
+      if (field || row.length > 0) {
+        row.push(field);
+        if (row.some(f => f.trim().length > 0)) rows.push(row);
+      }
+
+      if (rows.length < 2) return null;
+
+      const headers = rows[0].map(h => h.trim());
+      const result = [];
+
+      for (let i = 1; i < rows.length; i++) {
+        const cols = rows[i];
+        const obj = {};
+        headers.forEach((h, idx) => {
+          let v = cols[idx] !== undefined ? cols[idx] : "";
+          // JSON文字列（{"ram":...} 等）であれば自動でオブジェクト化して復元
+          if ((v.startsWith('{') && v.endsWith('}')) || (v.startsWith('[') && v.endsWith(']'))) {
+            try { v = JSON.parse(v); } catch (e) {}
+          } else if (/^(true|false)$/i.test(v)) {
+            v = v.toLowerCase() === 'true';
+          } else if (!isNaN(v) && v !== '') {
+            v = Number(v);
+          }
+          obj[h] = v;
+        });
+        result.push(obj);
+      }
+      return result;
+    }
+
+    // 出力形式の切り替え
+    function changeTargetFormat(fmt) {
+      targetFormat = fmt;
+      ['json', 'csv', 'tsv', 'markdown', 'yaml'].forEach(f => {
+        const btn = document.getElementById(`fmt-${f}`);
+        if (f === fmt) {
+          btn.className = "px-2.5 py-1 rounded-md bg-white text-indigo-600 shadow-2xs transition";
+        } else {
+          btn.className = "px-2.5 py-1 rounded-md text-slate-600 hover:text-slate-900 transition";
+        }
+      });
+      convertAndRender();
+    }
+
+    // データ変換＆レンダリング
+    function convertAndRender() {
+      if (!currentParsedData) {
+        currentRawOutput = inputArea.value;
+        renderCurrentView();
+        return;
+      }
+
+      try {
+        if (targetFormat === 'json') {
+          currentRawOutput = JSON.stringify(currentParsedData, null, 2);
+        } else if (targetFormat === 'csv') {
+          currentRawOutput = toDelimitedString(currentParsedData, ',');
+        } else if (targetFormat === 'tsv') {
+          currentRawOutput = toDelimitedString(currentParsedData, '\t');
+        } else if (targetFormat === 'markdown') {
+          currentRawOutput = toMarkdownTable(currentParsedData);
+        } else if (targetFormat === 'yaml') {
+          currentRawOutput = stringifyToYAML(currentParsedData, 0);
+        }
+      } catch (err) {
+        currentRawOutput = `// 変換エラー: ${err.message}`;
+      }
+
+      renderCurrentView();
+    }
+
+    // 整形 & 圧縮
+    function formatJSON(space) {
+      if (!currentParsedData) {
+        showToast("有効なデータを入力してください");
+        return;
+      }
+      inputArea.value = JSON.stringify(currentParsedData, null, space);
+      forceSelect.value = 'json';
+      updateInputStats();
+      analyzeInput();
+      showToast(`${space} スペースで整形しました`);
+    }
+
+    function minifyJSON() {
+      if (!currentParsedData) {
+        showToast("有効なデータを入力してください");
+        return;
+      }
+      inputArea.value = JSON.stringify(currentParsedData);
+      forceSelect.value = 'json';
+      updateInputStats();
+      analyzeInput();
+      showToast("1行に圧縮しました");
+    }
+
+    // 変換フォーマッター群
+    function toDelimitedString(data, delimiter) {
+      const arr = Array.isArray(data) ? data : [data];
+      if (!arr.length || typeof arr[0] !== 'object' || arr[0] === null) {
+        throw new Error("表形式変換にはオブジェクトの配列が必要です");
+      }
+      const headers = Array.from(new Set(arr.flatMap(o => Object.keys(o))));
+      const rows = [headers.join(delimiter)];
+
+      arr.forEach(item => {
+        const row = headers.map(h => {
+          let val = item[h] === undefined || item[h] === null ? "" : item[h];
+          if (typeof val === 'object') val = JSON.stringify(val);
+          val = String(val);
+          if (delimiter === ',') {
+            val = val.replace(/"/g, '""');
+            return `"${val}"`;
+          } else {
+            return val.replace(/\t/g, ' ').replace(/\n/g, ' ');
+          }
+        });
+        rows.push(row.join(delimiter));
+      });
+      return rows.join("\n");
+    }
+
+    function toMarkdownTable(data) {
+      const arr = Array.isArray(data) ? data : [data];
+      if (!arr.length || typeof arr[0] !== 'object' || arr[0] === null) {
+        throw new Error("Markdown表変換にはオブジェクトの配列が必要です");
+      }
+      const headers = Array.from(new Set(arr.flatMap(o => Object.keys(o))));
+      const headerRow = `| ${headers.join(" | ")} |`;
+      const sepRow = `| ${headers.map(() => "---").join(" | ")} |`;
+      const dataRows = arr.map(item => {
+        const cols = headers.map(h => {
+          let val = item[h] === undefined || item[h] === null ? "" : item[h];
+          if (typeof val === 'object') val = JSON.stringify(val);
+          return String(val).replace(/\|/g, '\\|');
+        });
+        return `| ${cols.join(" | ")} |`;
+      });
+      return [headerRow, sepRow, ...dataRows].join("\n");
+    }
+
+    function parseDelimited(text, sep) {
+      const lines = text.split(/\r?\n/).filter(l => l.trim().length > 0);
+      if (lines.length < 2) return null;
+      const headers = lines[0].split(sep).map(h => h.trim());
+      return lines.slice(1).map(l => {
+        const cols = l.split(sep);
+        const obj = {};
+        headers.forEach((h, idx) => {
+          let v = cols[idx] !== undefined ? cols[idx].trim() : "";
+          if (/^(true|false)$/i.test(v)) v = v.toLowerCase() === 'true';
+          else if (!isNaN(v) && v !== '') v = Number(v);
+          obj[h] = v;
+        });
+        return obj;
+      });
+    }
+
+    function stringifyToYAML(obj, depth) {
+      const indent = "  ".repeat(depth);
+      if (obj === null) return "null\n";
+      if (typeof obj !== "object") {
+        if (typeof obj === "string") {
+          if (obj.includes("\n") || obj.includes(":") || obj.includes("#") || obj.startsWith("- ")) {
+            return `"${obj.replace(/"/g, '\\"')}"\n`;
+          }
+          return `${obj}\n`;
+        }
+        return `${obj}\n`;
+      }
+      let res = "";
+      if (Array.isArray(obj)) {
+        if (obj.length === 0) return "[]\n";
+        obj.forEach(item => {
+          if (typeof item === "object" && item !== null) {
+            res += `${indent}- ${stringifyToYAML(item, depth + 1).trimStart()}`;
+          } else {
+            res += `${indent}- ${stringifyToYAML(item, 0)}`;
+          }
+        });
+      } else {
+        const keys = Object.keys(obj);
+        if (keys.length === 0) return "{}\n";
+        keys.forEach(k => {
+          const val = obj[k];
+          if (typeof val === "object" && val !== null) {
+            res += `${indent}${k}:\n${stringifyToYAML(val, depth + 1)}`;
+          } else {
+            res += `${indent}${k}: ${stringifyToYAML(val, 0)}`;
+          }
+        });
+      }
+      return res;
+    }
+
+    function parseSimpleYAML(str) {
+      const lines = str.split("\n").filter(l => l.trim() !== "" && !l.trim().startsWith("#"));
+      let index = 0;
+      function parseBlock(currentIndent) {
+        let isArray = false;
+        let isDict = false;
+        let result = null;
+        while (index < lines.length) {
+          const line = lines[index];
+          const indent = line.search(/\S/);
+          if (indent < currentIndent) break;
+          const trimmed = line.trim();
+          if (trimmed.startsWith("- ")) {
+            if (!isArray && !isDict) { isArray = true; result = []; }
+            const valStr = trimmed.substring(2).trim();
+            index++;
+            if (valStr === "") {
+              result.push(parseBlock(indent + 2));
+            } else if (valStr.includes(":")) {
+              index--;
+              lines[index] = " ".repeat(indent + 2) + valStr;
+              result.push(parseBlock(indent + 2));
+            } else {
+              result.push(castYAMLValue(valStr));
+            }
+          } else if (trimmed.includes(":")) {
+            if (!isArray && !isDict) { isDict = true; result = {}; }
+            const colonIdx = trimmed.indexOf(":");
+            const key = trimmed.substring(0, colonIdx).trim();
+            const valStr = trimmed.substring(colonIdx + 1).trim();
+            index++;
+            if (valStr === "") {
+              result[key] = parseBlock(indent + 2);
+            } else {
+              result[key] = castYAMLValue(valStr);
+            }
+          } else {
+            index++;
+          }
+        }
+        return result !== null ? result : {};
+      }
+      function castYAMLValue(v) {
+        if (/^(true|false)$/i.test(v)) return v.toLowerCase() === 'true';
+        if (v === 'null' || v === '~') return null;
+        if (!isNaN(v) && v !== '') return Number(v);
+        if ((v.startsWith('"') && v.endsWith('"')) || (v.startsWith("'") && v.endsWith("'"))) return v.slice(1, -1);
+        return v;
+      }
+      return parseBlock(0);
+    }
+
+    // 表示ビュー切替
+    function setViewMode(mode) {
+      currentView = mode;
+      ['code', 'tree', 'table'].forEach(m => {
+        document.getElementById(`view${m.charAt(0).toUpperCase() + m.slice(1)}`).classList.add('hidden');
+        document.getElementById(`tab${m.charAt(0).toUpperCase() + m.slice(1)}`).className = 'px-2.5 py-1 rounded-md text-xs font-bold text-slate-600 hover:text-slate-900 transition flex items-center gap-1';
+      });
+
+      document.getElementById(`view${mode.charAt(0).toUpperCase() + mode.slice(1)}`).classList.remove('hidden');
+      document.getElementById(`tab${mode.charAt(0).toUpperCase() + mode.slice(1)}`).className = 'px-2.5 py-1 rounded-md text-xs font-bold bg-white text-indigo-600 shadow-2xs transition flex items-center gap-1';
+
+      renderCurrentView();
+    }
+
+    function renderCurrentView() {
+      if (currentView === 'code') {
+        if (targetFormat === 'json' && currentParsedData) {
+          viewCode.innerHTML = syntaxHighlight(currentRawOutput);
+        } else {
+          viewCode.textContent = currentRawOutput;
+        }
+      } else if (currentView === 'tree') {
+        if (currentParsedData) {
+          viewTree.innerHTML = "";
+          viewTree.appendChild(buildTreeDOM(currentParsedData));
+        } else {
+          viewTree.innerHTML = `<p class="text-slate-400 py-6 text-center text-xs">ツリー表示は構造データのみ対応しています</p>`;
+        }
+      } else if (currentView === 'table') {
+        renderTableView();
+      }
+    }
+
+    function syntaxHighlight(json) {
+      if (!json) return '';
+      return escapeHtml(json).replace(/("(\\u[a-zA-Z0-9]{4}|\\[^u]|[^\\"])*"(\s*:)?|\b(true|false|null)\b|-?\d+(?:\.\d*)?(?:[eE][+\-]?\d+)?)/g, match => {
+        let cls = 'json-number';
+        if (/^"/.test(match)) {
+          if (/:$/.test(match)) { cls = 'json-key'; }
+          else { cls = 'json-string'; }
+        } else if (/true|false/.test(match)) { cls = 'json-boolean'; }
+        else if (/null/.test(match)) { cls = 'json-null'; }
+        return `<span class="${cls}">${match}</span>`;
+      });
+    }
+
+    function buildTreeDOM(val, keyName = null) {
+      const container = document.createElement('div');
+      container.className = "tree-node";
+      const header = document.createElement('div');
+      header.className = "flex items-center gap-1.5 py-0.5 hover:bg-slate-100 rounded px-1 cursor-pointer";
+      const isObj = typeof val === 'object' && val !== null;
+      const isArr = Array.isArray(val);
+
+      if (isObj) {
+        const toggleIcon = document.createElement('span');
+        toggleIcon.className = "text-[10px] text-slate-400 w-3 text-center";
+        toggleIcon.innerHTML = '<i class="fa-solid fa-chevron-down"></i>';
+        header.appendChild(toggleIcon);
+
+        if (keyName !== null) {
+          const kSpan = document.createElement('span');
+          kSpan.className = "font-bold text-slate-700";
+          kSpan.textContent = `"${keyName}": `;
+          header.appendChild(kSpan);
+        }
+
+        const countSpan = document.createElement('span');
+        countSpan.className = "text-[11px] text-slate-400";
+        countSpan.textContent = isArr ? `Array(${val.length})` : `Object{${Object.keys(val).length}}`;
+        header.appendChild(countSpan);
+        container.appendChild(header);
+
+        const children = document.createElement('div');
+        children.className = "tree-children pl-3";
+        if (isArr) {
+          val.forEach((item, idx) => children.appendChild(buildTreeDOM(item, idx)));
+        } else {
+          Object.keys(val).forEach(k => children.appendChild(buildTreeDOM(val[k], k)));
+        }
+        container.appendChild(children);
+
+        header.onclick = (e) => {
+          e.stopPropagation();
+          const isCollapsed = children.classList.toggle('collapsed');
+          toggleIcon.innerHTML = isCollapsed ? '<i class="fa-solid fa-chevron-right"></i>' : '<i class="fa-solid fa-chevron-down"></i>';
+        };
+      } else {
+        header.innerHTML = `
+          <span class="w-3"></span>
+          ${keyName !== null ? `<span class="text-slate-700 font-semibold">"${keyName}": </span>` : ''}
+          <span class="${typeof val === 'string' ? 'json-string' : (typeof val === 'number' ? 'json-number' : (typeof val === 'boolean' ? 'json-boolean' : 'json-null'))}">
+            ${typeof val === 'string' ? `"${escapeHtml(val)}"` : val}
+          </span>
+        `;
+        container.appendChild(header);
+      }
+      return container;
+    }
+
+    function renderTableView() {
+      const data = currentParsedData;
+      const head = document.getElementById('tableHead');
+      const body = document.getElementById('tableBody');
+      head.innerHTML = "";
+      body.innerHTML = "";
+
+      if (!data) {
+        head.innerHTML = `<tr><th class="p-3 text-slate-400">データがありません</th></tr>`;
+        return;
+      }
+
+      const arr = Array.isArray(data) ? data : [data];
+      if (!arr.length || typeof arr[0] !== 'object' || arr[0] === null) {
+        head.innerHTML = `<tr><th class="p-3 text-slate-400">テーブル表示にはオブジェクトの配列が必要です</th></tr>`;
+        return;
+      }
+
+      const keys = Array.from(new Set(arr.flatMap(o => Object.keys(o))));
+      const trHead = document.createElement('tr');
+      keys.forEach(k => {
+        const th = document.createElement('th');
+        th.className = "p-2.5 border-r border-slate-200 text-xs";
+        th.textContent = k;
+        trHead.appendChild(th);
+      });
+      head.appendChild(trHead);
+
+      arr.slice(0, 100).forEach(row => {
+        const tr = document.createElement('tr');
+        tr.className = "hover:bg-slate-50 transition";
+        keys.forEach(k => {
+          const td = document.createElement('td');
+          td.className = "p-2 border-r border-slate-100 text-[11px] text-slate-600 truncate max-w-xs";
+          const cellVal = row[k];
+          td.textContent = (typeof cellVal === 'object' && cellVal !== null) ? JSON.stringify(cellVal) : (cellVal !== undefined ? cellVal : '');
+          tr.appendChild(td);
+        });
+        body.appendChild(tr);
+      });
+    }
+
+    function clearViews() {
+      viewCode.innerHTML = "";
+      viewTree.innerHTML = "";
+      viewTable.classList.add('hidden');
+    }
+
+    function resetStatus() {
+      statusMsg.innerHTML = `<i class="fa-solid fa-circle-info text-slate-400"></i> <span>入力待機中...</span>`;
+      statusDetails.innerText = "";
+      statusBar.className = "bg-white p-3 rounded-2xl border border-slate-200 shadow-2xs flex items-center justify-between text-xs";
+    }
+
+    function loadSample() {
+      const sample = [
+        {
+          "id": 101,
+          "name": "ノートPC Pro",
+          "category": "ハードウェア",
+          "inStock": true,
+          "specs": { "ram": "16GB", "storage": "512GB SSD" },
+          "tags": ["pc", "work"]
+        },
+        {
+          "id": 102,
+          "name": "ワイヤレスマウス",
+          "category": "周辺機器",
+          "inStock": false,
+          "specs": { "battery": "USB-C 充電式" },
+          "tags": ["accessory"]
+        }
+      ];
+      inputArea.value = JSON.stringify(sample, null, 2);
+      forceSelect.value = 'auto';
+      updateInputStats();
+      analyzeInput();
+      showToast("サンプルデータを読み込みました");
+    }
+
+    function clearAll() {
+      inputArea.value = "";
+      forceSelect.value = 'auto';
+      updateInputStats();
+      analyzeInput();
+      showToast("入力をクリアしました");
+    }
+
+    function copyOutput() {
+      if (!currentRawOutput) {
+        showToast("コピーするデータがありません");
+        return;
+      }
+      navigator.clipboard.writeText(currentRawOutput).then(() => {
+        showToast("結果をクリップボードにコピーしました");
+      }).catch(() => {
+        showToast("コピーに失敗しました");
+      });
+    }
+
+    function downloadOutput() {
+      if (!currentRawOutput) {
+        showToast("保存するデータがありません");
+        return;
+      }
+      const ext = targetFormat === 'csv' ? 'csv' : (targetFormat === 'tsv' ? 'tsv' : (targetFormat === 'yaml' ? 'yaml' : (targetFormat === 'markdown' ? 'md' : 'json')));
+      const blob = new Blob([currentRawOutput], { type: 'text/plain;charset=utf-8' });
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(blob);
+      a.download = `exported_data.${ext}`;
+      a.click();
+      URL.revokeObjectURL(a.href);
+      showToast(`ファイル (exported_data.${ext}) をダウンロードしました`);
+    }
+
+    const dropZone = document.getElementById('dropZone');
+    const dragOverlay = document.getElementById('dragOverlay');
+
+    window.addEventListener('dragover', (e) => e.preventDefault());
+    window.addEventListener('drop', (e) => e.preventDefault());
+
+    dropZone.addEventListener('dragenter', (e) => { e.preventDefault(); dragOverlay.classList.remove('hidden'); });
+    dragOverlay.addEventListener('dragleave', (e) => { e.preventDefault(); dragOverlay.classList.add('hidden'); });
+    dropZone.addEventListener('dragover', (e) => e.preventDefault());
+    dropZone.addEventListener('drop', (e) => {
+      e.preventDefault();
+      dragOverlay.classList.add('hidden');
+      if (e.dataTransfer.files.length > 0) readFile(e.dataTransfer.files[0]);
+    });
+
+    function handleFileSelect(e) {
+      if (e.target.files.length > 0) readFile(e.target.files[0]);
+    }
+
+    function readFile(file) {
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        inputArea.value = e.target.result;
+        forceSelect.value = 'auto';
+        updateInputStats();
+        analyzeInput();
+        showToast(`'${file.name}' を読み込みました`);
+      };
+      reader.readAsText(file);
+    }
+
+    function escapeHtml(str) {
+      return String(str).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+    }
+
+    function showToast(msg) {
+      const toast = document.getElementById('toast');
+      document.getElementById('toastMsg').innerText = msg;
+      toast.classList.remove('opacity-0');
+      toast.classList.add('opacity-100');
+      setTimeout(() => {
+        toast.classList.remove('opacity-100');
+        toast.classList.add('opacity-0');
+      }, 1800);
+    }
+
+    window.addEventListener('DOMContentLoaded', () => {
+      loadSample();
+    });
+  </script>
+</body>
+</html>

@@ -1,0 +1,648 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Smart Vocab Hub 2000</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+      background-color: #f8fafc;
+      color: #0f172a;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+    header {
+      background: #ffffff;
+      border-bottom: 1px solid #e2e8f0;
+      padding: 12px 20px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+    .brand-title { font-size: 1.15rem; font-weight: 800; color: #1e1b4b; }
+    .brand-sub { font-size: 0.75rem; color: #64748b; }
+    .tab-nav { display: flex; background: #e2e8f0; padding: 3px; border-radius: 8px; gap: 4px; }
+    .tab-btn {
+      padding: 6px 14px;
+      font-size: 0.8rem;
+      font-weight: 700;
+      border: none;
+      background: transparent;
+      border-radius: 6px;
+      cursor: pointer;
+      color: #475569;
+      transition: all 0.2s;
+    }
+    .tab-btn.active { background: #ffffff; color: #4338ca; box-shadow: 0 1px 2px rgba(0,0,0,0.06); }
+
+    main { max-width: 900px; width: 100%; margin: 16px auto; padding: 0 16px; flex: 1; display: flex; flex-direction: column; gap: 16px; }
+
+    /* 検索・絞り込みパネル */
+    .filter-panel {
+      background: #ffffff;
+      padding: 16px;
+      border-radius: 12px;
+      border: 1px solid #e2e8f0;
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+      gap: 12px;
+    }
+    .f-item label { display: block; font-size: 0.72rem; font-weight: 700; color: #64748b; margin-bottom: 4px; }
+    .f-item select, .f-item input {
+      width: 100%;
+      padding: 8px 10px;
+      font-size: 0.82rem;
+      border: 1px solid #cbd5e1;
+      border-radius: 6px;
+      background: #f8fafc;
+      color: #1e293b;
+    }
+    .f-item select:focus, .f-item input:focus { outline: none; border-color: #4f46e5; background: #ffffff; }
+
+    .meta-bar {
+      grid-column: 1 / -1;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 8px;
+      padding-top: 10px;
+      border-top: 1px solid #f1f5f9;
+      font-size: 0.78rem;
+      color: #64748b;
+    }
+    .meta-bar b { color: #4338ca; }
+    .btn-link { background: none; border: none; color: #64748b; cursor: pointer; text-decoration: underline; font-size: 0.75rem; }
+    .btn-link:hover { color: #dc2626; }
+
+    /* カード学習ビュー（枠可変対応） */
+    .view-card-wrap {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      flex: 1;
+      padding: 10px 0;
+    }
+    .flashcard-box {
+      width: 100%;
+      max-width: 500px;
+      min-height: 290px;
+      perspective: 1000px;
+      cursor: pointer;
+      user-select: none;
+      display: flex;
+    }
+    .flashcard-inner {
+      width: 100%;
+      min-height: 290px;
+      position: relative;
+      transform-style: preserve-3d;
+      transition: transform 0.35s ease;
+      background: #ffffff;
+      border-radius: 16px;
+      border: 1px solid #cbd5e1;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.06);
+      display: flex;
+    }
+    .flashcard-inner.flipped { transform: rotateY(180deg); }
+    .card-face {
+      position: absolute;
+      inset: 0;
+      backface-visibility: hidden;
+      padding: 24px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      border-radius: 16px;
+      overflow-y: auto;
+    }
+    .card-back {
+      transform: rotateY(180deg);
+      background: #f5f3ff;
+    }
+
+    .tag-group { display: flex; gap: 6px; align-items: center; }
+    .tag { font-size: 0.7rem; font-weight: 700; padding: 2px 8px; border-radius: 4px; background: #e0e7ff; color: #3730a3; }
+    .tag.green { background: #dcfce7; color: #166534; }
+    .btn-sound { background: #f1f5f9; border: 1px solid #cbd5e1; border-radius: 6px; padding: 4px 8px; cursor: pointer; font-size: 0.8rem; }
+    .btn-sound:hover { background: #e2e8f0; }
+
+    .word-main { font-size: 2.2rem; font-weight: 800; color: #0f172a; text-align: center; }
+    .word-meaning {
+      font-size: 1.35rem;
+      font-weight: 800;
+      color: #1e1b4b;
+      text-align: center;
+      line-height: 1.45;
+      padding: 10px 4px;
+      word-break: break-word;
+      max-height: 130px;
+      overflow-y: auto;
+    }
+    .example-wrap {
+      background: rgba(255,255,255,0.95);
+      border: 1px solid #e0e7ff;
+      border-radius: 8px;
+      padding: 10px 12px;
+      font-size: 0.82rem;
+    }
+    .tap-hint { font-size: 0.72rem; color: #94a3b8; text-align: center; }
+
+    /* 操作ボタン */
+    .ctrl-group {
+      width: 100%;
+      max-width: 500px;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+      margin-top: 14px;
+    }
+    .act-btn {
+      padding: 12px;
+      border-radius: 8px;
+      font-size: 0.88rem;
+      font-weight: 700;
+      border: none;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      transition: opacity 0.2s;
+    }
+    .act-btn.yet { background: #fee2e2; color: #b91c1c; border: 1px solid #fecaca; }
+    .act-btn.done { background: #4f46e5; color: #ffffff; }
+    .act-btn:active { opacity: 0.8; }
+
+    /* リストビュー */
+    .table-box {
+      background: #ffffff;
+      border-radius: 12px;
+      border: 1px solid #e2e8f0;
+      overflow-x: auto;
+      max-height: 580px;
+    }
+    table { width: 100%; border-collapse: collapse; text-align: left; font-size: 0.82rem; }
+    th { background: #f8fafc; padding: 10px 14px; color: #475569; font-weight: 700; border-bottom: 1px solid #e2e8f0; position: sticky; top: 0; z-index: 10; }
+    td { padding: 9px 14px; border-bottom: 1px solid #f1f5f9; }
+    tr:hover { background: #f8fafc; }
+
+    /* クイズビュー */
+    .quiz-box {
+      max-width: 480px;
+      width: 100%;
+      margin: 0 auto;
+      background: #ffffff;
+      border-radius: 16px;
+      border: 1px solid #e2e8f0;
+      padding: 24px;
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+    }
+    .quiz-choice-btn {
+      width: 100%;
+      text-align: left;
+      padding: 12px 14px;
+      font-size: 0.85rem;
+      font-weight: 600;
+      background: #ffffff;
+      border: 1px solid #cbd5e1;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+    .quiz-choice-btn:hover { background: #f8fafc; border-color: #6366f1; }
+
+    .hidden { display: none !important; }
+    
+    #loading-box {
+      text-align: center;
+      padding: 40px;
+      font-weight: 700;
+      color: #6366f1;
+    }
+  </style>
+</head>
+<body>
+
+  <header>
+    <div>
+      <div class="brand-title">Smart Vocab Hub 2000</div>
+      <div class="brand-sub">NGSL × EJDict クリーンオープンデータ 2,000語収録</div>
+    </div>
+    <div class="tab-nav">
+      <button id="tab-btn-card" class="tab-btn active" onclick="setMode('card')">カード学習</button>
+      <button id="tab-btn-list" class="tab-btn" onclick="setMode('list')">単語一覧</button>
+      <button id="tab-btn-quiz" class="tab-btn" onclick="setMode('quiz')">4択テスト</button>
+    </div>
+  </header>
+
+  <main>
+    <div id="loading-box">単語データ（words.json）を読み込み中...</div>
+
+    <div id="app-content" class="hidden" style="display:flex; flex-direction:column; gap:16px;">
+      <!-- 絞り込み & 検索パネル -->
+      <div class="filter-panel">
+        <div class="f-item">
+          <label>学年・入試レベル</label>
+          <select id="sel-grade" onchange="runFilter()">
+            <option value="all">すべての学年 (2,000語)</option>
+            <option value="j1">中学1年 (英検5級)</option>
+            <option value="j2">中学2年 (英検4級)</option>
+            <option value="j3">中学3年 (英検3級)</option>
+            <option value="h1">高校1年基礎 (英検準2級)</option>
+            <option value="h_std">大学入試 標準 (英検2級)</option>
+            <option value="h_adv">大学入試 難関 (英検準1級)</option>
+          </select>
+        </div>
+
+        <div class="f-item">
+          <label>英検対応級</label>
+          <select id="sel-eiken" onchange="runFilter()">
+            <option value="all">すべての級</option>
+            <option value="5">英検5級</option>
+            <option value="4">英検4級</option>
+            <option value="3">英検3級</option>
+            <option value="pre2">英検準2級</option>
+            <option value="2">英検2級</option>
+            <option value="pre1">英検準1級</option>
+          </select>
+        </div>
+
+        <div class="f-item">
+          <label>学習状態</label>
+          <select id="sel-status" onchange="runFilter()">
+            <option value="all">すべて</option>
+            <option value="unlearned">要復習（未習得）のみ</option>
+            <option value="learned">覚えた単語のみ</option>
+          </select>
+        </div>
+
+        <div class="f-item">
+          <label>単語 / 意味 検索</label>
+          <input type="text" id="inp-search" oninput="runFilter()" placeholder="検索（英語または日本語）...">
+        </div>
+
+        <div class="meta-bar">
+          <div>
+            表示中: <b id="cnt-filtered">0</b> 語 / 全 <b id="cnt-total">0</b> 語
+            <span style="margin-left: 10px;">習得率: <b id="stat-rate" style="color:#16a34a;">0%</b> (<span id="stat-counts">0/0</span>)</span>
+          </div>
+          <div>
+            <button class="btn-link" onclick="shuffleCurrentDeck()">シャッフル</button>
+            <button class="btn-link" style="margin-left:8px;" onclick="resetProgress()">進捗リセット</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- モード1: カード学習 -->
+      <div id="view-card" class="view-card-wrap">
+        <div class="flashcard-box" onclick="flipCard()">
+          <div id="card-inner" class="flashcard-inner">
+            <!-- 表面 -->
+            <div class="card-face">
+              <div style="display:flex; justify-content:space-between; align-items:center;">
+                <div class="tag-group">
+                  <span id="c-grade" class="tag">中1</span>
+                  <span id="c-eiken" class="tag green">英検5級</span>
+                </div>
+                <button class="btn-sound" onclick="event.stopPropagation(); playVoice();" title="発音を聞く">🔊 発音</button>
+              </div>
+              <div>
+                <div id="c-word" class="word-main">-</div>
+              </div>
+              <div class="tap-hint">タップ または [スペース] で意味を表示</div>
+            </div>
+            <!-- 裏面 -->
+            <div class="card-face card-back">
+              <div style="display:flex; justify-content:space-between; align-items:center;">
+                <span class="tag" style="background:#ffffff; color:#4338ca;">日本語訳</span>
+                <span style="font-size:0.75rem; color:#64748b;" id="c-index-indicator">0 / 0</span>
+              </div>
+              <div id="c-meaning" class="word-meaning">-</div>
+              <div class="example-wrap">
+                <div id="c-ex-en" style="font-weight:700; color:#334155;">-</div>
+                <div id="c-ex-ja" style="color:#64748b; margin-top:2px;">-</div>
+              </div>
+              <div class="tap-hint">タップで表面に戻す</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="ctrl-group">
+          <button class="act-btn yet" onclick="markCard(false)">まだ [← 左矢印]</button>
+          <button class="act-btn done" onclick="markCard(true)">覚えた！ [→ 右矢印]</button>
+        </div>
+      </div>
+
+      <!-- モード2: 単語一覧 (テーブル) -->
+      <div id="view-list" class="table-box hidden">
+        <table>
+          <thead>
+            <tr>
+              <th style="width: 20%;">単語</th>
+              <th style="width: 35%;">意味</th>
+              <th style="width: 15%;">学年</th>
+              <th style="width: 18%;">英検</th>
+              <th style="width: 12%; text-align:center;">状態</th>
+            </tr>
+          </thead>
+          <tbody id="list-tbody"></tbody>
+        </table>
+      </div>
+
+      <!-- モード3: 4択クイズ -->
+      <div id="view-quiz" class="hidden" style="display:flex; justify-content:center; padding:10px 0;">
+        <div class="quiz-box">
+          <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid #f1f5f9; padding-bottom:8px;">
+            <span style="font-size:0.8rem; font-weight:700; color:#4338ca;">4択テスト</span>
+            <span style="font-size:0.75rem; color:#64748b;" id="q-progress">問 1 / 10</span>
+          </div>
+          <div style="text-align:center; padding:12px 0;">
+            <span id="q-level-tag" class="tag">-</span>
+            <h2 id="q-word" style="font-size:2rem; font-weight:800; margin-top:8px;">-</h2>
+          </div>
+          <div id="q-choices" style="display:flex; flex-direction:column; gap:8px;"></div>
+          <div id="q-feedback" class="hidden" style="padding:10px; border-radius:8px; text-align:center; font-size:0.8rem; font-weight:700;"></div>
+          <button id="q-next-btn" class="hidden act-btn done" onclick="nextQuizQuestion()" style="margin-top:6px;">次の問題へ</button>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <script>
+    let VOCAB_DATA = [];
+    const STORAGE_KEY = 'smart_vocab_learned_2000_v1';
+    let learnedSet = new Set();
+    let filteredList = [];
+    let curIndex = 0;
+    let isFlipped = false;
+
+    let quizQuestions = [];
+    let curQuizIdx = 0;
+
+    // words.json の読み込み
+    async function loadData() {
+      try {
+        const res = await fetch('./words.json');
+        if (!res.ok) throw new Error('words.json の取得に失敗しました');
+        VOCAB_DATA = await res.json();
+
+        document.getElementById('loading-box').classList.add('hidden');
+        document.getElementById('app-content').classList.remove('hidden');
+
+        const saved = localStorage.getItem(STORAGE_KEY);
+        if (saved) {
+          try { learnedSet = new Set(JSON.parse(saved)); } catch(e) { learnedSet = new Set(); }
+        }
+
+        document.getElementById('cnt-total').innerText = VOCAB_DATA.length;
+        runFilter();
+      } catch (err) {
+        document.getElementById('loading-box').innerHTML = `
+          <div style="color:#dc2626;">
+            ⚠️ 単語データ（words.json）の読み込みに失敗しました。<br>
+            <span style="font-size:0.8rem; color:#64748b; font-weight:normal;">
+              index.html と同じフォルダに words.json が配置されていることを確認してください。
+            </span>
+          </div>
+        `;
+        console.error(err);
+      }
+    }
+
+    function saveLearned() {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify([...learnedSet]));
+      updateStats();
+    }
+
+    function updateStats() {
+      const total = VOCAB_DATA.length;
+      const count = learnedSet.size;
+      const pct = total > 0 ? Math.round((count / total) * 100) : 0;
+      document.getElementById('stat-rate').innerText = `${pct}%`;
+      document.getElementById('stat-counts').innerText = `${count}/${total}`;
+    }
+
+    function runFilter() {
+      const g = document.getElementById('sel-grade').value;
+      const e = document.getElementById('sel-eiken').value;
+      const s = document.getElementById('sel-status').value;
+      const q = document.getElementById('inp-search').value.toLowerCase().trim();
+
+      filteredList = VOCAB_DATA.filter(item => {
+        if (g !== 'all' && item.grade !== g) return false;
+        if (e !== 'all' && item.eiken !== e) return false;
+        const isDone = learnedSet.has(item.id);
+        if (s === 'learned' && !isDone) return false;
+        if (s === 'unlearned' && isDone) return false;
+        if (q) {
+          if (!item.word.toLowerCase().includes(q) && !item.meaning.includes(q)) return false;
+        }
+        return true;
+      });
+
+      document.getElementById('cnt-filtered').innerText = filteredList.length;
+      curIndex = 0;
+      isFlipped = false;
+      renderCard();
+      renderTable();
+      updateStats();
+    }
+
+    function flipCard() {
+      if (filteredList.length === 0) return;
+      isFlipped = !isFlipped;
+      document.getElementById('card-inner').classList.toggle('flipped', isFlipped);
+    }
+
+    function renderCard() {
+      const inner = document.getElementById('card-inner');
+      inner.classList.remove('flipped');
+      isFlipped = false;
+
+      if (filteredList.length === 0) {
+        document.getElementById('c-word').innerText = "該当なし";
+        document.getElementById('c-meaning').innerText = "条件に合う単語がありません";
+        document.getElementById('c-ex-en').innerText = "";
+        document.getElementById('c-ex-ja').innerText = "";
+        document.getElementById('c-index-indicator').innerText = "0 / 0";
+        return;
+      }
+
+      const item = filteredList[curIndex];
+      document.getElementById('c-grade').innerText = item.gradeLabel;
+      document.getElementById('c-eiken').innerText = item.eikenLabel;
+      document.getElementById('c-word').innerText = item.word;
+      document.getElementById('c-meaning').innerText = item.meaning;
+      document.getElementById('c-ex-en').innerText = item.exEn;
+      document.getElementById('c-ex-ja').innerText = item.exJa;
+      document.getElementById('c-index-indicator').innerText = `${curIndex + 1} / ${filteredList.length}`;
+    }
+
+    function markCard(done) {
+      if (filteredList.length === 0) return;
+      const item = filteredList[curIndex];
+      if (done) learnedSet.add(item.id); else learnedSet.delete(item.id);
+      saveLearned();
+
+      const st = document.getElementById('sel-status').value;
+      if (st !== 'all') {
+        runFilter();
+      } else {
+        curIndex = (curIndex + 1) % filteredList.length;
+        renderCard();
+        renderTable();
+      }
+    }
+
+    function shuffleCurrentDeck() {
+      for (let i = filteredList.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [filteredList[i], filteredList[j]] = [filteredList[j], filteredList[i]];
+      }
+      curIndex = 0;
+      renderCard();
+      renderTable();
+    }
+
+    function resetProgress() {
+      if (confirm('すべての習得マークをリセットしますか？')) {
+        learnedSet.clear();
+        saveLearned();
+        runFilter();
+      }
+    }
+
+    function playVoice() {
+      if (filteredList.length === 0) return;
+      const w = filteredList[curIndex].word;
+      const u = new SpeechSynthesisUtterance(w);
+      u.lang = 'en-US';
+      u.rate = 0.9;
+      window.speechSynthesis.speak(u);
+    }
+
+    function renderTable() {
+      const tb = document.getElementById('list-tbody');
+      tb.innerHTML = '';
+      if (filteredList.length === 0) {
+        tb.innerHTML = `<tr><td colspan="5" style="text-align:center; padding:20px; color:#94a3b8;">該当する単語がありません</td></tr>`;
+        return;
+      }
+
+      const displayList = filteredList.slice(0, 150);
+      displayList.forEach(item => {
+        const done = learnedSet.has(item.id);
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+          <td><b>${item.word}</b></td>
+          <td><b>${item.meaning}</b></td>
+          <td><span class="tag">${item.gradeLabel}</span></td>
+          <td><span class="tag green">${item.eikenLabel}</span></td>
+          <td style="text-align:center;">${done ? '<b style="color:#16a34a;">済</b>' : '<span style="color:#cbd5e1;">未</span>'}</td>
+        `;
+        tb.appendChild(tr);
+      });
+    }
+
+    function startQuiz() {
+      const pool = filteredList.length >= 4 ? filteredList : VOCAB_DATA;
+      quizQuestions = [...pool].sort(() => 0.5 - Math.random()).slice(0, 10);
+      curQuizIdx = 0;
+      loadQuiz();
+    }
+
+    function loadQuiz() {
+      if (curQuizIdx >= quizQuestions.length) {
+        alert('10問テストが完了しました！');
+        setMode('card');
+        return;
+      }
+      const q = quizQuestions[curQuizIdx];
+      document.getElementById('q-progress').innerText = `問 ${curQuizIdx + 1} / ${quizQuestions.length}`;
+      document.getElementById('q-level-tag').innerText = `${q.gradeLabel} / ${q.eikenLabel}`;
+      document.getElementById('q-word').innerText = q.word;
+      document.getElementById('q-feedback').className = 'hidden';
+      document.getElementById('q-next-btn').className = 'hidden act-btn done';
+
+      const others = VOCAB_DATA.filter(w => w.id !== q.id).sort(() => 0.5 - Math.random()).slice(0, 3).map(w => w.meaning);
+      const choices = [q.meaning, ...others].sort(() => 0.5 - Math.random());
+
+      const cBox = document.getElementById('q-choices');
+      cBox.innerHTML = '';
+      choices.forEach(c => {
+        const btn = document.createElement('button');
+        btn.className = 'quiz-choice-btn';
+        btn.innerText = c;
+        btn.onclick = () => selectChoice(btn, c === q.meaning, q);
+        cBox.appendChild(btn);
+      });
+    }
+
+    function selectChoice(btn, isCorrect, q) {
+      const fb = document.getElementById('q-feedback');
+      fb.classList.remove('hidden');
+      if (isCorrect) {
+        btn.style.borderColor = '#16a34a';
+        btn.style.background = '#dcfce7';
+        fb.style.background = '#dcfce7';
+        fb.style.color = '#166534';
+        fb.innerText = '正解です！ 習得済みに登録しました。';
+        learnedSet.add(q.id);
+        saveLearned();
+      } else {
+        btn.style.borderColor = '#dc2626';
+        btn.style.background = '#fee2e2';
+        fb.style.background = '#fee2e2';
+        fb.style.color = '#991b1b';
+        fb.innerText = `不正解。 正解: 「${q.meaning}」`;
+      }
+      const allBtns = document.getElementById('q-choices').querySelectorAll('button');
+      allBtns.forEach(b => b.disabled = true);
+      document.getElementById('q-next-btn').classList.remove('hidden');
+    }
+
+    function nextQuizQuestion() {
+      curQuizIdx++;
+      loadQuiz();
+    }
+
+    function setMode(m) {
+      const tabs = ['card', 'list', 'quiz'];
+      tabs.forEach(t => {
+        document.getElementById(`view-${t}`).classList.add('hidden');
+        document.getElementById(`tab-btn-${t}`).classList.remove('active');
+      });
+      document.getElementById(`view-${m}`).classList.remove('hidden');
+      document.getElementById(`tab-btn-${m}`).classList.add('active');
+
+      if (m === 'quiz') startQuiz();
+    }
+
+    // キーボードショートカット
+    window.addEventListener('keydown', (e) => {
+      const v = document.getElementById('view-card');
+      if (v.classList.contains('hidden')) return;
+
+      if (e.code === 'Space') {
+        e.preventDefault();
+        flipCard();
+      } else if (e.code === 'ArrowRight') {
+        markCard(true);
+      } else if (e.code === 'ArrowLeft') {
+        markCard(false);
+      }
+    });
+
+    window.addEventListener('DOMContentLoaded', loadData);
+  </script>
+</body>
+</html>

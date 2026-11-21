@@ -1,0 +1,372 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <title>専門家・公的相談窓口のご案内 | Apps Hub</title>
+
+  <!-- Tailwind CSS & Font Awesome -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@500;700&family=Noto+Sans+JP:wght@400;500;700&family=Plus+Jakarta+Sans:wght@600;700;800&display=swap" rel="stylesheet">
+
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['"Plus Jakarta Sans"', '"Noto Sans JP"', 'sans-serif'],
+            mono: ['"JetBrains Mono"', 'monospace'],
+          }
+        }
+      }
+    }
+  </script>
+
+  <style>
+    body {
+      min-height: 100vh;
+      min-height: 100dvh;
+      padding-top: env(safe-area-inset-top);
+      padding-bottom: env(safe-area-inset-bottom);
+      padding-left: env(safe-area-inset-left);
+      padding-right: env(safe-area-inset-right);
+      -webkit-tap-highlight-color: transparent;
+      -webkit-text-size-adjust: 100%;
+    }
+    @keyframes breatheOrb {
+      0%, 100% { transform: scale(0.85); opacity: 0.65; }
+      40% { transform: scale(1.15); opacity: 1; }
+    }
+    .orb-active {
+      animation: breatheOrb 10s ease-in-out infinite;
+    }
+  </style>
+</head>
+<body class="bg-slate-50 dark:bg-slate-950 text-slate-800 dark:text-slate-100 flex flex-col justify-between transition-colors duration-200">
+
+  <!-- ================= 統一ヘッダー ================= -->
+  <header class="w-full bg-white/90 dark:bg-slate-900/90 backdrop-blur border-b border-slate-200/80 dark:border-slate-800 sticky top-0 z-50">
+    <div class="max-w-4xl mx-auto px-4 h-14 flex items-center justify-between">
+      
+      <!-- 統一戻りリンク -->
+      <a href="../" class="inline-flex items-center gap-1.5 text-xs font-semibold text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-slate-100 transition py-1.5 px-3 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700">
+        <i class="fa-solid fa-arrow-left text-[10px]"></i>
+        <span>Apps Hub</span>
+      </a>
+
+      <!-- ページタイトル -->
+      <div class="flex items-center gap-2">
+        <div class="w-7 h-7 rounded-lg bg-teal-50 dark:bg-teal-950/60 border border-teal-100 dark:border-teal-900/50 flex items-center justify-center text-teal-600 dark:text-teal-400 text-xs">
+          <i class="fa-solid fa-hand-holding-heart"></i>
+        </div>
+        <h1 class="text-sm font-extrabold tracking-tight text-slate-800 dark:text-slate-100">相談窓口・安心ガイド</h1>
+      </div>
+
+      <!-- 右端：ダークモード切替 -->
+      <div class="flex items-center">
+        <button id="theme-toggle" type="button" onclick="toggleTheme()" class="w-8 h-8 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-500 dark:text-slate-300 flex items-center justify-center text-xs hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors" aria-label="外観テーマ切り替え" title="外観切替">
+          <i id="theme-icon" class="fa-solid fa-moon"></i>
+        </button>
+      </div>
+
+    </div>
+  </header>
+
+  <!-- ================= メインコンテンツ ================= -->
+  <main class="flex-1 max-w-4xl w-full mx-auto p-4 sm:p-6 space-y-5">
+
+    <!-- 元のアプリへ戻るバー -->
+    <div id="back-to-app-bar" class="hidden">
+      <button type="button" onclick="goBackToApp()" class="w-full sm:w-auto inline-flex items-center justify-center gap-2 text-xs font-bold text-teal-700 dark:text-teal-300 bg-teal-50/90 dark:bg-teal-950/60 hover:bg-teal-100 dark:hover:bg-teal-900/60 border border-teal-200/80 dark:border-teal-800/70 px-4 py-2.5 rounded-xl transition">
+        <i class="fa-solid fa-rotate-left"></i>
+        <span>使っていたアプリに戻る</span>
+      </button>
+    </div>
+
+    <!-- 1. 導入・安全と医療に関する重要な位置づけ -->
+    <section class="bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 rounded-2xl sm:rounded-3xl p-5 sm:p-7 shadow-xs space-y-4">
+      <div class="flex items-start gap-3.5">
+        <div class="w-10 h-10 rounded-2xl bg-teal-50 dark:bg-teal-950/70 border border-teal-100 dark:border-teal-900/60 text-teal-600 dark:text-teal-400 flex items-center justify-center text-base shrink-0 mt-0.5">
+          <i class="fa-solid fa-leaf"></i>
+        </div>
+        <div class="space-y-1.5">
+          <h2 class="text-base sm:text-lg font-extrabold text-slate-800 dark:text-slate-100 leading-snug">
+            ひとりで抱えきれないときは、専門家や公的窓口へ
+          </h2>
+          <p class="text-xs sm:text-sm text-slate-600 dark:text-slate-300 leading-relaxed">
+            Apps Hub のセルフケア・思考整理ツールは、日々の気持ちを整えるための補助的な道具であり、<strong>医療行為・診断・カウンセリングの代替となるものではありません</strong>。
+          </p>
+        </div>
+      </div>
+
+      <div class="bg-amber-50/80 dark:bg-amber-950/40 border border-amber-200/80 dark:border-amber-800/60 rounded-2xl p-4 text-xs text-amber-950 dark:text-amber-200 leading-relaxed space-y-1.5">
+        <div class="font-bold flex items-center gap-1.5 text-amber-900 dark:text-amber-300">
+          <i class="fa-solid fa-circle-exclamation text-amber-600 dark:text-amber-400"></i>
+          <span>アプリの利用を中止していただきたい場合</span>
+        </div>
+        <p>
+          振り返りや記録を行っているうちに、かえってつらさ・焦り・自己否定が強くなったり、過去の記憶が蘇って苦しくなったりした場合は、<strong>すぐに画面を閉じて使用を中止してください</strong>。心身の不調が続くときは、無理をせず医療機関や下記の公的相談窓口をご利用ください。
+        </p>
+      </div>
+    </section>
+
+    <!-- 2. 主な公的・無料相談窓口（電話 ＆ 公式Webサイト） -->
+    <section class="bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 rounded-2xl sm:rounded-3xl p-5 sm:p-7 shadow-xs space-y-4">
+      <div class="space-y-1">
+        <h2 class="text-sm sm:text-base font-extrabold text-slate-800 dark:text-slate-100 flex items-center gap-2">
+          <i class="fa-solid fa-phone-volume text-indigo-600 dark:text-indigo-400"></i>
+          <span>無料で相談できる主な公的窓口</span>
+        </h2>
+        <p class="text-xs text-slate-500 dark:text-slate-400">
+          電話番号をタップすると通話画面が開きます。各窓口の公式ホームページからも詳細やSNS相談の案内を確認できます。
+        </p>
+      </div>
+
+      <div class="grid grid-cols-1 gap-3.5">
+
+        <!-- #いのちSOS -->
+        <div class="bg-slate-50/90 dark:bg-slate-800/60 border border-slate-200/80 dark:border-slate-700/80 rounded-2xl p-4 sm:p-5 flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+          <div class="space-y-1.5">
+            <div class="flex flex-wrap items-center gap-2">
+              <span class="font-extrabold text-sm text-slate-800 dark:text-slate-100">#いのちSOS</span>
+              <span class="text-[11px] font-bold px-2 py-0.5 rounded-full bg-emerald-100 dark:bg-emerald-950 text-emerald-700 dark:text-emerald-300">通話無料・24時間 365日</span>
+            </div>
+            <p class="text-xs text-slate-600 dark:text-slate-300 leading-relaxed">
+              特定非営利活動法人 自殺対策支援センターライフリンクによる窓口です。「死にたい」「消えたい」「生きることに疲れた」などの気持ちを専門の相談員が受け止め、必要な支援策などを一緒に考えます。
+            </p>
+          </div>
+          <div class="flex flex-col sm:flex-row lg:flex-col gap-2 shrink-0">
+            <a href="tel:0120061338" class="inline-flex items-center justify-center gap-2 bg-indigo-600 hover:bg-indigo-700 active:scale-[0.99] text-white font-mono font-bold text-sm px-4 py-2.5 rounded-xl shadow-xs transition">
+              <i class="fa-solid fa-phone text-xs"></i>
+              <span>0120-061-338</span>
+            </a>
+            <a href="https://www.lifelink.or.jp/inochisos/" target="_blank" rel="noopener noreferrer" class="inline-flex items-center justify-center gap-1.5 bg-white dark:bg-slate-900 hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-slate-700 font-bold text-xs px-4 py-2 rounded-xl transition">
+              <span>公式ホームページ</span>
+              <i class="fa-solid fa-arrow-up-right-from-square text-[10px] text-slate-400"></i>
+            </a>
+          </div>
+        </div>
+
+        <!-- よりそいホットライン -->
+        <div class="bg-slate-50/90 dark:bg-slate-800/60 border border-slate-200/80 dark:border-slate-700/80 rounded-2xl p-4 sm:p-5 flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+          <div class="space-y-1.5">
+            <div class="flex flex-wrap items-center gap-2">
+              <span class="font-extrabold text-sm text-slate-800 dark:text-slate-100">よりそいホットライン</span>
+              <span class="text-[11px] font-bold px-2 py-0.5 rounded-full bg-emerald-100 dark:bg-emerald-950 text-emerald-700 dark:text-emerald-300">通話無料・24時間対応</span>
+            </div>
+            <p class="text-xs text-slate-600 dark:text-slate-300 leading-relaxed">
+              一般社団法人 社会的包摂サポートセンター運営。暮らしの困りごとや心身の悩みを幅広く相談できます（ガイダンスで専門分野や外国語も選択可）。
+            </p>
+            <p class="text-[11px] text-slate-500 dark:text-slate-400">
+              ※福島県からは <a href="tel:0120279226" class="underline font-mono text-indigo-600 dark:text-indigo-400">0120-279-226</a>（無料）／050等のIP電話からは <a href="tel:05036550279" class="underline font-mono text-indigo-600 dark:text-indigo-400">050-3655-0279</a>
+            </p>
+          </div>
+          <div class="flex flex-col sm:flex-row lg:flex-col gap-2 shrink-0">
+            <a href="tel:0120279338" class="inline-flex items-center justify-center gap-2 bg-indigo-600 hover:bg-indigo-700 active:scale-[0.99] text-white font-mono font-bold text-sm px-4 py-2.5 rounded-xl shadow-xs transition">
+              <i class="fa-solid fa-phone text-xs"></i>
+              <span>0120-279-338</span>
+            </a>
+            <a href="https://www.since2011.net/yorisoi/" target="_blank" rel="noopener noreferrer" class="inline-flex items-center justify-center gap-1.5 bg-white dark:bg-slate-900 hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-slate-700 font-bold text-xs px-4 py-2 rounded-xl transition">
+              <span>公式ホームページ</span>
+              <i class="fa-solid fa-arrow-up-right-from-square text-[10px] text-slate-400"></i>
+            </a>
+          </div>
+        </div>
+
+        <!-- いのちの電話 -->
+        <div class="bg-slate-50/90 dark:bg-slate-800/60 border border-slate-200/80 dark:border-slate-700/80 rounded-2xl p-4 sm:p-5 flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+          <div class="space-y-1.5">
+            <div class="flex flex-wrap items-center gap-2">
+              <span class="font-extrabold text-sm text-slate-800 dark:text-slate-100">いのちの電話</span>
+              <span class="text-[11px] font-bold px-2 py-0.5 rounded-full bg-slate-200/80 dark:bg-slate-700 text-slate-700 dark:text-slate-200">毎日 16:00〜21:00 / 毎月10日 8:00〜翌8:00</span>
+            </div>
+            <p class="text-xs text-slate-600 dark:text-slate-300 leading-relaxed">
+              一般社団法人 日本いのちの電話連盟。孤独や絶望感に悩む方の声に耳を傾ける相談窓口です（ナビダイヤルは <a href="tel:0570783556" class="underline font-mono text-indigo-600 dark:text-indigo-400">0570-783-556</a> 10:00〜22:00 ※通話料有料）。
+            </p>
+          </div>
+          <div class="flex flex-col sm:flex-row lg:flex-col gap-2 shrink-0">
+            <a href="tel:0120783556" class="inline-flex items-center justify-center gap-2 bg-indigo-600 hover:bg-indigo-700 active:scale-[0.99] text-white font-mono font-bold text-sm px-4 py-2.5 rounded-xl shadow-xs transition">
+              <i class="fa-solid fa-phone text-xs"></i>
+              <span>0120-783-556</span>
+            </a>
+            <a href="https://www.inochinodenwa.org/" target="_blank" rel="noopener noreferrer" class="inline-flex items-center justify-center gap-1.5 bg-white dark:bg-slate-900 hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-slate-700 font-bold text-xs px-4 py-2 rounded-xl transition">
+              <span>全国の窓口・公式サイト</span>
+              <i class="fa-solid fa-arrow-up-right-from-square text-[10px] text-slate-400"></i>
+            </a>
+          </div>
+        </div>
+
+      </div>
+    </section>
+
+    <!-- 3. 声を出せないとき（LINE・チャット相談・地域窓口） -->
+    <section class="bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 rounded-2xl sm:rounded-3xl p-5 sm:p-7 shadow-xs space-y-4">
+      <div class="space-y-1">
+        <h2 class="text-sm sm:text-base font-extrabold text-slate-800 dark:text-slate-100 flex items-center gap-2">
+          <i class="fa-regular fa-comment-dots text-teal-600 dark:text-teal-400"></i>
+          <span>電話がつらい・声を出せないとき（SNS・チャット相談）</span>
+        </h2>
+        <p class="text-xs text-slate-600 dark:text-slate-300 leading-relaxed">
+          「電話で話す気力がない」「家族や周囲に聞かれたくない」という場合は、LINEやWebチャットで文字による相談ができる窓口もあります。受付時間や対象窓口の最新一覧は、厚生労働省の総合案内ページから確認できます。
+        </p>
+      </div>
+
+      <div class="bg-slate-50 dark:bg-slate-800/60 border border-slate-200/80 dark:border-slate-700/80 rounded-2xl p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+        <div class="space-y-0.5">
+          <div class="text-xs font-bold text-slate-800 dark:text-slate-100">
+            厚生労働省「まもろうよ こころ」相談窓口一覧
+          </div>
+          <p class="text-[11px] text-slate-500 dark:text-slate-400">
+            SNS相談（LINE・チャット）、都道府県・政令指定都市別の精神保健福祉センター・いのちの電話一覧が掲載されています。
+          </p>
+        </div>
+        <a href="https://www.mhlw.go.jp/mamorouyokokoro/" target="_blank" rel="noopener noreferrer" class="shrink-0 inline-flex items-center justify-center gap-2 bg-white dark:bg-slate-900 hover:bg-slate-100 dark:hover:bg-slate-800 text-indigo-600 dark:text-indigo-400 border border-indigo-200 dark:border-indigo-800/80 font-bold text-xs px-4 py-2.5 rounded-xl transition">
+          <span>厚生労働省の案内を開く</span>
+          <i class="fa-solid fa-arrow-up-right-from-square text-[10px]"></i>
+        </a>
+      </div>
+
+      <div class="text-[11px] text-slate-500 dark:text-slate-400 flex items-start gap-2 pt-1">
+        <i class="fa-solid fa-hospital text-slate-400 mt-0.5"></i>
+        <span>
+          眠れない日が続く・食事がとれない・身体症状が出ている場合は、お近くの<strong>心療内科・精神科</strong>や、職場の<strong>産業医・保健師</strong>、自治体の<strong>保健所・精神保健福祉センター</strong>への相談もご検討ください。緊急時は迷わず <a href="tel:119" class="font-mono font-bold underline text-rose-600 dark:text-rose-400">119</a>（救急）へご連絡ください。
+        </span>
+      </div>
+    </section>
+
+    <!-- 4. 今この場で少し落ち着くための呼吸ガイド -->
+    <section class="bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 rounded-2xl sm:rounded-3xl p-5 sm:p-7 shadow-xs">
+      <div class="flex flex-col sm:flex-row items-center justify-between gap-4">
+        <div class="space-y-1 text-center sm:text-left">
+          <h2 class="text-sm font-extrabold text-slate-800 dark:text-slate-100 flex items-center justify-center sm:justify-start gap-2">
+            <i class="fa-solid fa-wind text-sky-500"></i>
+            <span>連絡する前に、ひと息つく</span>
+          </h2>
+          <p class="text-xs text-slate-500 dark:text-slate-400 leading-relaxed">
+            緊張や動悸が強いときは、円の動きに合わせて「4秒吸って、6秒かけてゆっくり吐く」だけ試してみてください。
+          </p>
+        </div>
+
+        <div class="flex items-center gap-4 shrink-0">
+          <div class="relative w-16 h-16 flex items-center justify-center">
+            <div id="breathe-orb" class="w-12 h-12 rounded-full bg-teal-400/30 dark:bg-teal-400/20 border border-teal-400/60 transition-transform"></div>
+            <span id="breathe-label" class="absolute text-[10px] font-bold text-teal-800 dark:text-teal-200">待機中</span>
+          </div>
+          <button id="breathe-btn" type="button" onclick="toggleBreathe()" class="text-xs font-bold px-3.5 py-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 transition">
+            呼吸ガイド開始
+          </button>
+        </div>
+      </div>
+    </section>
+
+    <!-- 下部ナビゲーション -->
+    <div class="flex flex-wrap items-center justify-center gap-3 pt-1">
+      <button id="bottom-back-btn" type="button" onclick="goBackToApp()" class="hidden inline-flex items-center gap-1.5 text-xs font-bold text-slate-600 dark:text-slate-300 bg-white dark:bg-slate-900 hover:bg-slate-100 dark:hover:bg-slate-800 border border-slate-200/80 dark:border-slate-800 px-4 py-2.5 rounded-xl transition">
+        <i class="fa-solid fa-rotate-left text-[11px]"></i>
+        <span>元のアプリに戻る</span>
+      </button>
+      <a href="../" class="inline-flex items-center gap-1.5 text-xs font-bold text-slate-600 dark:text-slate-300 bg-white dark:bg-slate-900 hover:bg-slate-100 dark:hover:bg-slate-800 border border-slate-200/80 dark:border-slate-800 px-4 py-2.5 rounded-xl transition">
+        <i class="fa-solid fa-table-cells-large text-[11px]"></i>
+        <span>Apps Hub 一覧へ</span>
+      </a>
+    </div>
+
+  </main>
+
+  <!-- ================= 統一フッター（正式ミニ免責ワンライナーのみ） ================= -->
+  <footer class="mt-8 py-6 text-center border-t border-slate-200 dark:border-slate-800">
+    <div class="max-w-4xl mx-auto px-4">
+      <p class="text-[11px] text-slate-400">
+        ※個人開発プロトタイプにつき無保証・自己責任にてご利用ください（データは端末内完結・サポート対象外）
+      </p>
+    </div>
+  </footer>
+
+  <script>
+    // テーマ初期化・切替（全アプリ共通キー app_theme と互換）
+    function initTheme() {
+      const saved = localStorage.getItem('app_theme');
+      const isDark = saved === 'dark' || (!saved && window.matchMedia('(prefers-color-scheme: dark)').matches);
+      applyTheme(isDark);
+    }
+
+    function toggleTheme() {
+      const isDark = document.documentElement.classList.toggle('dark');
+      localStorage.setItem('app_theme', isDark ? 'dark' : 'light');
+      updateThemeIcon(isDark);
+    }
+
+    function applyTheme(isDark) {
+      document.documentElement.classList.toggle('dark', isDark);
+      updateThemeIcon(isDark);
+    }
+
+    function updateThemeIcon(isDark) {
+      const icon = document.getElementById('theme-icon');
+      if (icon) {
+        icon.className = isDark ? 'fa-solid fa-sun' : 'fa-solid fa-moon';
+      }
+    }
+
+    // 元のアプリから遷移してきた場合のみ「戻る」ボタンを表示
+    function initBackButton() {
+      const hasHistory = window.history.length > 1 && document.referrer !== '';
+      if (hasHistory) {
+        const topBar = document.getElementById('back-to-app-bar');
+        const bottomBtn = document.getElementById('bottom-back-btn');
+        if (topBar) topBar.classList.remove('hidden');
+        if (bottomBtn) bottomBtn.classList.remove('hidden');
+      }
+    }
+
+    function goBackToApp() {
+      if (window.history.length > 1) {
+        window.history.back();
+      } else {
+        window.location.href = '../';
+      }
+    }
+
+    // 簡易呼吸ガイド（4秒吸う・6秒吐く）
+    let breatheTimer = null;
+    let isBreathing = false;
+
+    function toggleBreathe() {
+      const orb = document.getElementById('breathe-orb');
+      const label = document.getElementById('breathe-label');
+      const btn = document.getElementById('breathe-btn');
+
+      if (isBreathing) {
+        isBreathing = false;
+        clearInterval(breatheTimer);
+        orb.classList.remove('orb-active');
+        label.textContent = '待機中';
+        btn.textContent = '呼吸ガイド開始';
+        return;
+      }
+
+      isBreathing = true;
+      btn.textContent = '停止する';
+      orb.classList.add('orb-active');
+
+      let sec = 0;
+      const updatePhase = () => {
+        const mod = sec % 10;
+        label.textContent = mod < 4 ? '吸う…' : '吐く…';
+        sec++;
+      };
+      updatePhase();
+      breatheTimer = setInterval(updatePhase, 1000);
+    }
+
+    initTheme();
+    initBackButton();
+  </script>
+</body>
+</html>

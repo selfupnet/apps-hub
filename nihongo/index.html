@@ -1,0 +1,1277 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Nihongo Hub - Japanese Learning Hub</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700;800&family=Plus+Jakarta+Sans:wght@500;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    body { font-family: 'Plus Jakarta Sans', 'Noto Sans JP', sans-serif; }
+    .perspective-1000 { perspective: 1000px; }
+    .transform-style-3d { transform-style: preserve-3d; }
+    .backface-hidden { backface-visibility: hidden; }
+    .rotate-y-180 { transform: rotateY(180deg); }
+    .active-tab { border-bottom: 2px solid #6366f1; color: #4f46e5; font-weight: 700; }
+    .subtab-active { background-color: #4f46e5; color: #ffffff; }
+    .subtab-inactive { background-color: #f1f5f9; color: #475569; }
+    .subtab-inactive:hover { background-color: #e2e8f0; color: #0f172a; }
+  </style>
+</head>
+<body class="bg-slate-50 text-slate-800 min-h-screen flex flex-col antialiased">
+
+  <!-- ヘッダー (Apps Hub 統一規格) -->
+  <header class="bg-white border-b border-slate-200 sticky top-0 z-40 shadow-xs">
+    <div class="max-w-5xl mx-auto px-4 h-16 flex items-center justify-between">
+      <div class="flex items-center gap-3">
+        <a href="../" class="inline-flex items-center gap-1.5 text-xs font-semibold text-slate-500 hover:text-slate-900 transition py-1 px-2.5 rounded-lg bg-slate-100 hover:bg-slate-200">
+          <i class="fa-solid fa-arrow-left text-[10px]"></i>
+          <span>Apps Hub</span>
+        </a>
+        <div class="h-4 w-px bg-slate-200"></div>
+        <div class="flex items-center gap-2">
+          <span class="text-xl">🌸</span>
+          <h1 class="font-bold text-slate-900 tracking-tight text-base sm:text-lg">Nihongo Hub</h1>
+        </div>
+      </div>
+
+      <!-- 多言語UIセレクター（英語デフォルト・日本語との2択） -->
+      <div class="flex items-center gap-2">
+        <i class="fa-solid fa-globe text-slate-400 text-sm"></i>
+        <select id="uiLangSelect" onchange="changeUILang(this.value)" class="text-xs font-semibold bg-slate-100 border border-slate-200 text-slate-700 py-1.5 px-2.5 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500">
+          <option value="en" selected>English (EN)</option>
+          <option value="ja">日本語 (JA)</option>
+        </select>
+      </div>
+    </div>
+
+    <!-- モードナビゲーションバー -->
+    <div class="max-w-5xl mx-auto px-4 flex overflow-x-auto space-x-2 sm:space-x-4 border-t border-slate-100 text-xs sm:text-sm font-medium scrollbar-none">
+      <button onclick="switchMode('kana')" id="tab-kana" class="py-3 px-2 whitespace-nowrap active-tab flex items-center gap-1.5 transition">
+        <span>あ/ア</span> <span data-i18n="navKana">Kana</span>
+      </button>
+      <button onclick="switchMode('vocab')" id="tab-vocab" class="py-3 px-2 whitespace-nowrap text-slate-500 hover:text-slate-800 flex items-center gap-1.5 transition">
+        <i class="fa-solid fa-layer-group text-xs"></i> <span data-i18n="navVocab">JLPT Vocab</span>
+      </button>
+      <button onclick="switchMode('counter')" id="tab-counter" class="py-3 px-2 whitespace-nowrap text-slate-500 hover:text-slate-800 flex items-center gap-1.5 transition">
+        <i class="fa-solid fa-calculator text-xs"></i> <span data-i18n="navCounter">Counters</span>
+      </button>
+      <button onclick="switchMode('travel')" id="tab-travel" class="py-3 px-2 whitespace-nowrap text-slate-500 hover:text-slate-800 flex items-center gap-1.5 transition">
+        <i class="fa-solid fa-plane-departure text-xs"></i> <span data-i18n="navTravel">Survival JP</span>
+      </button>
+      <button onclick="switchMode('keigo')" id="tab-keigo" class="py-3 px-2 whitespace-nowrap text-slate-500 hover:text-slate-800 flex items-center gap-1.5 transition">
+        <i class="fa-solid fa-comments text-xs"></i> <span data-i18n="navKeigo">Keigo</span>
+      </button>
+    </div>
+  </header>
+
+  <!-- メインコンテンツ -->
+  <main class="max-w-5xl mx-auto px-4 py-6 flex-1 w-full">
+
+    <!-- MODE 1: KANA -->
+    <section id="sec-kana" class="space-y-6">
+      <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-white p-4 rounded-2xl border border-slate-200">
+        <div>
+          <h2 class="text-base font-bold text-slate-800" data-i18n="kanaTitle">Hiragana & Katakana Matrix</h2>
+          <p class="text-xs text-slate-500" data-i18n="kanaDesc">Tap any tile for audio. Test tricky similar characters.</p>
+        </div>
+        <div class="flex items-center gap-2">
+          <div class="inline-flex rounded-lg border border-slate-200 p-0.5 bg-slate-100 text-xs font-semibold">
+            <button onclick="setKanaType('hira')" id="btn-kana-hira" class="px-3 py-1 rounded-md bg-white text-indigo-600 shadow-xs">ひらがな</button>
+            <button onclick="setKanaType('kata')" id="btn-kana-kata" class="px-3 py-1 rounded-md text-slate-600">カタカナ</button>
+          </div>
+        </div>
+      </div>
+
+      <div id="kana-matrix" class="grid grid-cols-5 gap-2 sm:gap-3 bg-white p-4 sm:p-6 rounded-2xl border border-slate-200 shadow-xs"></div>
+
+      <div class="bg-indigo-50/70 border border-indigo-100 rounded-2xl p-5">
+        <h3 class="font-bold text-sm text-indigo-900 mb-2 flex items-center gap-2">
+          <i class="fa-solid fa-shapes"></i> <span data-i18n="quizTrickyTitle">Tricky Pair Quiz (シ / ツ, ソ / ン, さ / き)</span>
+        </h3>
+        <div id="tricky-quiz-area" class="flex flex-col sm:flex-row items-center justify-between gap-4 bg-white p-4 rounded-xl border border-indigo-100">
+          <div class="flex items-center gap-3">
+            <span class="text-xs text-slate-400 font-bold uppercase tracking-wider">Sound:</span>
+            <span id="tricky-target-romaji" class="text-2xl font-black text-indigo-600">shi</span>
+            <button onclick="speakCurrentTricky()" class="w-8 h-8 rounded-full bg-indigo-50 text-indigo-600 flex items-center justify-center hover:bg-indigo-100">
+              <i class="fa-solid fa-volume-high text-xs"></i>
+            </button>
+          </div>
+          <div id="tricky-options" class="flex gap-3 w-full sm:w-auto"></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- MODE 2: JLPT VOCAB (進捗保存・一覧検索・4択テスト完備) -->
+    <section id="sec-vocab" class="space-y-6 hidden">
+      <!-- 最上部コントロールヘッダー -->
+      <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-white p-4 rounded-2xl border border-slate-200">
+        <div>
+          <div class="flex items-center gap-2">
+            <h2 class="text-base font-bold text-slate-800" data-i18n="vocabTitle">JLPT Essential Vocabulary</h2>
+            <span id="data-source-badge" class="text-[10px] bg-slate-100 text-slate-600 px-2 py-0.5 rounded font-mono font-semibold">Loading data...</span>
+          </div>
+          <p class="text-xs text-slate-500 mt-0.5" data-i18n="vocabDesc">Master JLPT words with flashcards, a searchable list, and 4-choice quizzes.</p>
+        </div>
+        
+        <!-- レベル選択ドロップダウン -->
+        <div class="flex items-center gap-2">
+          <select id="jlptLevelSelect" onchange="changeJLPTLevel(this.value)" class="text-xs font-bold bg-slate-50 border border-slate-200 py-1.5 px-3 rounded-lg text-slate-700 focus:outline-none focus:ring-2 focus:ring-indigo-500">
+            <option value="all">All Levels</option>
+            <option value="n5" selected>N5 (Beginner)</option>
+            <option value="n4">N4 (Elementary)</option>
+            <option value="n3">N3 (Intermediate)</option>
+            <option value="n2">N2 (Upper-Int)</option>
+            <option value="n1">N1 (Advanced)</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- 進捗プログレスバー ＆ サブタブ切替バー -->
+      <div class="bg-white p-4 rounded-2xl border border-slate-200 shadow-xs space-y-3">
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+          <!-- 3つのサブタブ（フラッシュカード / 一覧リスト / 4択テスト） -->
+          <div class="inline-flex rounded-xl p-1 bg-slate-100 text-xs font-bold gap-1">
+            <button onclick="setVocabSubView('card')" id="subtab-btn-card" class="px-3 py-1.5 rounded-lg transition subtab-active flex items-center gap-1.5">
+              <i class="fa-solid fa-clone"></i> <span data-i18n="subtabCards">Flashcards</span>
+            </button>
+            <button onclick="setVocabSubView('list')" id="subtab-btn-list" class="px-3 py-1.5 rounded-lg transition subtab-inactive flex items-center gap-1.5">
+              <i class="fa-solid fa-list-ul"></i> <span data-i18n="subtabList">Word List</span>
+            </button>
+            <button onclick="setVocabSubView('quiz')" id="subtab-btn-quiz" class="px-3 py-1.5 rounded-lg transition subtab-inactive flex items-center gap-1.5">
+              <i class="fa-solid fa-circle-question"></i> <span data-i18n="subtabQuiz">4-Choice Quiz</span>
+            </button>
+          </div>
+
+          <!-- 未習得のみフィルタ -->
+          <label class="flex items-center gap-2 text-xs font-semibold text-slate-600 cursor-pointer select-none">
+            <input type="checkbox" id="unlearnedOnlyToggle" onchange="toggleUnlearnedFilter(this.checked)" class="rounded border-slate-300 text-indigo-600 focus:ring-indigo-500 w-4 h-4">
+            <span data-i18n="labelOnlyUnlearned">Only Unlearned</span>
+          </label>
+        </div>
+
+        <!-- 進捗ゲージ -->
+        <div class="space-y-1">
+          <div class="flex justify-between items-center text-xs">
+            <span class="font-bold text-slate-600 flex items-center gap-1.5">
+              <i class="fa-solid fa-circle-check text-emerald-500"></i>
+              <span data-i18n="labelMasteryProgress">Mastery:</span>
+              <span id="learnedStatText" class="font-mono font-bold text-indigo-600">0 / 0 (0%)</span>
+            </span>
+            <button onclick="resetLearnedProgress()" class="text-[11px] text-slate-400 hover:text-rose-500 transition underline" data-i18n="btnResetLearned">Reset Progress</button>
+          </div>
+          <div class="w-full h-2 bg-slate-100 rounded-full overflow-hidden">
+            <div id="learnedProgressBar" class="h-full bg-emerald-500 rounded-full transition-all duration-300 w-0"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 1. フラッシュカード表示ビュー -->
+      <div id="vocab-subview-card" class="space-y-4">
+        <div class="flex flex-col items-center justify-center py-2">
+          <div onclick="flipVocabCard()" class="w-full max-w-md h-64 perspective-1000 cursor-pointer">
+            <div id="vocab-card-inner" class="relative w-full h-full transform-style-3d transition-transform duration-500 bg-white rounded-2xl border border-slate-200 shadow-md">
+              <!-- 表面 -->
+              <div class="absolute inset-0 backface-hidden p-6 flex flex-col justify-between rounded-2xl bg-white">
+                <div class="flex justify-between items-start">
+                  <div class="flex items-center gap-1.5">
+                    <span id="card-level-badge" class="text-xs font-bold px-2.5 py-1 rounded bg-indigo-50 text-indigo-600 uppercase">N5</span>
+                    <span id="card-learned-indicator" class="hidden text-xs font-bold px-2 py-0.5 rounded bg-emerald-50 text-emerald-600 border border-emerald-200">
+                      <i class="fa-solid fa-check mr-0.5"></i> Learned
+                    </span>
+                  </div>
+                  <button onclick="event.stopPropagation(); playCurrentVocabSpeech();" class="w-9 h-9 rounded-full bg-slate-100 text-slate-600 flex items-center justify-center hover:bg-indigo-50 hover:text-indigo-600 transition">
+                    <i class="fa-solid fa-volume-high text-sm"></i>
+                  </button>
+                </div>
+                <div class="text-center my-auto">
+                  <div id="card-kanji" class="text-3xl sm:text-4xl font-extrabold text-slate-900 mb-1">食べる</div>
+                  <div id="card-kana" class="text-base text-indigo-600 font-medium">たべる</div>
+                </div>
+                <div class="text-center text-xs text-slate-400 font-medium" data-i18n="cardFlipHint">Tap to flip (Meaning & POS)</div>
+              </div>
+              <!-- 裏面 -->
+              <div class="absolute inset-0 backface-hidden rotate-y-180 p-6 flex flex-col justify-between rounded-2xl bg-indigo-50/50 border border-indigo-100">
+                <div class="flex justify-between items-center text-xs">
+                  <span id="card-pos" class="font-bold text-indigo-700 bg-indigo-100 px-2.5 py-1 rounded-lg">動詞</span>
+                  <span id="card-romaji" class="font-mono text-slate-400 font-semibold"></span>
+                </div>
+                <div class="text-center my-auto px-4">
+                  <div id="card-meaning" class="text-2xl sm:text-3xl font-extrabold text-slate-900 leading-snug break-words">to eat</div>
+                </div>
+                <div class="text-center text-xs text-slate-400 font-medium" data-i18n="cardFlipBackHint">Tap to flip back</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- 理解判定（覚えた / まだ）ボタン -->
+          <div class="flex items-center gap-3 mt-4 w-full max-w-md">
+            <button onclick="markCurrentVocab(false)" class="flex-1 py-2.5 rounded-xl bg-white border border-rose-200 text-rose-600 hover:bg-rose-50 text-xs font-bold transition shadow-xs flex items-center justify-center gap-1.5 active:scale-95">
+              <i class="fa-solid fa-rotate-left"></i> <span data-i18n="btnReview">Review / まだ</span>
+            </button>
+            <button onclick="markCurrentVocab(true)" class="flex-1 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold transition shadow-xs flex items-center justify-center gap-1.5 active:scale-95">
+              <i class="fa-solid fa-check"></i> <span data-i18n="btnLearned">Learned / 覚えた</span>
+            </button>
+          </div>
+
+          <!-- 前へ / 次へ コントロール -->
+          <div class="flex items-center gap-3 mt-3 w-full max-w-md">
+            <button onclick="prevVocab()" class="flex-1 py-2 rounded-xl bg-white border border-slate-200 text-xs font-bold text-slate-700 hover:bg-slate-50 transition shadow-xs flex items-center justify-center gap-1.5">
+              <i class="fa-solid fa-chevron-left text-xs"></i> <span data-i18n="btnPrev">Prev</span>
+            </button>
+            <span id="vocab-counter" class="text-xs font-mono text-slate-500 font-bold px-2">1 / 10</span>
+            <button onclick="nextVocab()" class="flex-1 py-2 rounded-xl bg-indigo-600 text-white text-xs font-bold hover:bg-indigo-700 transition shadow-xs flex items-center justify-center gap-1.5">
+              <span data-i18n="btnNext">Next</span> <i class="fa-solid fa-chevron-right text-xs"></i>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- 2. 一覧リスト表示ビュー（検索 ＆ インクリメンタルフィルター） -->
+      <div id="vocab-subview-list" class="space-y-3 hidden">
+        <div class="bg-white p-3 rounded-2xl border border-slate-200 shadow-xs flex items-center gap-2">
+          <i class="fa-solid fa-magnifying-glass text-slate-400 text-xs pl-2"></i>
+          <input type="text" id="vocabSearchInput" oninput="handleVocabSearch(this.value)" placeholder="Search Kanji, Kana, or English meaning..." class="w-full text-xs bg-transparent border-none outline-none text-slate-800 placeholder-slate-400 py-1">
+        </div>
+        <div class="bg-white rounded-2xl border border-slate-200 overflow-hidden shadow-xs">
+          <div class="max-h-[500px] overflow-y-auto divide-y divide-slate-100" id="vocab-list-container"></div>
+        </div>
+      </div>
+
+      <!-- 3. 4択テストビュー -->
+      <div id="vocab-subview-quiz" class="space-y-4 hidden">
+        <div class="bg-white rounded-2xl border border-slate-200 p-6 shadow-xs max-w-xl mx-auto">
+          <!-- クイズ進行ヘッダー -->
+          <div class="flex justify-between items-center pb-3 border-b border-slate-100 text-xs font-bold">
+            <span class="text-indigo-600" id="quiz-question-counter">Question 1 / 10</span>
+            <span class="text-slate-400" id="quiz-score-badge">Score: 0</span>
+          </div>
+
+          <!-- 出題エリア -->
+          <div class="text-center my-6">
+            <div class="text-xs text-slate-400 font-bold uppercase tracking-wider mb-1" data-i18n="quizPrompt">What is the meaning of:</div>
+            <div id="quiz-q-kanji" class="text-3xl sm:text-4xl font-extrabold text-slate-900 mb-1">食べる</div>
+            <div id="quiz-q-kana" class="text-sm font-semibold text-indigo-600 mb-2">たべる</div>
+            <button onclick="playQuizSpeech()" class="w-8 h-8 rounded-full bg-slate-100 text-slate-600 inline-flex items-center justify-center hover:bg-indigo-50 hover:text-indigo-600 transition">
+              <i class="fa-solid fa-volume-high text-xs"></i>
+            </button>
+          </div>
+
+          <!-- 4択ボタンエリア -->
+          <div id="quiz-choices-box" class="grid grid-cols-1 sm:grid-cols-2 gap-2.5"></div>
+
+          <!-- フィードバック表示 ＆ 次へボタン -->
+          <div id="quiz-feedback-box" class="mt-4 p-3 rounded-xl text-center text-xs font-bold hidden"></div>
+          <div class="mt-4 flex justify-end">
+            <button onclick="nextQuizStep()" id="quiz-btn-next" class="hidden px-5 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold rounded-xl transition shadow-xs items-center gap-1.5">
+              <span data-i18n="btnNextQuestion">Next Question</span> <i class="fa-solid fa-chevron-right text-[10px]"></i>
+            </button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- MODE 3: COUNTERS (助数詞TOP10網羅) -->
+    <section id="sec-counter" class="space-y-6 hidden">
+      <div class="bg-white p-4 rounded-2xl border border-slate-200">
+        <h2 class="text-base font-bold text-slate-800" data-i18n="counterTitle">Numeral Counters Master</h2>
+        <p class="text-xs text-slate-500" data-i18n="counterDesc">Learn how to count objects and master irregular phonetic sound shifts.</p>
+      </div>
+
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <div class="bg-white p-4 rounded-2xl border border-slate-200 space-y-2">
+          <h3 class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-2" data-i18n="counterSelectTitle">Select Counter</h3>
+          <div id="counter-category-list" class="space-y-1.5 max-h-[460px] overflow-y-auto pr-1"></div>
+        </div>
+
+        <div class="md:col-span-2 bg-white p-5 rounded-2xl border border-slate-200">
+          <div class="flex items-center justify-between mb-4 pb-3 border-b border-slate-100">
+            <div>
+              <h3 id="counter-current-name" class="font-extrabold text-lg text-slate-900">〜本 (ほん / ぽん / ぼん)</h3>
+              <p id="counter-current-desc" class="text-xs text-slate-500">細長いもの（ペン、傘、ボトル、映画など）</p>
+            </div>
+            <span class="text-2xl" id="counter-current-icon">✏️</span>
+          </div>
+          <div id="counter-numbers-grid" class="grid grid-cols-2 sm:grid-cols-5 gap-2.5"></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- MODE 4: TRAVEL & SURVIVAL (5シチュエーション完全網羅) -->
+    <section id="sec-travel" class="space-y-6 hidden">
+      <div class="bg-white p-4 rounded-2xl border border-slate-200">
+        <h2 class="text-base font-bold text-slate-800" data-i18n="travelTitle">Survival Travel Cheat-sheet</h2>
+        <p class="text-xs text-slate-500" data-i18n="travelDesc">Show large cards to shop staff or play native audio directly.</p>
+      </div>
+
+      <!-- シーン切替タブ（5大カテゴリ） -->
+      <div class="flex flex-wrap gap-2" id="travel-category-tabs"></div>
+
+      <!-- フレーズカード一覧 -->
+      <div id="travel-phrases-grid" class="grid grid-cols-1 sm:grid-cols-2 gap-3"></div>
+    </section>
+
+    <!-- MODE 5: KEIGO -->
+    <section id="sec-keigo" class="space-y-6 hidden">
+      <div class="bg-white p-4 rounded-2xl border border-slate-200">
+        <h2 class="text-base font-bold text-slate-800" data-i18n="keigoTitle">Keigo & Casual Conversions</h2>
+        <p class="text-xs text-slate-500" data-i18n="keigoDesc">Compare Casual, Polite (Desu/Masu), Respectful, and Humble forms.</p>
+      </div>
+
+      <div class="bg-white rounded-2xl border border-slate-200 overflow-x-auto shadow-xs">
+        <table class="w-full text-left text-xs sm:text-sm">
+          <thead class="bg-slate-50 border-b border-slate-200 text-slate-600 font-bold">
+            <tr>
+              <th class="p-3 sm:p-4" data-i18n="thBase">Plain / Dictionary</th>
+              <th class="p-3 sm:p-4 text-emerald-600" data-i18n="thPolite">Polite (Desu/Masu)</th>
+              <th class="p-3 sm:p-4 text-indigo-600" data-i18n="thSonkei">Respectful (Others)</th>
+              <th class="p-3 sm:p-4 text-purple-600" data-i18n="thKenjou">Humble (Self)</th>
+            </tr>
+          </thead>
+          <tbody id="keigo-tbody" class="divide-y divide-slate-100 font-medium"></tbody>
+        </table>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- 特大カンペモーダル（Travel用） -->
+  <div id="modal-card" class="fixed inset-0 bg-slate-900/80 backdrop-blur-xs z-50 flex items-center justify-center p-4 hidden">
+    <div class="bg-white w-full max-w-lg rounded-3xl p-6 sm:p-8 flex flex-col justify-between shadow-2xl relative">
+      <button onclick="closeBigCard()" class="absolute top-4 right-4 text-slate-400 hover:text-slate-600 p-2">
+        <i class="fa-solid fa-xmark text-lg"></i>
+      </button>
+      <div class="text-center my-8">
+        <div id="modal-jp" class="text-3xl sm:text-4xl font-black text-slate-900 mb-3 leading-snug">袋は要りません。</div>
+        <div id="modal-kana" class="text-base text-indigo-600 font-bold mb-2">ふくろはいりません</div>
+        <div id="modal-romaji" class="text-xs text-slate-400 font-mono mb-4">fukuro wa irimasen</div>
+        <div id="modal-meaning" class="text-sm font-semibold text-slate-600 bg-slate-50 py-2 px-4 rounded-xl inline-block">No plastic bag, please.</div>
+      </div>
+      <button onclick="playModalSpeech()" class="w-full py-4 rounded-2xl bg-indigo-600 text-white font-bold text-base hover:bg-indigo-700 transition flex items-center justify-center gap-2 shadow-lg shadow-indigo-200">
+        <i class="fa-solid fa-volume-high"></i> <span data-i18n="modalListen">Play Native Audio</span>
+      </button>
+    </div>
+  </div>
+
+  <!-- データ出典・ライセンス明記ブロック -->
+  <section class="max-w-5xl mx-auto px-4 mt-10 mb-4 w-full">
+    <div class="bg-white rounded-2xl p-4 sm:p-5 border border-slate-200/80 shadow-xs">
+      <h3 class="text-xs font-bold text-slate-700 flex items-center gap-1.5 mb-2.5">
+        <i class="fa-solid fa-scale-balanced text-indigo-500"></i>
+        <span data-i18n="licenseHeading">Data Sources & Open License Notices</span>
+      </h3>
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 text-[11px] text-slate-600">
+        <div class="bg-slate-50 p-3 rounded-xl border border-slate-100">
+          <p class="font-bold text-slate-800 mb-0.5" data-i18n="licJmdictTitle">Japanese Dictionary Data (JMdict)</p>
+          <p class="text-slate-500 leading-relaxed">
+            <span class="font-semibold text-slate-700">JMdict / EDICT</span> (Electronic Dictionary R&D Group / Jim Breen)<br>
+            License: <a href="https://creativecommons.org/licenses/by-sa/3.0/" target="_blank" rel="noopener noreferrer" class="text-indigo-600 hover:underline font-medium">CC BY-SA 3.0</a>
+          </p>
+        </div>
+        <div class="bg-slate-50 p-3 rounded-xl border border-slate-100">
+          <p class="font-bold text-slate-800 mb-0.5" data-i18n="licSpeechTitle">Speech Synthesis Engine (Web Speech API)</p>
+          <p class="text-slate-500 leading-relaxed" data-i18n="licSpeechDesc">
+            Browser native speech synthesizer (W3C Web Speech API / ja-JP). No external proprietary audio files or network audio calls.
+          </p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- フッター (Apps Hub 統一免責規格・コピーライトなし) -->
+  <footer class="mt-8 py-6 text-center border-t border-slate-200 bg-white">
+    <div class="max-w-4xl mx-auto px-4">
+      <p class="text-[11px] text-slate-400">
+        ※個人開発プロトタイプにつき無保証・自己責任にてご利用ください（データは端末内完結・サポート対象外）
+      </p>
+    </div>
+  </footer>
+
+  <script>
+    // 1. 多言語UI辞書（ENデフォルト & JAの2言語のみ）
+    const UI_TRANSLATIONS = {
+      en: {
+        navKana: "Kana", navVocab: "JLPT Vocab", navCounter: "Counters", navTravel: "Survival JP", navKeigo: "Keigo",
+        kanaTitle: "Hiragana & Katakana Matrix", kanaDesc: "Tap any tile for audio. Test tricky similar characters.",
+        quizTrickyTitle: "Tricky Pair Quiz (シ/ツ, ソ/ン, etc.)",
+        vocabTitle: "JLPT Essential Vocabulary", vocabDesc: "Master JLPT words with flashcards, a searchable list, and 4-choice quizzes.",
+        subtabCards: "Flashcards", subtabList: "Word List", subtabQuiz: "4-Choice Quiz",
+        labelOnlyUnlearned: "Only Unlearned", labelMasteryProgress: "Mastery:",
+        btnResetLearned: "Reset Progress",
+        cardFlipHint: "Tap to flip (Meaning & POS)", cardFlipBackHint: "Tap to flip back",
+        btnPrev: "Prev", btnNext: "Next", btnReview: "Review / まだ", btnLearned: "Learned / 覚えた",
+        quizPrompt: "What is the meaning of:", btnNextQuestion: "Next Question",
+        counterTitle: "Numeral Counters Master", counterDesc: "Learn how to count objects and master irregular phonetic sound shifts.",
+        counterSelectTitle: "Select Counter",
+        travelTitle: "Survival Travel Cheat-sheet", travelDesc: "Show large cards to shop staff or play native audio directly.",
+        keigoTitle: "Keigo & Casual Conversions", keigoDesc: "Compare Casual, Polite (Desu/Masu), Respectful, and Humble forms.",
+        thBase: "Plain / Dictionary", thPolite: "Polite (Desu/Masu)", thSonkei: "Respectful (Others)", thKenjou: "Humble (Self)",
+        modalListen: "Play Native Audio",
+        licenseHeading: "Data Sources & Open License Notices",
+        licJmdictTitle: "Japanese Dictionary Data (JMdict)",
+        licSpeechTitle: "Speech Synthesis Engine (Web Speech API)",
+        licSpeechDesc: "Browser native speech synthesizer (W3C Web Speech API / ja-JP). No external proprietary audio files or network audio calls."
+      },
+      ja: {
+        navKana: "五十音", navVocab: "JLPT語彙", navCounter: "助数詞", navTravel: "トラベル会話", navKeigo: "敬語・丁寧語",
+        kanaTitle: "五十音タップ盤 ＆ 似た文字判別", kanaDesc: "文字をタップして音声を聞き、似た文字クイズで識別力を鍛えます。",
+        quizTrickyTitle: "似た文字 2択テスト (シ / ツ, ソ / ン, さ / き)",
+        vocabTitle: "JLPT 必須語彙フラッシュカード", vocabDesc: "フラッシュカード、検索付き単語一覧、実戦4択テストで重要語彙を定着させます。",
+        subtabCards: "カード学習", subtabList: "単語一覧", subtabQuiz: "4択テスト",
+        labelOnlyUnlearned: "未習得のみ", labelMasteryProgress: "習得率:",
+        btnResetLearned: "進捗リセット",
+        cardFlipHint: "タップで裏面（意味・品詞）を表示", cardFlipBackHint: "タップで表面に戻る",
+        btnPrev: "前へ", btnNext: "次へ", btnReview: "まだ（要復習）", btnLearned: "覚えた！",
+        quizPrompt: "この単語の意味は？", btnNextQuestion: "次の問題へ",
+        counterTitle: "助数詞（数え方）マスター", counterDesc: "物によって変わる「数え方」と、1本・3本・6本などの発音変化を学習します。",
+        counterSelectTitle: "助数詞を選ぶ",
+        travelTitle: "トラベル・サバイバル即席カンペ", travelDesc: "コンビニ・飲食店・駅・ホテル・緊急時でそのまま店員に見せられる特大カード＆発音機能。",
+        keigoTitle: "敬語・丁寧語・カジュアル変換", keigoDesc: "友達（タメ口）⇄ 丁寧語（です・ます）⇄ 尊敬語・謙譲語の対照と使い分け。",
+        thBase: "基本形 (辞書形)", thPolite: "丁寧語 (です・ます)", thSonkei: "尊敬語 (相手の動作)", thKenjou: "謙譲語 (自分の動作)",
+        modalListen: "相手に聞かせる (Play Audio)",
+        licenseHeading: "収録データ・オープンライセンス表示",
+        licJmdictTitle: "日本語辞書・語彙データ (JMdict)",
+        licSpeechTitle: "音声再生エンジン (Web Speech API)",
+        licSpeechDesc: "ブラウザ標準の合成音声エンジン（W3C Web Speech API Specification / ja-JP）を使用。外部の商用音声ファイル・通信は一切使用していません。"
+      }
+    };
+
+    let currentUILang = 'en';
+
+    function changeUILang(lang) {
+      if (!UI_TRANSLATIONS[lang]) {
+        lang = 'en';
+      }
+      currentUILang = lang;
+      localStorage.setItem('nihongo_ui_lang', lang);
+      const sel = document.getElementById('uiLangSelect');
+      if (sel) sel.value = lang;
+
+      document.querySelectorAll('[data-i18n]').forEach(el => {
+        const key = el.getAttribute('data-i18n');
+        if (UI_TRANSLATIONS[lang] && UI_TRANSLATIONS[lang][key]) {
+          el.innerText = UI_TRANSLATIONS[lang][key];
+        }
+      });
+    }
+
+    // 2. 音声再生エンジン
+    function speakJapanese(text) {
+      if (!('speechSynthesis' in window)) return;
+      window.speechSynthesis.cancel();
+      const ut = new SpeechSynthesisUtterance(text);
+      ut.lang = 'ja-JP';
+      ut.rate = 0.9;
+      window.speechSynthesis.speak(ut);
+    }
+
+    // 3. モード切替
+    const MODES = ['kana', 'vocab', 'counter', 'travel', 'keigo'];
+    function switchMode(m) {
+      MODES.forEach(id => {
+        document.getElementById(`sec-${id}`).classList.add('hidden');
+        document.getElementById(`tab-${id}`).className = 'py-3 px-2 whitespace-nowrap text-slate-500 hover:text-slate-800 flex items-center gap-1.5 transition';
+      });
+      document.getElementById(`sec-${m}`).classList.remove('hidden');
+      document.getElementById(`tab-${m}`).className = 'py-3 px-2 whitespace-nowrap active-tab flex items-center gap-1.5 transition';
+    }
+
+    // 4. MODE 1: KANA
+    const KANA_DATA = [
+      { h: "あ", k: "ア", r: "a" }, { h: "い", k: "イ", r: "i" }, { h: "う", k: "ウ", r: "u" }, { h: "え", k: "エ", r: "e" }, { h: "お", k: "オ", r: "o" },
+      { h: "か", k: "カ", r: "ka" }, { h: "き", k: "キ", r: "ki" }, { h: "く", k: "ク", r: "ku" }, { h: "け", k: "ケ", r: "ke" }, { h: "こ", k: "コ", r: "ko" },
+      { h: "さ", k: "サ", r: "sa" }, { h: "し", k: "シ", r: "shi" }, { h: "す", k: "ス", r: "su" }, { h: "せ", k: "セ", r: "se" }, { h: "そ", k: "ソ", r: "so" },
+      { h: "た", k: "タ", r: "ta" }, { h: "ち", k: "チ", r: "chi" }, { h: "つ", k: "ツ", r: "tsu" }, { h: "て", k: "テ", r: "te" }, { h: "と", k: "ト", r: "to" },
+      { h: "な", k: "ナ", r: "na" }, { h: "に", k: "ニ", r: "ni" }, { h: "ぬ", k: "ヌ", r: "nu" }, { h: "ね", k: "ネ", r: "ne" }, { h: "の", k: "ノ", r: "no" },
+      { h: "は", k: "ハ", r: "ha" }, { h: "ひ", k: "ヒ", r: "hi" }, { h: "ふ", k: "フ", r: "fu" }, { h: "へ", k: "ヘ", r: "he" }, { h: "ほ", k: "ホ", r: "ho" },
+      { h: "ま", k: "マ", r: "ma" }, { h: "み", k: "ミ", r: "mi" }, { h: "む", k: "ム", r: "mu" }, { h: "め", k: "メ", r: "me" }, { h: "も", k: "モ", r: "mo" },
+      { h: "や", k: "ヤ", r: "ya" }, { h: "", k: "", r: "" }, { h: "ゆ", k: "ユ", r: "yu" }, { h: "", k: "", r: "" }, { h: "よ", k: "ヨ", r: "yo" },
+      { h: "ら", k: "ラ", r: "ra" }, { h: "り", k: "リ", r: "ri" }, { h: "る", k: "ル", r: "ru" }, { h: "れ", k: "レ", r: "re" }, { h: "ろ", k: "ロ", r: "ro" },
+      { h: "わ", k: "ワ", r: "wa" }, { h: "", k: "", r: "" }, { h: "", k: "", r: "" }, { h: "", k: "", r: "" }, { h: "を", k: "ヲ", r: "wo" },
+      { h: "ん", k: "ン", r: "n" }, { h: "", k: "", r: "" }, { h: "", k: "", r: "" }, { h: "", k: "", r: "" }, { h: "", k: "" }
+    ];
+
+    let currentKanaType = 'hira';
+
+    function setKanaType(type) {
+      currentKanaType = type;
+      if (type === 'hira') {
+        document.getElementById('btn-kana-hira').className = 'px-3 py-1 rounded-md bg-white text-indigo-600 shadow-xs';
+        document.getElementById('btn-kana-kata').className = 'px-3 py-1 rounded-md text-slate-600';
+      } else {
+        document.getElementById('btn-kana-kata').className = 'px-3 py-1 rounded-md bg-white text-indigo-600 shadow-xs';
+        document.getElementById('btn-kana-hira').className = 'px-3 py-1 rounded-md text-slate-600';
+      }
+      renderKanaMatrix();
+    }
+
+    function renderKanaMatrix() {
+      const container = document.getElementById('kana-matrix');
+      container.innerHTML = '';
+      KANA_DATA.forEach(item => {
+        if (!item.r) {
+          container.appendChild(document.createElement('div'));
+          return;
+        }
+        const char = currentKanaType === 'hira' ? item.h : item.k;
+        const btn = document.createElement('button');
+        btn.className = "flex flex-col items-center justify-center p-3 rounded-xl border border-slate-100 hover:border-indigo-400 hover:bg-indigo-50/40 transition active:scale-95 group";
+        btn.onclick = () => speakJapanese(char);
+        btn.innerHTML = `
+          <span class="text-2xl sm:text-3xl font-extrabold text-slate-800 group-hover:text-indigo-600">${char}</span>
+          <span class="text-[10px] font-mono text-slate-400 mt-1 uppercase font-semibold">${item.r}</span>
+        `;
+        container.appendChild(btn);
+      });
+    }
+
+    const TRICKY_PAIRS = [
+      { q: "shi", pair: ["シ", "ツ"], ans: "シ" },
+      { q: "tsu", pair: ["シ", "ツ"], ans: "ツ" },
+      { q: "so", pair: ["ソ", "ン"], ans: "ソ" },
+      { q: "n", pair: ["ソ", "ン"], ans: "ン" },
+      { q: "sa", pair: ["さ", "き"], ans: "さ" },
+      { q: "ki", pair: ["さ", "き"], ans: "き" }
+    ];
+    let currentTrickyIdx = 0;
+
+    function renderTrickyQuiz() {
+      const q = TRICKY_PAIRS[currentTrickyIdx];
+      document.getElementById('tricky-target-romaji').innerText = q.q;
+      const optContainer = document.getElementById('tricky-options');
+      optContainer.innerHTML = '';
+      q.pair.forEach(char => {
+        const btn = document.createElement('button');
+        btn.className = "px-6 py-2.5 bg-slate-100 hover:bg-indigo-600 hover:text-white rounded-xl text-xl font-black text-slate-800 transition active:scale-95 border border-slate-200";
+        btn.innerText = char;
+        btn.onclick = () => {
+          speakJapanese(char);
+          if (char === q.ans) {
+            btn.classList.add('bg-emerald-500', 'text-white');
+            setTimeout(() => {
+              currentTrickyIdx = (currentTrickyIdx + 1) % TRICKY_PAIRS.length;
+              renderTrickyQuiz();
+            }, 600);
+          } else {
+            btn.classList.add('bg-rose-500', 'text-white');
+          }
+        };
+        optContainer.appendChild(btn);
+      });
+    }
+
+    function speakCurrentTricky() {
+      speakJapanese(TRICKY_PAIRS[currentTrickyIdx].ans);
+    }
+
+    // ========================================================
+    // 5. MODE 2: JLPT VOCABULARY (進捗保存・一覧検索・4択テスト完備)
+    // ========================================================
+    const FALLBACK_VOCAB = [
+      { id: 1, kanji: "食べる", kana: "たべる", romaji: "taberu", pos: "動詞", meaning: "to eat", level: "n5" },
+      { id: 2, kanji: "飲む", kana: "のむ", romaji: "nomu", pos: "動詞", meaning: "to drink", level: "n5" },
+      { id: 3, kanji: "行く", kana: "いく", romaji: "iku", pos: "動詞", meaning: "to go", level: "n5" },
+      { id: 4, kanji: "見る", kana: "みる", romaji: "miru", pos: "動詞", meaning: "to see, watch", level: "n5" },
+      { id: 5, kanji: "本", kana: "ほん", romaji: "hon", pos: "名詞", meaning: "book", level: "n5" },
+      { id: 6, kanji: "準備", kana: "じゅんび", romaji: "junbi", pos: "名詞", meaning: "preparation", level: "n4" },
+      { id: 7, kanji: "経験", kana: "けいけん", romaji: "keiken", pos: "名詞", meaning: "experience", level: "n4" },
+      { id: 8, kanji: "複雑", kana: "ふくざつ", romaji: "fukuzatsu", pos: "形動", meaning: "complicated, complex", level: "n3" }
+    ];
+
+    let JLPT_DATA = [...FALLBACK_VOCAB];
+    let filteredVocab = [];
+    let curVocabIdx = 0;
+    let isFlipped = false;
+    let currentVocabSubView = 'card';
+    let onlyUnlearnedFilter = false;
+    let learnedVocabIds = new Set();
+
+    function loadLearnedProgress() {
+      try {
+        const saved = localStorage.getItem('nihongo_learned_ids');
+        if (saved) {
+          learnedVocabIds = new Set(JSON.parse(saved));
+        }
+      } catch (e) {
+        learnedVocabIds = new Set();
+      }
+      updateLearnedUI();
+    }
+
+    function saveLearnedProgress() {
+      try {
+        localStorage.setItem('nihongo_learned_ids', JSON.stringify(Array.from(learnedVocabIds)));
+      } catch (e) {}
+      updateLearnedUI();
+    }
+
+    function updateLearnedUI() {
+      const totalWords = JLPT_DATA.length;
+      const learnedCount = JLPT_DATA.filter(w => learnedVocabIds.has(w.id)).length;
+      const pct = totalWords > 0 ? Math.round((learnedCount / totalWords) * 100) : 0;
+
+      const statText = document.getElementById('learnedStatText');
+      if (statText) statText.innerText = `${learnedCount} / ${totalWords} (${pct}%)`;
+
+      const bar = document.getElementById('learnedProgressBar');
+      if (bar) bar.style.width = `${pct}%`;
+    }
+
+    function resetLearnedProgress() {
+      if (confirm(currentUILang === 'ja' ? '習得進捗をリセットしますか？' : 'Reset all learned progress?')) {
+        learnedVocabIds.clear();
+        saveLearnedProgress();
+        filterVocab();
+      }
+    }
+
+    function setVocabSubView(view) {
+      currentVocabSubView = view;
+      ['card', 'list', 'quiz'].forEach(v => {
+        document.getElementById(`vocab-subview-${v}`).classList.add('hidden');
+        const btn = document.getElementById(`subtab-btn-${v}`);
+        if (btn) btn.className = 'px-3 py-1.5 rounded-lg transition subtab-inactive flex items-center gap-1.5';
+      });
+
+      document.getElementById(`vocab-subview-${view}`).classList.remove('hidden');
+      const activeBtn = document.getElementById(`subtab-btn-${view}`);
+      if (activeBtn) activeBtn.className = 'px-3 py-1.5 rounded-lg transition subtab-active flex items-center gap-1.5';
+
+      if (view === 'list') {
+        renderVocabList();
+      } else if (view === 'quiz') {
+        startQuizSession();
+      }
+    }
+
+    function toggleUnlearnedFilter(checked) {
+      onlyUnlearnedFilter = checked;
+      filterVocab();
+    }
+
+    async function loadExternalJLPTData() {
+      const badge = document.getElementById('data-source-badge');
+      try {
+        const res = await fetch('./jlpt_words.json');
+        if (res.ok) {
+          const ext = await res.json();
+          if (Array.isArray(ext) && ext.length > 0) {
+            JLPT_DATA = ext;
+            badge.innerText = `External: ${JLPT_DATA.length} words`;
+            badge.className = "text-[10px] bg-emerald-100 text-emerald-700 px-2 py-0.5 rounded font-mono font-bold";
+          }
+        } else {
+          badge.innerText = `Preset: ${JLPT_DATA.length} words`;
+        }
+      } catch (e) {
+        badge.innerText = `Preset: ${JLPT_DATA.length} words`;
+      }
+      loadLearnedProgress();
+      filterVocab();
+    }
+
+    function filterVocab() {
+      const lvl = document.getElementById('jlptLevelSelect').value;
+      let pool = JLPT_DATA;
+      if (lvl !== 'all') {
+        pool = pool.filter(v => (v.level || '').toLowerCase() === lvl);
+      }
+
+      if (onlyUnlearnedFilter) {
+        pool = pool.filter(v => !learnedVocabIds.has(v.id));
+      }
+
+      filteredVocab = pool;
+      if (curVocabIdx >= filteredVocab.length) {
+        curVocabIdx = Math.max(0, filteredVocab.length - 1);
+      }
+      updateVocabCard();
+      if (currentVocabSubView === 'list') renderVocabList();
+    }
+
+    function changeJLPTLevel(lvl) {
+      filterVocab();
+      if (currentVocabSubView === 'quiz') startQuizSession();
+    }
+
+    function flipVocabCard() {
+      if (filteredVocab.length === 0) return;
+      isFlipped = !isFlipped;
+      document.getElementById('vocab-card-inner').classList.toggle('rotate-y-180', isFlipped);
+    }
+
+    function updateVocabCard() {
+      isFlipped = false;
+      document.getElementById('vocab-card-inner').classList.remove('rotate-y-180');
+
+      if (filteredVocab.length === 0) {
+        document.getElementById('card-kanji').innerText = "—";
+        document.getElementById('card-kana').innerText = currentUILang === 'ja' ? "該当なし (全単語習得済)" : "None (All Learned)";
+        document.getElementById('card-pos').innerText = "—";
+        document.getElementById('card-meaning').innerText = currentUILang === 'ja' ? "未習得の単語はありません" : "No unlearned words found";
+        document.getElementById('vocab-counter').innerText = "0 / 0";
+        document.getElementById('card-learned-indicator').classList.add('hidden');
+        return;
+      }
+
+      const item = filteredVocab[curVocabIdx];
+      document.getElementById('card-level-badge').innerText = (item.level || 'N5').toUpperCase();
+      document.getElementById('card-kanji').innerText = item.kanji;
+      document.getElementById('card-kana').innerText = item.kana;
+      document.getElementById('card-pos').innerText = item.pos || '名詞';
+      document.getElementById('card-meaning').innerText = item.meaning;
+      document.getElementById('vocab-counter').innerText = `${curVocabIdx + 1} / ${filteredVocab.length}`;
+
+      const indicator = document.getElementById('card-learned-indicator');
+      if (learnedVocabIds.has(item.id)) {
+        indicator.classList.remove('hidden');
+      } else {
+        indicator.classList.add('hidden');
+      }
+    }
+
+    function markCurrentVocab(isLearned) {
+      if (filteredVocab.length === 0) return;
+      const currentItem = filteredVocab[curVocabIdx];
+      if (isLearned) {
+        learnedVocabIds.add(currentItem.id);
+      } else {
+        learnedVocabIds.delete(currentItem.id);
+      }
+      saveLearnedProgress();
+
+      if (onlyUnlearnedFilter && isLearned) {
+        filterVocab();
+      } else {
+        nextVocab();
+      }
+    }
+
+    function nextVocab() {
+      if (filteredVocab.length === 0) return;
+      curVocabIdx = (curVocabIdx + 1) % filteredVocab.length;
+      updateVocabCard();
+    }
+
+    function prevVocab() {
+      if (filteredVocab.length === 0) return;
+      curVocabIdx = (curVocabIdx - 1 + filteredVocab.length) % filteredVocab.length;
+      updateVocabCard();
+    }
+
+    function playCurrentVocabSpeech() {
+      if (filteredVocab.length === 0) return;
+      speakJapanese(filteredVocab[curVocabIdx].kanji || filteredVocab[curVocabIdx].kana);
+    }
+
+    // 5-B. 単語一覧リスト ＆ 検索機能
+    function renderVocabList(searchQuery = '') {
+      const container = document.getElementById('vocab-list-container');
+      const q = (searchQuery || '').trim().toLowerCase();
+      let list = filteredVocab;
+      if (q) {
+        list = list.filter(w => 
+          (w.kanji && w.kanji.toLowerCase().includes(q)) ||
+          (w.kana && w.kana.toLowerCase().includes(q)) ||
+          (w.meaning && w.meaning.toLowerCase().includes(q))
+        );
+      }
+
+      if (list.length === 0) {
+        container.innerHTML = `<div class="p-8 text-center text-xs text-slate-400 font-semibold">No words match your filter.</div>`;
+        return;
+      }
+
+      container.innerHTML = list.slice(0, 200).map(item => {
+        const isL = learnedVocabIds.has(item.id);
+        return `
+          <div class="p-3.5 flex items-center justify-between hover:bg-slate-50 transition">
+            <div class="flex items-center gap-3">
+              <button onclick="toggleWordLearnedInList(${item.id})" class="w-6 h-6 rounded-lg flex items-center justify-center border transition ${isL ? 'bg-emerald-500 border-emerald-600 text-white' : 'border-slate-300 text-transparent hover:border-slate-400'}">
+                <i class="fa-solid fa-check text-[10px]"></i>
+              </button>
+              <div>
+                <div class="flex items-center gap-2">
+                  <span class="text-base font-extrabold text-slate-900">${item.kanji}</span>
+                  <span class="text-xs text-indigo-600 font-medium">${item.kana}</span>
+                  <span class="text-[10px] uppercase font-bold text-slate-400 bg-slate-100 px-1.5 py-0.5 rounded">${item.level || 'N5'}</span>
+                </div>
+                <div class="text-xs text-slate-500 mt-0.5">${item.meaning}</div>
+              </div>
+            </div>
+            <div class="flex items-center gap-2">
+              <button onclick="speakJapanese('${item.kanji || item.kana}')" class="w-8 h-8 rounded-full bg-slate-100 hover:bg-indigo-50 text-slate-600 hover:text-indigo-600 flex items-center justify-center transition">
+                <i class="fa-solid fa-volume-high text-xs"></i>
+              </button>
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    function handleVocabSearch(val) {
+      renderVocabList(val);
+    }
+
+    function toggleWordLearnedInList(id) {
+      if (learnedVocabIds.has(id)) {
+        learnedVocabIds.delete(id);
+      } else {
+        learnedVocabIds.add(id);
+      }
+      saveLearnedProgress();
+      renderVocabList(document.getElementById('vocabSearchInput').value);
+      updateVocabCard();
+    }
+
+    // 5-C. 実戦4択テスト機能
+    let quizQuestions = [];
+    let quizCurrentIdx = 0;
+    let quizScore = 0;
+
+    function startQuizSession() {
+      const pool = filteredVocab.length >= 4 ? filteredVocab : JLPT_DATA;
+      if (pool.length < 4) return;
+
+      const shuffled = [...pool].sort(() => 0.5 - Math.random());
+      quizQuestions = shuffled.slice(0, 10);
+      quizCurrentIdx = 0;
+      quizScore = 0;
+
+      loadQuizQuestion();
+    }
+
+    function loadQuizQuestion() {
+      if (quizCurrentIdx >= quizQuestions.length) {
+        showQuizResults();
+        return;
+      }
+
+      const q = quizQuestions[quizCurrentIdx];
+      document.getElementById('quiz-question-counter').innerText = `Question ${quizCurrentIdx + 1} / ${quizQuestions.length}`;
+      document.getElementById('quiz-score-badge').innerText = `Score: ${quizScore}`;
+      document.getElementById('quiz-q-kanji').innerText = q.kanji;
+      document.getElementById('quiz-q-kana').innerText = q.kana;
+
+      const pool = JLPT_DATA.filter(w => w.id !== q.id);
+      const dummies = [...pool].sort(() => 0.5 - Math.random()).slice(0, 3).map(w => w.meaning);
+      const choices = [q.meaning, ...dummies].sort(() => 0.5 - Math.random());
+
+      const cBox = document.getElementById('quiz-choices-box');
+      cBox.innerHTML = '';
+      choices.forEach(c => {
+        const btn = document.createElement('button');
+        btn.className = "w-full p-3 rounded-xl border border-slate-200 hover:border-indigo-400 bg-white hover:bg-indigo-50/50 text-slate-800 text-xs font-bold text-left transition active:scale-95 flex items-center justify-between";
+        btn.innerHTML = `<span>${c}</span><i class="fa-solid fa-chevron-right text-[10px] opacity-40"></i>`;
+        btn.onclick = () => selectQuizChoice(btn, c === q.meaning, q);
+        cBox.appendChild(btn);
+      });
+
+      document.getElementById('quiz-feedback-box').className = 'hidden';
+      document.getElementById('quiz-btn-next').className = 'hidden';
+    }
+
+    function selectQuizChoice(btn, isCorrect, item) {
+      const fb = document.getElementById('quiz-feedback-box');
+      fb.classList.remove('hidden');
+
+      const allBtns = document.getElementById('quiz-choices-box').querySelectorAll('button');
+      allBtns.forEach(b => b.disabled = true);
+
+      if (isCorrect) {
+        quizScore += 10;
+        document.getElementById('quiz-score-badge').innerText = `Score: ${quizScore}`;
+        btn.className = "w-full p-3 rounded-xl border border-emerald-500 bg-emerald-50 text-emerald-800 text-xs font-bold text-left flex items-center justify-between";
+        fb.className = "mt-4 p-3 rounded-xl text-center text-xs font-bold bg-emerald-100 text-emerald-800";
+        fb.innerHTML = `<i class="fa-solid fa-circle-check mr-1"></i> Correct! Marked as Learned.`;
+        learnedVocabIds.add(item.id);
+        saveLearnedProgress();
+      } else {
+        btn.className = "w-full p-3 rounded-xl border border-rose-500 bg-rose-50 text-rose-800 text-xs font-bold text-left flex items-center justify-between";
+        fb.className = "mt-4 p-3 rounded-xl text-center text-xs font-bold bg-rose-100 text-rose-800";
+        fb.innerHTML = `<i class="fa-solid fa-circle-xmark mr-1"></i> Incorrect. Correct: 「${item.meaning}」`;
+      }
+
+      document.getElementById('quiz-btn-next').className = 'px-5 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold rounded-xl transition shadow-xs flex items-center gap-1.5';
+    }
+
+    function nextQuizStep() {
+      quizCurrentIdx++;
+      loadQuizQuestion();
+    }
+
+    function showQuizResults() {
+      const cBox = document.getElementById('quiz-choices-box');
+      cBox.innerHTML = '';
+      document.getElementById('quiz-q-kanji').innerText = `🎉 Complete!`;
+      document.getElementById('quiz-q-kana').innerText = `Your Final Score: ${quizScore} / 100`;
+      document.getElementById('quiz-feedback-box').className = 'mt-4 p-4 rounded-xl text-center text-xs font-bold bg-indigo-50 text-indigo-700';
+      document.getElementById('quiz-feedback-box').innerText = quizScore >= 80 ? 'Excellent work! Keep it up!' : 'Good effort! Review unlearned words anytime.';
+      document.getElementById('quiz-btn-next').className = 'px-5 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold rounded-xl transition shadow-xs flex items-center gap-1.5';
+      document.getElementById('quiz-btn-next').innerHTML = `<span>Try Again</span> <i class="fa-solid fa-rotate-right text-[10px]"></i>`;
+      document.getElementById('quiz-btn-next').onclick = () => startQuizSession();
+    }
+
+    function playQuizSpeech() {
+      if (quizQuestions.length > 0 && quizCurrentIdx < quizQuestions.length) {
+        speakJapanese(quizQuestions[quizCurrentIdx].kanji || quizQuestions[quizCurrentIdx].kana);
+      }
+    }
+
+    // 6. MODE 3: COUNTERS (TOP10助数詞)
+    const COUNTER_GROUPS = [
+      {
+        id: "hon", name: "〜本 (ほん / ぽん / ぼん)", icon: "✏️",
+        desc: "Long, cylindrical objects (pens, umbrellas, bottles, films)",
+        list: [
+          { num: 1, text: "1本", kana: "いっぽん", shift: true },
+          { num: 2, text: "2本", kana: "にほん", shift: false },
+          { num: 3, text: "3本", kana: "さんぼん", shift: true },
+          { num: 4, text: "4本", kana: "よんほん", shift: false },
+          { num: 5, text: "5本", kana: "ごほん", shift: false },
+          { num: 6, text: "6本", kana: "ろっぽん", shift: true },
+          { num: 7, text: "7本", kana: "ななほん", shift: false },
+          { num: 8, text: "8本", kana: "はっぽん", shift: true },
+          { num: 9, text: "9本", kana: "きゅうほん", shift: false },
+          { num: 10, text: "10本", kana: "じゅっぽん", shift: true }
+        ]
+      },
+      {
+        id: "mai", name: "〜枚 (まい)", icon: "📄",
+        desc: "Thin and flat items (paper, shirts, tickets, plates)",
+        list: [
+          { num: 1, text: "1枚", kana: "いちまい", shift: false },
+          { num: 2, text: "2枚", kana: "にまい", shift: false },
+          { num: 3, text: "3枚", kana: "さんまい", shift: false },
+          { num: 4, text: "4枚", kana: "よんまい", shift: false },
+          { num: 5, text: "5枚", kana: "ごまい", shift: false },
+          { num: 6, text: "6枚", kana: "ろくまい", shift: false },
+          { num: 7, text: "7枚", kana: "ななまい", shift: false },
+          { num: 8, text: "8枚", kana: "はちまい", shift: false },
+          { num: 9, text: "9枚", kana: "きゅうまい", shift: false },
+          { num: 10, text: "10枚", kana: "じゅうまい", shift: false }
+        ]
+      },
+      {
+        id: "ko", name: "〜個 (こ)", icon: "🍎",
+        desc: "Small 3D objects (apples, eggs, erasers, small boxes)",
+        list: [
+          { num: 1, text: "1個", kana: "いっこ", shift: true },
+          { num: 2, text: "2個", kana: "にこ", shift: false },
+          { num: 3, text: "3個", kana: "さんこ", shift: false },
+          { num: 4, text: "4個", kana: "よんこ", shift: false },
+          { num: 5, text: "5個", kana: "ごこ", shift: false },
+          { num: 6, text: "6個", kana: "ろっこ", shift: true },
+          { num: 7, text: "7個", kana: "ななこ", shift: false },
+          { num: 8, text: "8個", kana: "はっこ", shift: true },
+          { num: 9, text: "9個", kana: "きゅうこ", shift: false },
+          { num: 10, text: "10個", kana: "じゅっこ", shift: true }
+        ]
+      },
+      {
+        id: "hai", name: "〜杯 (はい / ぱい / ばい)", icon: "☕",
+        desc: "Cups, glasses, and bowls with liquids (coffee, beer, ramen)",
+        list: [
+          { num: 1, text: "1杯", kana: "いっぱい", shift: true },
+          { num: 2, text: "2杯", kana: "にはい", shift: false },
+          { num: 3, text: "3杯", kana: "さんばい", shift: true },
+          { num: 4, text: "4杯", kana: "よんはい", shift: false },
+          { num: 5, text: "5杯", kana: "ごはい", shift: false },
+          { num: 6, text: "6杯", kana: "ろっぱい", shift: true },
+          { num: 7, text: "7杯", kana: "ななはい", shift: false },
+          { num: 8, text: "8杯", kana: "はっぱい", shift: true },
+          { num: 9, text: "9杯", kana: "きゅうはい", shift: false },
+          { num: 10, text: "10杯", kana: "じゅっぱい", shift: true }
+        ]
+      },
+      {
+        id: "hiki", name: "〜匹 (ひき / ぴき / びき)", icon: "🐱",
+        desc: "Small-to-medium animals, fish, insects (cats, dogs, fish)",
+        list: [
+          { num: 1, text: "1匹", kana: "いっぴき", shift: true },
+          { num: 2, text: "2匹", kana: "にひき", shift: false },
+          { num: 3, text: "3匹", kana: "さんびき", shift: true },
+          { num: 4, text: "4匹", kana: "よんひき", shift: false },
+          { num: 5, text: "5匹", kana: "ごひき", shift: false },
+          { num: 6, text: "6匹", kana: "ろっぴき", shift: true },
+          { num: 7, text: "7匹", kana: "ななひき", shift: false },
+          { num: 8, text: "8匹", kana: "はっぴき", shift: true },
+          { num: 9, text: "9匹", kana: "きゅうひき", shift: false },
+          { num: 10, text: "10匹", kana: "じゅっぴき", shift: true }
+        ]
+      },
+      {
+        id: "satsu", name: "〜冊 (さつ)", icon: "📚",
+        desc: "Bound paper volumes (books, magazines, notebooks)",
+        list: [
+          { num: 1, text: "1冊", kana: "いっさつ", shift: true },
+          { num: 2, text: "2冊", kana: "にさつ", shift: false },
+          { num: 3, text: "3冊", kana: "さんさつ", shift: false },
+          { num: 4, text: "4冊", kana: "よんさつ", shift: false },
+          { num: 5, text: "5冊", kana: "ごさつ", shift: false },
+          { num: 6, text: "6冊", kana: "ろくさつ", shift: false },
+          { num: 7, text: "7冊", kana: "ななさつ", shift: false },
+          { num: 8, text: "8冊", kana: "はっさつ", shift: true },
+          { num: 9, text: "9冊", kana: "きゅうさつ", shift: false },
+          { num: 10, text: "10冊", kana: "じゅっさつ", shift: true }
+        ]
+      },
+      {
+        id: "dai", name: "〜台 (だい)", icon: "🚗",
+        desc: "Machines, vehicles, electronic appliances (cars, bicycles, PCs)",
+        list: [
+          { num: 1, text: "1台", kana: "いちだい", shift: false },
+          { num: 2, text: "2台", kana: "にだい", shift: false },
+          { num: 3, text: "3台", kana: "さんだい", shift: false },
+          { num: 4, text: "4台", kana: "よんだい", shift: false },
+          { num: 5, text: "5台", kana: "ごだい", shift: false },
+          { num: 6, text: "6台", kana: "ろくだい", shift: false },
+          { num: 7, text: "7台", kana: "ななだい", shift: false },
+          { num: 8, text: "8台", kana: "はちだい", shift: false },
+          { num: 9, text: "9台", kana: "きゅうだい", shift: false },
+          { num: 10, text: "10台", kana: "じゅうだい", shift: false }
+        ]
+      },
+      {
+        id: "nin", name: "〜人 (にん / り)", icon: "👤",
+        desc: "People (1 & 2 use unique native Japanese readings)",
+        list: [
+          { num: 1, text: "1人", kana: "ひとり", shift: true },
+          { num: 2, text: "2人", kana: "ふたり", shift: true },
+          { num: 3, text: "3人", kana: "さんにん", shift: false },
+          { num: 4, text: "4人", kana: "よにん", shift: true },
+          { num: 5, text: "5人", kana: "ごにん", shift: false },
+          { num: 6, text: "6人", kana: "ろくにん", shift: false },
+          { num: 7, text: "7人", kana: "ななにん / しちにん", shift: false },
+          { num: 8, text: "8人", kana: "はちにん", shift: false },
+          { num: 9, text: "9人", kana: "きゅうにん", shift: false },
+          { num: 10, text: "10人", kana: "じゅうにん", shift: false }
+        ]
+      },
+      {
+        id: "tsu", name: "〜つ (Yamato Counter)", icon: "📦",
+        desc: "General or abstract objects (from 1 to 10)",
+        list: [
+          { num: 1, text: "1つ", kana: "ひとつ", shift: true },
+          { num: 2, text: "2つ", kana: "ふたつ", shift: true },
+          { num: 3, text: "3つ", kana: "みっつ", shift: true },
+          { num: 4, text: "4つ", kana: "よっつ", shift: true },
+          { num: 5, text: "5つ", kana: "いつつ", shift: true },
+          { num: 6, text: "6つ", kana: "むっつ", shift: true },
+          { num: 7, text: "7つ", kana: "ななつ", shift: true },
+          { num: 8, text: "8つ", kana: "やっつ", shift: true },
+          { num: 9, text: "9つ", kana: "ここのつ", shift: true },
+          { num: 10, text: "10", kana: "とお", shift: true }
+        ]
+      },
+      {
+        id: "kai", name: "〜回 (かい)", icon: "🔄",
+        desc: "Frequency, occurrences, rounds (times, lessons, rounds)",
+        list: [
+          { num: 1, text: "1回", kana: "いっかい", shift: true },
+          { num: 2, text: "2回", kana: "にかい", shift: false },
+          { num: 3, text: "3回", kana: "さんかい", shift: false },
+          { num: 4, text: "4回", kana: "よんかい", shift: false },
+          { num: 5, text: "5回", kana: "ごかい", shift: false },
+          { num: 6, text: "6回", kana: "ろっかい", shift: true },
+          { num: 7, text: "7回", kana: "ななかい", shift: false },
+          { num: 8, text: "8回", kana: "はっかい", shift: true },
+          { num: 9, text: "9回", kana: "きゅうかい", shift: false },
+          { num: 10, text: "10回", kana: "じゅっかい", shift: true }
+        ]
+      }
+    ];
+
+    let currentCounterId = "hon";
+
+    function renderCountersUI() {
+      const catList = document.getElementById('counter-category-list');
+      catList.innerHTML = '';
+      COUNTER_GROUPS.forEach(cg => {
+        const btn = document.createElement('button');
+        const isActive = cg.id === currentCounterId;
+        btn.className = `w-full text-left px-3 py-2.5 rounded-xl font-bold text-xs flex items-center justify-between transition ${isActive ? 'bg-indigo-600 text-white shadow-xs' : 'bg-slate-50 hover:bg-slate-100 text-slate-700'}`;
+        btn.innerHTML = `<span>${cg.icon} ${cg.name.split(' ')[0]}</span><i class="fa-solid fa-chevron-right text-[10px] opacity-60"></i>`;
+        btn.onclick = () => {
+          currentCounterId = cg.id;
+          renderCountersUI();
+        };
+        catList.appendChild(btn);
+      });
+
+      const current = COUNTER_GROUPS.find(cg => cg.id === currentCounterId);
+      document.getElementById('counter-current-name').innerText = current.name;
+      document.getElementById('counter-current-desc').innerText = current.desc;
+      document.getElementById('counter-current-icon').innerText = current.icon;
+
+      const numGrid = document.getElementById('counter-numbers-grid');
+      numGrid.innerHTML = '';
+      current.list.forEach(item => {
+        const card = document.createElement('button');
+        card.className = `p-3 rounded-xl border text-center transition active:scale-95 flex flex-col items-center justify-center ${item.shift ? 'border-amber-200 bg-amber-50/50 hover:bg-amber-100/60' : 'border-slate-100 bg-white hover:bg-slate-50'}`;
+        card.onclick = () => speakJapanese(item.kana.split('/')[0].trim());
+        card.innerHTML = `
+          <span class="text-xs text-slate-400 font-bold mb-0.5">${item.num}</span>
+          <span class="text-base font-extrabold text-slate-900">${item.text}</span>
+          <span class="text-xs ${item.shift ? 'text-amber-700 font-bold' : 'text-slate-500'} mt-1">${item.kana}</span>
+        `;
+        numGrid.appendChild(card);
+      });
+    }
+
+    // 7. MODE 4: TRAVEL CHEAT-SHEET (5大シチュエーション完全網羅)
+    const TRAVEL_DATA = {
+      conbini: {
+        name: "🏪 Convenience (コンビニ)",
+        phrases: [
+          { jp: "袋は要りません。", kana: "ふくろはいりません", romaji: "fukuro wa irimasen", en: "No plastic bag, please." },
+          { jp: "温めてください。", kana: "あたためてください", romaji: "atatomete kudasai", en: "Please heat this up." },
+          { jp: "お箸（スプーン）をください。", kana: "おはし（スプーン）をください", romaji: "ohashi o kudasai", en: "Chopsticks (spoon), please." },
+          { jp: "肉まんをひとつください。", kana: "にくまんをひとつください", romaji: "nikuman o hitotsu kudasai", en: "One steamed meat bun, please." }
+        ]
+      },
+      dining: {
+        name: "🍜 Dining & Izakaya (居酒屋)",
+        phrases: [
+          { jp: "お会計をお願いします。", kana: "おかいけいをおねがいします", romaji: "okaikei o onegaishimasu", en: "Check, please." },
+          { jp: "これをお願いします。", kana: "これをおねがいします", romaji: "kore o onegaishimasu", en: "This one, please." },
+          { jp: "英語のメニューはありますか？", kana: "えいごのめにゅーはありますか？", romaji: "eigo no menyuu wa arimasu ka?", en: "Do you have an English menu?" },
+          { jp: "水をもらえますか？", kana: "みずをもらえますか？", romaji: "mizu o moraemasu ka?", en: "Can I have some water?" },
+          { jp: "ごちそうさまでした！", kana: "ごちそうさまでした", romaji: "gochisousama deshita", en: "Thank you for the meal!" }
+        ]
+      },
+      station: {
+        name: "🚆 Station & Train (駅・交通)",
+        phrases: [
+          { jp: "この電車は新宿に行きますか？", kana: "このでんしゃはしんじゅくにいきますか？", romaji: "kono densha wa shinjuku ni ikimasu ka?", en: "Does this train go to Shinjuku?" },
+          { jp: "きっぷ売り場はどこですか？", kana: "きっぷうりばはどこですか？", romaji: "kippu uriba wa doko desu ka?", en: "Where is the ticket counter?" },
+          { jp: "次の電車は何時ですか？", kana: "つぎのでんしゃはなんじですか？", romaji: "tsugi no densha wa nanji desu ka?", en: "What time is the next train?" },
+          { jp: "トイレはどこですか？", kana: "といれはどこですか？", romaji: "toire wa doko desu ka?", en: "Where is the restroom?" }
+        ]
+      },
+      hotel: {
+        name: "🏨 Hotel (ホテル)",
+        phrases: [
+          { jp: "チェックインをお願いします。", kana: "ちぇっくいんをおねがいします", romaji: "chekkuin o onegaishimasu", en: "Check-in, please." },
+          { jp: "荷物を預かってもらえますか？", kana: "にもつをあずかってもらえますか？", romaji: "nimotsu o azukatte moraemasu ka?", en: "Can you hold my luggage?" },
+          { jp: "Wi-Fiのパスワードは何ですか？", kana: "わいふぁいのぱすわーどはなんですか？", romaji: "waifai no pasuwaado wa nan desu ka?", en: "What is the Wi-Fi password?" },
+          { jp: "チェックアウトをお願いします。", kana: "ちぇっくあうとをおねがいします", romaji: "chekkuauto o onegaishimasu", en: "Check-out, please." }
+        ]
+      },
+      emergency: {
+        name: "🚨 Emergency (緊急時)",
+        phrases: [
+          { jp: "助けてください！", kana: "たすけてください！", romaji: "tasukete kudasai!", en: "Please help me!" },
+          { jp: "気分が悪いです（体調不良）。", kana: "きぶんがわるいです", romaji: "kibun ga warui desu", en: "I feel sick / unwell." },
+          { jp: "パスポートをなくしました。", kana: "ぱすぽーとをなくしました", romaji: "pasupooto o nakushimashita", en: "I lost my passport." },
+          { jp: "警察を呼んでください。", kana: "けいさつをよんでください", romaji: "keisatsu o yonde kudasai", en: "Please call the police." }
+        ]
+      }
+    };
+
+    let activeTravelCategory = 'conbini';
+
+    function renderTravelUI() {
+      const tabs = document.getElementById('travel-category-tabs');
+      tabs.innerHTML = '';
+      Object.keys(TRAVEL_DATA).forEach(key => {
+        const cat = TRAVEL_DATA[key];
+        const btn = document.createElement('button');
+        const isActive = key === activeTravelCategory;
+        btn.className = `px-3.5 py-1.5 rounded-lg text-xs font-bold transition ${isActive ? 'bg-indigo-600 text-white' : 'bg-white border border-slate-200 text-slate-700 hover:bg-slate-50'}`;
+        btn.innerText = cat.name;
+        btn.onclick = () => {
+          activeTravelCategory = key;
+          renderTravelUI();
+        };
+        tabs.appendChild(btn);
+      });
+
+      const grid = document.getElementById('travel-phrases-grid');
+      grid.innerHTML = '';
+      TRAVEL_DATA[activeTravelCategory].phrases.forEach(p => {
+        const card = document.createElement('div');
+        card.className = "bg-white p-4 rounded-2xl border border-slate-200 shadow-xs flex flex-col justify-between";
+        card.innerHTML = `
+          <div>
+            <div class="text-base font-extrabold text-slate-900 mb-1">${p.jp}</div>
+            <div class="text-xs text-indigo-600 font-medium mb-1">${p.kana}</div>
+            <div class="text-xs text-slate-500 font-semibold mb-3">${p.en}</div>
+          </div>
+          <div class="flex items-center gap-2 pt-2 border-t border-slate-100">
+            <button onclick="speakJapanese('${p.jp}')" class="flex-1 py-1.5 px-3 bg-slate-50 hover:bg-indigo-50 text-indigo-600 rounded-lg text-xs font-bold flex items-center justify-center gap-1.5 transition">
+              <i class="fa-solid fa-volume-high"></i> 音声
+            </button>
+            <button onclick="openBigCard('${p.jp}', '${p.kana}', '${p.romaji}', '${p.en}')" class="py-1.5 px-3 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-xs font-bold flex items-center justify-center gap-1 transition">
+              <i class="fa-solid fa-expand"></i> 見せる
+            </button>
+          </div>
+        `;
+        grid.appendChild(card);
+      });
+    }
+
+    let currentModalJp = "";
+    function openBigCard(jp, kana, romaji, en) {
+      currentModalJp = jp;
+      document.getElementById('modal-jp').innerText = jp;
+      document.getElementById('modal-kana').innerText = kana;
+      document.getElementById('modal-romaji').innerText = romaji;
+      document.getElementById('modal-meaning').innerText = en;
+      document.getElementById('modal-card').classList.remove('hidden');
+    }
+    function closeBigCard() {
+      document.getElementById('modal-card').classList.add('hidden');
+    }
+    function playModalSpeech() {
+      if (currentModalJp) speakJapanese(currentModalJp);
+    }
+
+    // 8. MODE 5: KEIGO
+    const KEIGO_DATA = [
+      { base: "行く (to go)", polite: "行きます", sonkei: "いらっしゃる / おいでになる", kenjou: "参ります (まいります)" },
+      { base: "来る (to come)", polite: "来ます", sonkei: "いらっしゃる / お越しになる", kenjou: "参ります (まいります)" },
+      { base: "食べる (to eat)", polite: "食べます", sonkei: "召し上がる (めしあがる)", kenjou: "いただきます" },
+      { base: "言う (to say)", polite: "言います", sonkei: "おっしゃる", kenjou: "申します (もうします)" },
+      { base: "する (to do)", polite: "します", sonkei: "なさる", kenjou: "いたします" },
+      { base: "見る (to see)", polite: "見ます", sonkei: "ご覧になる (ごらんになる)", kenjou: "拝見する (はいけんする)" }
+    ];
+
+    function renderKeigoTable() {
+      const tbody = document.getElementById('keigo-tbody');
+      tbody.innerHTML = '';
+      KEIGO_DATA.forEach(row => {
+        const tr = document.createElement('tr');
+        tr.className = "hover:bg-slate-50 transition";
+        tr.innerHTML = `
+          <td class="p-3 sm:p-4 font-bold text-slate-800">${row.base}</td>
+          <td class="p-3 sm:p-4 text-emerald-700 font-semibold cursor-pointer hover:underline" onclick="speakJapanese('${row.polite}')">🔊 ${row.polite}</td>
+          <td class="p-3 sm:p-4 text-indigo-700 font-semibold cursor-pointer hover:underline" onclick="speakJapanese('${row.sonkei.split('/')[0].trim()}')">🔊 ${row.sonkei}</td>
+          <td class="p-3 sm:p-4 text-purple-700 font-semibold cursor-pointer hover:underline" onclick="speakJapanese('${row.kenjou.split('(')[0].trim()}')">🔊 ${row.kenjou}</td>
+        `;
+        tbody.appendChild(tr);
+      });
+    }
+
+    // 初期化 (英語デフォルト・安全なフォールバックガード)
+    window.addEventListener('DOMContentLoaded', () => {
+      let savedLang = localStorage.getItem('nihongo_ui_lang');
+      if (savedLang !== 'en' && savedLang !== 'ja') {
+        savedLang = 'en';
+      }
+      changeUILang(savedLang);
+
+      renderKanaMatrix();
+      renderTrickyQuiz();
+      renderCountersUI();
+      renderTravelUI();
+      renderKeigoTable();
+
+      loadExternalJLPTData();
+    });
+  </script>
+</body>
+</html>

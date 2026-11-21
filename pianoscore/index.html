@@ -1,0 +1,3430 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Score Studio｜五線譜＆MIDIスコアメーカー</title>
+<style>
+  :root {
+    --bg: #f4f6fb;
+    --panel: #ffffff;
+    --ink: #1e293b;
+    --muted: #64748b;
+    --line: #e2e8f0;
+    --line-strong: #cbd5e1;
+    --accent: #4f46e5;
+    --accent-hover: #4338ca;
+    --accent-soft: #eef2ff;
+    --lh: #0d9488;
+    --lh-soft: #f0fdfa;
+    --play: #ea580c;
+    --play-soft: #ffedd5;
+    --good: #059669;
+    --danger: #dc2626;
+    --danger-soft: #fef2f2;
+    --radius: 14px;
+    --shadow: 0 4px 16px rgba(15, 23, 42, 0.04);
+  }
+
+  * {
+    box-sizing: border-box;
+  }
+
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--ink);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Hiragino Sans", "Hiragino Kaku Gothic ProN", "Yu Gothic", sans-serif;
+    font-size: 14px;
+    line-height: 1.5;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  /* ヘッダー */
+  header {
+    background: #1e293b;
+    color: #ffffff;
+    padding: 13px clamp(14px, 3vw, 28px);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    flex-wrap: wrap;
+    border-bottom: 1px solid #334155;
+  }
+
+  .header-left {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex-wrap: wrap;
+  }
+
+  .back-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    color: #cbd5e1;
+    text-decoration: none;
+    font-size: 13px;
+    font-weight: 600;
+    padding: 6px 10px;
+    border-radius: 8px;
+    background: rgba(255, 255, 255, 0.08);
+    transition: background 0.15s, color 0.15s;
+  }
+
+  .back-link:hover {
+    background: rgba(255, 255, 255, 0.16);
+    color: #ffffff;
+  }
+
+  .brand h1 {
+    margin: 0;
+    font-size: clamp(16px, 2.2vw, 19px);
+    font-weight: 700;
+    letter-spacing: -0.01em;
+  }
+
+  .header-right {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+  }
+
+  .save-badge {
+    font-size: 12px;
+    font-weight: 600;
+    color: #6ee7b7;
+    background: rgba(16, 185, 129, 0.14);
+    border: 1px solid rgba(16, 185, 129, 0.3);
+    padding: 5px 10px;
+    border-radius: 999px;
+    white-space: nowrap;
+  }
+
+  .header-btn, .header-select {
+    font: inherit;
+    font-size: 13px;
+    font-weight: 600;
+    border-radius: 8px;
+    padding: 6px 11px;
+    border: 1px solid #475569;
+    background: #334155;
+    color: #f8fafc;
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+
+  .header-btn:hover, .header-select:hover {
+    background: #475569;
+    border-color: #64748b;
+  }
+
+  /* メインコンテナ */
+  main {
+    max-width: 1180px;
+    margin: 0 auto;
+    padding: 14px;
+    display: grid;
+    gap: 12px;
+  }
+
+  .panel {
+    background: var(--panel);
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+    padding: 13px 16px;
+    box-shadow: var(--shadow);
+  }
+
+  .panel-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    flex-wrap: wrap;
+    margin-bottom: 9px;
+  }
+
+  .panel-title {
+    margin: 0;
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--muted);
+    letter-spacing: 0.04em;
+  }
+
+  /* フォーム・ボタン共通 */
+  .toolbar-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px 12px;
+    align-items: flex-end;
+  }
+
+  .field {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+
+  .field label {
+    font-size: 11px;
+    font-weight: 700;
+    color: var(--muted);
+  }
+
+  .btn-group {
+    display: inline-flex;
+    flex-wrap: wrap;
+    gap: 5px;
+    align-items: center;
+  }
+
+  button, select, input[type="text"], input[type="number"] {
+    font: inherit;
+    border: 1px solid var(--line-strong);
+    border-radius: 9px;
+    padding: 7px 10px;
+    background: #ffffff;
+    color: var(--ink);
+    transition: all 0.15s ease;
+  }
+
+  input[type="text"]:focus, input[type="number"]:focus, select:focus {
+    outline: none;
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.15);
+  }
+
+  button {
+    cursor: pointer;
+    font-weight: 600;
+    font-size: 13px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 5px;
+    user-select: none;
+  }
+
+  button:hover:not(:disabled) {
+    border-color: var(--accent);
+    color: var(--accent);
+    background: #fafaff;
+  }
+
+  button:active:not(:disabled) {
+    transform: translateY(1px);
+  }
+
+  button:disabled {
+    opacity: 0.42;
+    cursor: not-allowed;
+  }
+
+  button.active {
+    background: var(--accent-soft);
+    border-color: var(--accent);
+    color: var(--accent);
+    box-shadow: inset 0 0 0 1px var(--accent);
+  }
+
+  button.active-lh {
+    background: var(--lh-soft);
+    border-color: var(--lh);
+    color: var(--lh);
+    box-shadow: inset 0 0 0 1px var(--lh);
+  }
+
+  button.primary {
+    background: var(--accent);
+    border-color: var(--accent);
+    color: #ffffff;
+  }
+
+  button.primary:hover:not(:disabled) {
+    background: var(--accent-hover);
+    border-color: var(--accent-hover);
+    color: #ffffff;
+  }
+
+  button.playing {
+    background: var(--play);
+    border-color: var(--play);
+    color: #ffffff;
+  }
+
+  button.playing:hover {
+    background: #c2410c;
+    border-color: #c2410c;
+    color: #ffffff;
+  }
+
+  button.danger-btn:hover:not(:disabled) {
+    border-color: var(--danger);
+    color: var(--danger);
+    background: var(--danger-soft);
+  }
+
+  .bpm-wrap {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+  }
+
+  input[type="range"] {
+    accent-color: var(--accent);
+    width: 88px;
+    cursor: pointer;
+  }
+
+  .divider {
+    width: 1px;
+    height: 26px;
+    background: var(--line);
+    margin: 0 2px;
+  }
+
+  /* スコアエリア */
+  .guide-pill {
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--accent);
+    background: var(--accent-soft);
+    padding: 4px 12px;
+    border-radius: 999px;
+    font-variant-numeric: tabular-nums;
+  }
+
+  #paper {
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    background: #ffffff;
+    overflow: hidden;
+  }
+
+  #sc {
+    display: block;
+    width: 100%;
+    height: auto;
+    cursor: crosshair;
+    touch-action: manipulation;
+  }
+
+  .nt {
+    cursor: pointer;
+  }
+
+  .nt.sel line, .nt.sel path, .nt.sel ellipse {
+    stroke: var(--accent);
+  }
+  .nt.sel .f {
+    fill: var(--accent);
+  }
+
+  .nt.sel-lh line, .nt.sel-lh path, .nt.sel-lh ellipse {
+    stroke: var(--lh);
+  }
+  .nt.sel-lh .f {
+    fill: var(--lh);
+  }
+
+  .nt.play line, .nt.play path, .nt.play ellipse {
+    stroke: var(--play);
+  }
+  .nt.play .f {
+    fill: var(--play);
+  }
+
+  /* 和音構成音チップ（ミニ編集バー内） */
+  .chord-tones {
+    display: inline-flex;
+    flex-wrap: wrap;
+    gap: 4px;
+    align-items: center;
+  }
+
+  .tone-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 3px;
+    padding: 2px 7px;
+    border-radius: 6px;
+    font-size: 11px;
+    font-weight: 700;
+    background: var(--accent-soft);
+    color: var(--accent);
+    border: 1px solid rgba(79, 70, 229, 0.25);
+    cursor: pointer;
+  }
+
+  .tone-chip.lh-chip {
+    background: var(--lh-soft);
+    color: var(--lh);
+    border-color: rgba(13, 148, 136, 0.3);
+  }
+
+  .tone-chip.active-tone {
+    background: var(--accent);
+    color: #ffffff;
+  }
+
+  .tone-chip.lh-chip.active-tone {
+    background: var(--lh);
+    color: #ffffff;
+  }
+
+  .tone-chip .rm-tone {
+    margin-left: 2px;
+    opacity: 0.75;
+    font-weight: 900;
+  }
+
+  .tone-chip .rm-tone:hover {
+    opacity: 1;
+  }
+
+  /* 選択音符ミニ編集バー */
+  .sel-edit-bar {
+    margin-top: 10px;
+    padding: 8px 12px;
+    background: #f8fafc;
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    flex-wrap: wrap;
+  }
+
+  .sel-edit-status {
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--ink);
+  }
+
+  .sel-edit-status span {
+    color: var(--accent);
+  }
+
+  .mini-btn {
+    padding: 5px 9px;
+    font-size: 12px;
+    border-radius: 7px;
+  }
+
+  /* 4オクターブピアノ鍵盤（C2〜C6） */
+  #kbWrap {
+    overflow-x: auto;
+    padding-bottom: 4px;
+  }
+
+  #kb {
+    position: relative;
+    display: flex;
+    height: 106px;
+    min-width: 780px;
+    user-select: none;
+    touch-action: none;
+    border-radius: 8px;
+    overflow: hidden;
+    border: 1px solid #94a3b8;
+    background: #cbd5e1;
+  }
+
+  .w {
+    position: relative;
+    flex: none;
+    border-right: 1px solid #94a3b8;
+    background: linear-gradient(180deg, #ffffff 0%, #f8fafc 90%, #e2e8f0 100%);
+    cursor: pointer;
+    transition: background 0.06s;
+  }
+
+  .w:last-child {
+    border-right: none;
+  }
+
+  .w span {
+    position: absolute;
+    bottom: 5px;
+    left: 0;
+    right: 0;
+    text-align: center;
+    font-size: 10px;
+    font-weight: 700;
+    color: #64748b;
+    pointer-events: none;
+  }
+
+  .b {
+    position: absolute;
+    top: 0;
+    height: 62px;
+    background: linear-gradient(180deg, #334155 0%, #0f172a 100%);
+    border: 1px solid #020617;
+    border-top: none;
+    border-radius: 0 0 5px 5px;
+    z-index: 2;
+    cursor: pointer;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+    transition: background 0.06s;
+  }
+
+  /* 右手・左手で鍵盤の点灯色を区別 */
+  .w.on-rh {
+    background: linear-gradient(180deg, #e0e7ff 0%, #818cf8 100%) !important;
+  }
+  .b.on-rh {
+    background: linear-gradient(180deg, #6366f1 0%, #4338ca 100%) !important;
+  }
+  .w.on-lh {
+    background: linear-gradient(180deg, #ccfbf1 0%, #5eead4 100%) !important;
+  }
+  .b.on-lh {
+    background: linear-gradient(180deg, #14b8a6 0%, #0f766e 100%) !important;
+  }
+  .w.on-both {
+    background: linear-gradient(180deg, #ffedd5 0%, #fb923c 100%) !important;
+  }
+  .b.on-both {
+    background: linear-gradient(180deg, #f97316 0%, #ea580c 100%) !important;
+  }
+
+  /* 鍵盤上の指番号バッジ */
+  .key-finger {
+    position: absolute;
+    left: 0;
+    right: 0;
+    text-align: center;
+    font-weight: 800;
+    pointer-events: none;
+    line-height: 1;
+  }
+  .w .key-finger {
+    bottom: 20px;
+    font-size: 12px;
+    color: #1e293b;
+  }
+  .b .key-finger {
+    bottom: 8px;
+    font-size: 11px;
+    color: #ffffff;
+  }
+
+  .kb-legend {
+    display: inline-flex;
+    gap: 12px;
+    font-size: 11px;
+    color: var(--muted);
+    align-items: center;
+  }
+
+  .legend-dot {
+    display: inline-block;
+    width: 10px;
+    height: 10px;
+    border-radius: 3px;
+    margin-right: 4px;
+    vertical-align: middle;
+  }
+
+  .hint-text {
+    margin: 8px 0 0;
+    font-size: 12px;
+    color: var(--muted);
+  }
+
+  /* カスタムモーダル・トースト */
+  .modal-backdrop {
+    position: fixed;
+    inset: 0;
+    background: rgba(15, 23, 42, 0.48);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 16px;
+    z-index: 1000;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.18s;
+  }
+
+  .modal-backdrop.show {
+    opacity: 1;
+    pointer-events: auto;
+  }
+
+  .modal-card {
+    background: #ffffff;
+    border-radius: 14px;
+    padding: 20px;
+    max-width: 390px;
+    width: 100%;
+    box-shadow: 0 20px 35px rgba(15, 23, 42, 0.2);
+  }
+
+  .modal-card h3 {
+    margin: 0 0 8px;
+    font-size: 16px;
+    color: var(--ink);
+  }
+
+  .modal-card p {
+    margin: 0 0 18px;
+    font-size: 13px;
+    color: var(--muted);
+  }
+
+  .modal-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 8px;
+  }
+
+  .toast {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    background: #1e293b;
+    color: #ffffff;
+    padding: 10px 16px;
+    border-radius: 10px;
+    font-size: 13px;
+    font-weight: 600;
+    box-shadow: 0 10px 25px rgba(15, 23, 42, 0.2);
+    transform: translateY(20px);
+    opacity: 0;
+    pointer-events: none;
+    transition: all 0.2s;
+    z-index: 1100;
+  }
+
+  .toast.show {
+    transform: translateY(0);
+    opacity: 1;
+  }
+
+  footer {
+    text-align: center;
+    color: var(--muted);
+    font-size: 11px;
+    padding: 6px 16px 24px;
+  }
+
+  @media (max-width: 680px) {
+    main {
+      padding: 10px;
+      gap: 10px;
+    }
+    .panel {
+      padding: 11px 12px;
+    }
+    .field {
+      flex: 1 1 42%;
+    }
+    .field.full-mobile {
+      flex: 1 1 100%;
+    }
+    .divider {
+      display: none;
+    }
+  }
+
+  /* 印刷用スタイル：スコア部分のみA4用紙に綺麗に印刷 */
+  @media print {
+    @page {
+      size: A4 portrait;
+      margin: 12mm;
+    }
+    body {
+      background: #ffffff;
+    }
+    header, .no-print, footer, .modal-backdrop, .toast {
+      display: none !important;
+    }
+    main {
+      max-width: 100%;
+      padding: 0;
+      margin: 0;
+      display: block;
+    }
+    .score-panel {
+      border: none !important;
+      box-shadow: none !important;
+      padding: 0 !important;
+    }
+    #paper {
+      border: none !important;
+      border-radius: 0 !important;
+    }
+    #sc {
+      width: 100% !important;
+    }
+    .nt.sel line, .nt.sel path, .nt.sel ellipse,
+    .nt.sel-lh line, .nt.sel-lh path, .nt.sel-lh ellipse {
+      stroke: #1e293b !important;
+    }
+    .nt.sel .f, .nt.sel-lh .f {
+      fill: #1e293b !important;
+    }
+    #playhead, #ov {
+      display: none !important;
+    }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="header-left">
+    <a href="../" class="back-link" aria-label="Apps Hubへ戻る">← Apps Hub</a>
+    <div class="brand">
+      <h1>🎼 Score Studio｜五線譜＆MIDIスコアメーカー</h1>
+    </div>
+  </div>
+  <div class="header-right">
+    <span class="save-badge" id="saveStatus">✓ 自動保存済み</span>
+    <button type="button" class="header-btn" id="newBtn">新規作成</button>
+    <select class="header-select" id="presetSelect" aria-label="サンプル曲読込">
+      <option value="">サンプル曲（16〜24小節・両手）…</option>
+      <option value="minuet">1. メヌエット ト長調（16小節・両手）</option>
+      <option value="silent">2. きよしこの夜（16小節・アルペジオ伴奏）</option>
+      <option value="canon">3. カノン（16小節・変奏両手アレンジ）</option>
+      <option value="elise">4. エリーゼのために（24小節・A〜中間部）</option>
+      <option value="ode">5. 歓喜の歌（16小節・重厚コード＆対旋律）</option>
+    </select>
+  </div>
+</header>
+
+<main>
+  <!-- ツールバー1：楽曲設定 -->
+  <section class="panel no-print" aria-label="楽曲設定">
+    <div class="toolbar-row">
+      <div class="field full-mobile" style="min-width: 185px; flex: 1;">
+        <label for="title">タイトル</label>
+        <input type="text" id="title" placeholder="無題の楽譜" maxlength="60">
+      </div>
+      <div class="field">
+        <label for="clef">譜表モード</label>
+        <select id="clef">
+          <option value="grand">大譜表（両手ピアノ）</option>
+          <option value="treble">単一段・ト音記号</option>
+          <option value="bass">単一段・ヘ音記号</option>
+        </select>
+      </div>
+      <div class="field">
+        <label for="ts">拍子</label>
+        <select id="ts">
+          <option value="4/4">4/4</option>
+          <option value="3/4">3/4</option>
+          <option value="2/4">2/4</option>
+          <option value="6/8">6/8</option>
+          <option value="3/8">3/8</option>
+        </select>
+      </div>
+      <div class="field">
+        <label for="key">調号</label>
+        <select id="key"></select>
+      </div>
+      <div class="field">
+        <label for="inst">楽器音色</label>
+        <select id="inst">
+          <option value="piano">ピアノ (Prog 0)</option>
+          <option value="musicbox">オルゴール (Prog 10)</option>
+          <option value="epiano">エレピ (Prog 4)</option>
+          <option value="flute">フルート (Prog 73)</option>
+          <option value="pizz">ピッツィカート (Prog 45)</option>
+        </select>
+      </div>
+      <div class="field">
+        <label for="bpm">テンポ BPM</label>
+        <div class="bpm-wrap">
+          <input type="number" id="bpm" min="40" max="240" value="120" style="width: 66px;">
+          <input type="range" id="bpmr" min="40" max="240" value="120" aria-label="BPMスライダー">
+        </div>
+      </div>
+      <div class="field" id="lhVolField">
+        <label for="lhVol">左手音量バランス</label>
+        <div class="bpm-wrap">
+          <input type="range" id="lhVol" min="0" max="200" step="5" value="100" aria-label="左手音量スライダー">
+          <span id="lhVolVal" style="font-size: 12px; font-weight: 700; color: var(--lh); min-width: 38px; font-variant-numeric: tabular-nums;">100%</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ツールバー2：入力・再生コントロール -->
+  <section class="panel no-print" aria-label="入力と再生コントロール">
+    <div class="toolbar-row" style="align-items: center;">
+      <div class="btn-group">
+        <button type="button" class="primary" id="play">▶ 再生</button>
+      </div>
+      <div class="divider" id="handDivider"></div>
+      <div class="btn-group" id="handTools" role="group" aria-label="入力パート選択">
+        <button type="button" data-hand="rh" class="active">右手（上段）</button>
+        <button type="button" data-hand="lh">左手（下段）</button>
+      </div>
+      <div class="divider"></div>
+      <div class="btn-group" role="group" aria-label="音価選択">
+        <button type="button" data-dur="16">𝅝 全音符</button>
+        <button type="button" data-dur="8">𝅗𝅥 2分</button>
+        <button type="button" data-dur="4" class="active">♩ 4分</button>
+        <button type="button" data-dur="2">♪ 8分</button>
+        <button type="button" data-dur="1">♬ 16分</button>
+        <button type="button" id="dotBtn" title="付点（長さを1.5倍）">・付点</button>
+        <button type="button" id="rest">休符</button>
+      </div>
+      <div class="divider"></div>
+      <div class="btn-group" role="group" aria-label="和音・臨時記号選択">
+        <button type="button" id="chordModeBtn" title="選択中の音符に音を重ねて和音にします (C)">＋ 和音追加</button>
+        <button type="button" data-acc="auto" class="active">自動</button>
+        <button type="button" data-acc="#">♯</button>
+        <button type="button" data-acc="b">♭</button>
+        <button type="button" data-acc="n">♮</button>
+      </div>
+      <div class="divider"></div>
+      <div class="btn-group">
+        <button type="button" id="fingeringToggleBtn" class="active" title="五線譜・鍵盤への指番号（1〜5）表示を切り替えます">🖐️ 指番号表示</button>
+        <button type="button" id="fingerHelpBtn" title="左手・右手の指番号（1〜5）対応図を表示します">？ 指番号ガイド</button>
+        <button type="button" id="undo" title="元に戻す (Ctrl+Z)">↶ 戻す</button>
+        <button type="button" id="clr" class="danger-btn">全消去</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- 五線譜エディタ -->
+  <section class="panel score-panel" aria-label="五線譜エディタ">
+    <div class="panel-header no-print">
+      <h2 class="panel-title">五線譜スコア</h2>
+      <div class="guide-pill" id="info">五線譜にカーソルを合わせると音名を表示します</div>
+    </div>
+    <div id="paper"></div>
+
+    <!-- 選択音符・和音ミニ編集バー -->
+    <div class="sel-edit-bar no-print" id="selBar">
+      <div class="sel-edit-status" id="selStatus">選択中の音符：<span>なし（音符をタップして選択）</span></div>
+      <div class="btn-group">
+        <span style="font-size:11px;font-weight:700;color:var(--muted);margin-right:2px;">指番号:</span>
+        <button type="button" class="mini-btn" data-set-finger="0" disabled title="自動計算に戻す (0キー)">自動</button>
+        <button type="button" class="mini-btn" data-set-finger="1" disabled title="親指 (1キー)">1</button>
+        <button type="button" class="mini-btn" data-set-finger="2" disabled title="人差し指 (2キー)">2</button>
+        <button type="button" class="mini-btn" data-set-finger="3" disabled title="中指 (3キー)">3</button>
+        <button type="button" class="mini-btn" data-set-finger="4" disabled title="薬指 (4キー)">4</button>
+        <button type="button" class="mini-btn" data-set-finger="5" disabled title="小指 (5キー)">5</button>
+        <div class="divider" style="height:18px;"></div>
+        <button type="button" class="mini-btn" id="addToneQuick" disabled>＋音を重ねる</button>
+        <button type="button" class="mini-btn" id="stepUp" disabled>音程 ↑</button>
+        <button type="button" class="mini-btn" id="stepDown" disabled>音程 ↓</button>
+        <button type="button" class="mini-btn" id="cycleAcc" disabled>臨時記号 ♯/♭/♮</button>
+        <button type="button" class="mini-btn danger-btn" id="del" disabled>削除</button>
+      </div>
+    </div>
+    <p class="hint-text no-print">操作ヒント：大譜表では上段クリックで右手・下段クリックで左手に直接入力。音符選択中に <b>1〜5キー</b>（またはボタン）で指番号変更、<b>「＋ 和音追加」(Cキー)</b> で和音作成、<b>↑↓</b> で音程移動、<b>Space</b> で再生/停止。</p>
+  </section>
+
+  <!-- 4オクターブ ピアノ鍵盤連動プレビュー（C2〜C6） -->
+  <section class="panel no-print" aria-label="ピアノ鍵盤">
+    <div class="panel-header">
+      <h2 class="panel-title">ピアノ鍵盤（C2〜C6・4オクターブ）ステップ入力＆両手再生連動</h2>
+      <div class="kb-legend">
+        <span><i class="legend-dot" style="background:#818cf8;"></i>右手</span>
+        <span><i class="legend-dot" style="background:#5eead4;"></i>左手</span>
+        <span><i class="legend-dot" style="background:#fb923c;"></i>両手重なり</span>
+      </div>
+    </div>
+    <div id="kbWrap">
+      <div id="kb"></div>
+    </div>
+    <p class="hint-text">鍵盤をタップすると現在アクティブな手（右手／左手）にステップ入力され、再生中は両手の演奏音に合わせて鍵盤がリアルタイムに光ります。</p>
+  </section>
+
+  <!-- 保存・書き出しパネル -->
+  <section class="panel no-print" aria-label="保存と書き出し">
+    <div class="panel-header">
+      <h2 class="panel-title">保存・書き出し</h2>
+    </div>
+    <div class="btn-group">
+      <button type="button" class="primary" id="xmid">↓ MIDI (.mid)</button>
+      <button type="button" id="xpng">↓ 楽譜画像 (.png)</button>
+      <button type="button" id="xsvg">↓ 楽譜画像 (.svg)</button>
+      <button type="button" id="xjson">↓ JSON保存</button>
+      <button type="button" id="ijson">↑ JSON読込</button>
+      <input type="file" id="file" accept=".json,application/json" hidden>
+      <button type="button" id="printBtn">🖨️ 印刷</button>
+    </div>
+    <p class="hint-text">データはブラウザ内に自動保存されます。大譜表モードのMIDI書き出しは右手（Ch 1）・左手（Ch 2）を分けた標準SMF Format 1で出力されます。</p>
+  </section>
+</main>
+
+<footer>外部サーバー通信ゼロ・完全ローカル動作｜Score Studio for Apps Hub</footer>
+
+<!-- カスタム確認ダイアログ -->
+<div class="modal-backdrop" id="confirmModal" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
+  <div class="modal-card">
+    <h3 id="modalTitle">確認</h3>
+    <p id="modalMessage">よろしいですか？</p>
+    <div class="modal-actions">
+      <button type="button" id="modalCancel">キャンセル</button>
+      <button type="button" class="primary" id="modalOk">実行する</button>
+    </div>
+  </div>
+</div>
+
+<!-- 両手の指番号（1〜5）図解ガイドモーダル -->
+<div class="modal-backdrop" id="fingerHelpModal" role="dialog" aria-modal="true" aria-labelledby="fingerHelpTitle">
+  <div class="modal-card" style="max-width: 560px;">
+    <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:10px;">
+      <h3 id="fingerHelpTitle" style="margin:0;font-size:16px;">🖐️ ピアノ両手の指番号（1〜5）ガイド</h3>
+      <button type="button" id="fingerHelpCloseX" class="mini-btn" aria-label="閉じる">✕</button>
+    </div>
+    <p style="margin:0 0 12px;font-size:13px;color:var(--muted);">ピアノでは左右どちらも<strong>親指が「1」・小指が「5」</strong>です。手のひらを下（鍵盤側）に向けた状態で上から見た配置です。</p>
+
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:12px;margin-bottom:14px;">
+      <!-- 左手イラスト -->
+      <div style="background:var(--lh-soft);border:1px solid rgba(13,148,136,0.28);border-radius:12px;padding:12px;text-align:center;">
+        <div style="font-size:13px;font-weight:800;color:var(--lh);margin-bottom:4px;">左手（下段・ヘ音記号）</div>
+        <svg viewBox="0 0 220 185" width="100%" height="158" role="img" aria-label="左手の指番号 5小指 4薬指 3中指 2人差し指 1親指">
+          <defs>
+            <linearGradient id="handGradL" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stop-color="#ffffff"/>
+              <stop offset="100%" stop-color="#e6fffa"/>
+            </linearGradient>
+          </defs>
+          <!-- 継ぎ目のない自然な左手シルエット（手の甲側から見た図） -->
+          <path d="M 74 176 L 72 146 C 58 138 51 124 51 106 L 51 64 C 51 56 64 56 64 64 L 64 98 L 71 98 L 71 46 C 71 37 85 37 85 46 L 85 95 L 92 95 L 92 38 C 92 29 107 29 107 38 L 107 95 L 114 95 L 114 48 C 114 39 128 39 128 48 L 128 106 C 134 106 144 98 156 89 C 164 83 175 92 167 101 C 154 116 142 132 132 146 L 130 176 Z" fill="url(#handGradL)" stroke="#0d9488" stroke-width="2.4" stroke-linejoin="round" stroke-linecap="round"/>
+          <!-- 指の付け根のさりげない陰影ライン -->
+          <path d="M 76 116 Q 99 112 121 118" fill="none" stroke="#99f6e4" stroke-width="2" stroke-linecap="round"/>
+          <!-- 5 小指 -->
+          <circle cx="57.5" cy="40" r="11.5" fill="#0d9488"/>
+          <text x="57.5" y="44.2" text-anchor="middle" font-size="12.5" font-weight="800" fill="#ffffff">5</text>
+          <text x="57.5" y="22" text-anchor="middle" font-size="10" font-weight="700" fill="#0f766e">小指</text>
+          <!-- 4 薬指 -->
+          <circle cx="78" cy="23" r="11.5" fill="#0d9488"/>
+          <text x="78" y="27.2" text-anchor="middle" font-size="12.5" font-weight="800" fill="#ffffff">4</text>
+          <!-- 3 中指 -->
+          <circle cx="99.5" cy="15" r="11.5" fill="#0d9488"/>
+          <text x="99.5" y="19.2" text-anchor="middle" font-size="12.5" font-weight="800" fill="#ffffff">3</text>
+          <!-- 2 人差し指 -->
+          <circle cx="121" cy="25" r="11.5" fill="#0d9488"/>
+          <text x="121" y="29.2" text-anchor="middle" font-size="12.5" font-weight="800" fill="#ffffff">2</text>
+          <!-- 1 親指 -->
+          <circle cx="182" cy="84" r="11.5" fill="#0d9488"/>
+          <text x="182" y="88.2" text-anchor="middle" font-size="12.5" font-weight="800" fill="#ffffff">1</text>
+          <text x="182" y="108" text-anchor="middle" font-size="10" font-weight="700" fill="#0f766e">親指</text>
+        </svg>
+        <div style="font-size:11.5px;color:#115e59;font-weight:600;">左から：5(小)・4(薬)・3(中)・2(人)・1(親)</div>
+      </div>
+
+      <!-- 右手イラスト -->
+      <div style="background:var(--accent-soft);border:1px solid rgba(79,70,229,0.25);border-radius:12px;padding:12px;text-align:center;">
+        <div style="font-size:13px;font-weight:800;color:var(--accent);margin-bottom:4px;">右手（上段・ト音記号）</div>
+        <svg viewBox="0 0 220 185" width="100%" height="158" role="img" aria-label="右手の指番号 1親指 2人差し指 3中指 4薬指 5小指">
+          <defs>
+            <linearGradient id="handGradR" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stop-color="#ffffff"/>
+              <stop offset="100%" stop-color="#eef2ff"/>
+            </linearGradient>
+          </defs>
+          <!-- 継ぎ目のない自然な右手シルエット（手の甲側から見た図） -->
+          <path d="M 146 176 L 148 146 C 162 138 169 124 169 106 L 169 64 C 169 56 156 56 156 64 L 156 98 L 149 98 L 149 46 C 149 37 135 37 135 46 L 135 95 L 128 95 L 128 38 C 128 29 113 29 113 38 L 113 95 L 106 95 L 106 48 C 106 39 92 39 92 48 L 92 106 C 86 106 76 98 64 89 C 56 83 45 92 53 101 C 66 116 78 132 88 146 L 90 176 Z" fill="url(#handGradR)" stroke="#4f46e5" stroke-width="2.4" stroke-linejoin="round" stroke-linecap="round"/>
+          <!-- 指の付け根のさりげない陰影ライン -->
+          <path d="M 99 118 Q 121 112 144 116" fill="none" stroke="#c7d2fe" stroke-width="2" stroke-linecap="round"/>
+          <!-- 1 親指 -->
+          <circle cx="38" cy="84" r="11.5" fill="#4f46e5"/>
+          <text x="38" y="88.2" text-anchor="middle" font-size="12.5" font-weight="800" fill="#ffffff">1</text>
+          <text x="38" y="108" text-anchor="middle" font-size="10" font-weight="700" fill="#3730a3">親指</text>
+          <!-- 2 人差し指 -->
+          <circle cx="99" cy="25" r="11.5" fill="#4f46e5"/>
+          <text x="99" y="29.2" text-anchor="middle" font-size="12.5" font-weight="800" fill="#ffffff">2</text>
+          <!-- 3 中指 -->
+          <circle cx="120.5" cy="15" r="11.5" fill="#4f46e5"/>
+          <text x="120.5" y="19.2" text-anchor="middle" font-size="12.5" font-weight="800" fill="#ffffff">3</text>
+          <!-- 4 薬指 -->
+          <circle cx="142" cy="23" r="11.5" fill="#4f46e5"/>
+          <text x="142" y="27.2" text-anchor="middle" font-size="12.5" font-weight="800" fill="#ffffff">4</text>
+          <!-- 5 小指 -->
+          <circle cx="162.5" cy="40" r="11.5" fill="#4f46e5"/>
+          <text x="162.5" y="44.2" text-anchor="middle" font-size="12.5" font-weight="800" fill="#ffffff">5</text>
+          <text x="162.5" y="22" text-anchor="middle" font-size="10" font-weight="700" fill="#3730a3">小指</text>
+        </svg>
+        <div style="font-size:11.5px;color:#3730a3;font-weight:600;">左から：1(親)・2(人)・3(中)・4(薬)・5(小)</div>
+      </div>
+    </div>
+
+    <div style="background:#f8fafc;border:1px solid var(--line);border-radius:10px;padding:10px 12px;font-size:12px;color:var(--ink);margin-bottom:14px;">
+      <div>・<strong>楽譜上の表示</strong>：右手は音符の<strong>上</strong>（青紫）、左手は音符の<strong>下</strong>（緑）に指番号が表示されます。</div>
+      <div style="margin-top:4px;">・<strong>変更方法</strong>：音符を選んで下の編集バーの「1〜5」ボタン、またはキーボードの <kbd style="background:#fff;border:1px solid #cbd5e1;border-radius:4px;padding:1px 5px;font-size:11px;">1</kbd>〜<kbd style="background:#fff;border:1px solid #cbd5e1;border-radius:4px;padding:1px 5px;font-size:11px;">5</kbd> キーで変更できます。</div>
+    </div>
+
+    <div class="modal-actions">
+      <button type="button" class="primary" id="fingerHelpOk">閉じる</button>
+    </div>
+  </div>
+</div>
+
+<script>
+(() => {
+  "use strict";
+
+  const W = 1000, LM = 34, RM = 22;
+  const STORAGE_KEY = "selfup_score_studio_v2";
+  const $ = s => document.querySelector(s);
+  const esc = s => String(s).replace(/[&<>]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;" }[c]));
+
+  // 音階・調号定数（d = oct*7 + letterIdx, C4 = 28, E4 = 30, G2 = 18）
+  const L = "CDEFGAB";
+  const SOL = ["ド", "レ", "ミ", "ファ", "ソ", "ラ", "シ"];
+  const SEMI = [0, 2, 4, 5, 7, 9, 11];
+  const SH = [38, 35, 39, 36, 33, 37, 34]; // F5, C5, G5, D5, A4, E5, B4
+  const FL = [34, 37, 33, 36, 32, 35, 31]; // B4, E5, A4, D5, G4, C5, F4
+  const LS = [3, 0, 4, 1, 5, 2, 6];
+  const LF = [6, 2, 5, 1, 4, 0, 3];
+  const KN = ["C♭", "G♭", "D♭", "A♭", "E♭", "B♭", "F", "C", "G", "D", "A", "E", "B", "F♯", "C♯"];
+  const CF = "'Noto Music','Bravura','Segoe UI Symbol','Apple Symbols',serif";
+  const AM = { auto: undefined, "#": 1, b: -1, n: 0 };
+
+  // 楽器音色定義
+  const INSTRUMENTS = {
+    piano:    { name: "ピアノ", prog: 0 },
+    musicbox: { name: "オルゴール", prog: 10 },
+    epiano:   { name: "エレピ", prog: 4 },
+    flute:    { name: "フルート", prog: 73 },
+    pizz:     { name: "ピッツィカート", prog: 45 }
+  };
+
+  // ヘルパー：和音・単音・休符生成用
+  const n = (ds, dur, accs = {}) => ({
+    t: "n",
+    ds: (Array.isArray(ds) ? ds : [ds]).slice().sort((a, b) => a - b),
+    dur,
+    accs
+  });
+  const r = dur => ({ t: "r", dur });
+
+  // =========================================================================
+  // 5つのフルサイズ両手ピアノプリセット（16〜24小節・小節長完全一致）
+  // =========================================================================
+  const PRESETS = {
+    // 1. メヌエット ト長調（BWV Anh.114 / 3/4拍子=12単位/小節 × 16小節 = 192単位）
+    minuet: {
+      title: "メヌエット ト長調（BWV Anh.114）",
+      bpm: 118, num: 3, den: 4, fifths: 1, clef: "grand", inst: "piano",
+      rh: [
+        // 1-4小節
+        n(36, 4), n(32, 2), n(33, 2), n(34, 2), n(35, 2),
+        n(36, 4), n(32, 4), n(32, 4),
+        n(37, 4), n(35, 2), n(36, 2), n(37, 2), n(38, 2),
+        n(39, 4), n(32, 4), n(32, 4),
+        // 5-8小節
+        n(35, 4), n(36, 2), n(35, 2), n(34, 2), n(33, 2),
+        n(34, 4), n(35, 2), n(34, 2), n(33, 2), n(32, 2),
+        n(33, 4), n(34, 2), n(33, 2), n(32, 2), n(31, 2),
+        n(32, 12),
+        // 9-12小節（1-4小節の再現＋装飾）
+        n([32, 36], 4), n(32, 2), n(33, 2), n(34, 2), n(35, 2),
+        n([31, 36], 4), n(32, 4), n(32, 4),
+        n([32, 37], 4), n(35, 2), n(36, 2), n(37, 2), n(38, 2),
+        n([32, 39], 4), n(32, 4), n(32, 4),
+        // 13-16小節（終止形）
+        n(35, 4), n(36, 2), n(35, 2), n(34, 2), n(33, 2),
+        n(34, 4), n(35, 2), n(34, 2), n(33, 2), n(32, 2),
+        n(33, 4), n(34, 2), n(33, 2), n(32, 2), n(31, 2),
+        n([29, 32], 12)
+      ],
+      lh: [
+        // 1-4小節
+        n([18, 22], 8), n(21, 4),
+        n(22, 12),
+        n(20, 12),
+        n(22, 8), n(18, 4),
+        // 5-8小節
+        n(21, 12),
+        n(22, 12),
+        n(23, 4), n(22, 4), n(18, 4),
+        n(18, 4), n(15, 4), n(14, 4),
+        // 9-12小節
+        n([18, 22], 8), n(21, 4),
+        n(22, 4), n(21, 4), n(20, 4),
+        n(20, 8), n(18, 4),
+        n(22, 4), n(18, 4), n(15, 4),
+        // 13-16小節
+        n(21, 8), n(20, 4),
+        n(22, 8), n(18, 4),
+        n(16, 4), n(18, 4), n(15, 4),
+        n([11, 18], 12)
+      ]
+    },
+
+    // 2. きよしこの夜（ハ長調 / 3/4拍子=12単位/小節 × 16小節 = 192単位）
+    silent: {
+      title: "きよしこの夜（両手アルペジオ伴奏）",
+      bpm: 84, num: 3, den: 4, fifths: 0, clef: "grand", inst: "musicbox",
+      rh: [
+        // 1-4小節：きよしこの夜
+        n([28, 32], 6), n(33, 2), n([28, 32], 4),
+        n([25, 30], 12),
+        n([28, 32], 6), n(33, 2), n([28, 32], 4),
+        n([25, 30], 12),
+        // 5-8小節：ほしはひかり
+        n([31, 36], 8), n(36, 4),
+        n([30, 34], 12),
+        n([28, 35], 8), n(35, 4),
+        n([28, 32], 12),
+        // 9-12小節：すくいのみこは
+        n([29, 33], 8), n(33, 4),
+        n([31, 35], 6), n(34, 2), n(33, 4),
+        n([28, 32], 6), n(33, 2), n([28, 32], 4),
+        n([25, 30], 12),
+        // 13-16小節：まぶねのなかに ねむりたもう
+        n([29, 33], 8), n(33, 4),
+        n([31, 35], 6), n(34, 2), n(33, 4),
+        n([28, 32], 6), n(33, 2), n([28, 32], 4),
+        n([25, 30], 12)
+      ],
+      lh: [
+        // 1-4小節：Cコード分散和音
+        n(14, 2), n(18, 2), n(21, 2), n(23, 2), n(21, 2), n(18, 2),
+        n(14, 2), n(18, 2), n(21, 2), n(23, 2), n(21, 2), n(18, 2),
+        n(14, 2), n(18, 2), n(21, 2), n(23, 2), n(21, 2), n(18, 2),
+        n(14, 2), n(18, 2), n(21, 2), n(23, 2), n(21, 2), n(18, 2),
+        // 5-8小節：G7 → C
+        n(11, 2), n(15, 2), n(18, 2), n(20, 2), n(18, 2), n(15, 2),
+        n(11, 2), n(15, 2), n(18, 2), n(20, 2), n(18, 2), n(15, 2),
+        n(14, 2), n(18, 2), n(21, 2), n(23, 2), n(21, 2), n(18, 2),
+        n(14, 2), n(18, 2), n(21, 2), n(23, 2), n(21, 2), n(18, 2),
+        // 9-12小節：F → C
+        n(10, 2), n(14, 2), n(17, 2), n(19, 2), n(17, 2), n(14, 2),
+        n(10, 2), n(14, 2), n(17, 2), n(19, 2), n(17, 2), n(14, 2),
+        n(14, 2), n(18, 2), n(21, 2), n(23, 2), n(21, 2), n(18, 2),
+        n(14, 2), n(18, 2), n(21, 2), n(23, 2), n(21, 2), n(18, 2),
+        // 13-16小節：F → G7 → C
+        n(10, 2), n(14, 2), n(17, 2), n(19, 2), n(17, 2), n(14, 2),
+        n(11, 2), n(15, 2), n(18, 2), n(20, 2), n(18, 2), n(15, 2),
+        n(14, 2), n(18, 2), n(21, 2), n(23, 2), n(21, 2), n(18, 2),
+        n([14, 18, 21], 12)
+      ]
+    },
+
+    // 3. パッヘルベルのカノン（ニ長調 ♯2 / 4/4拍子=16単位/小節 × 16小節 = 256単位）
+    canon: {
+      title: "パッヘルベルのカノン（変奏両手アレンジ）",
+      bpm: 84, num: 4, den: 4, fifths: 2, clef: "grand", inst: "piano",
+      rh: [
+        // 1-4小節：2分音符のテーマ
+        n([33, 37], 8), n([31, 36], 8),
+        n([31, 35], 8), n([29, 34], 8),
+        n([29, 33], 8), n([27, 32], 8),
+        n([29, 33], 8), n([30, 34], 8),
+        // 5-8小節：4分音符の和声展開
+        n([33, 35], 4), n([31, 34], 4), n([31, 33], 4), n([29, 32], 4),
+        n([29, 31], 4), n([27, 29], 4), n([29, 31], 4), n([30, 32], 4),
+        n(29, 4), n(31, 4), n(33, 4), n(32, 4),
+        n(31, 4), n(29, 4), n(31, 4), n(36, 4),
+        // 9-12小節：8分音符の美しい変奏メロディ
+        n(37, 2), n(36, 2), n(37, 2), n(30, 2), n(31, 2), n(34, 2), n(33, 2), n(32, 2),
+        n(33, 2), n(31, 2), n(32, 2), n(33, 2), n(34, 2), n(33, 2), n(32, 2), n(31, 2),
+        n(32, 2), n(30, 2), n(29, 2), n(30, 2), n(31, 2), n(32, 2), n(33, 2), n(34, 2),
+        n(32, 2), n(34, 2), n(33, 2), n(32, 2), n(33, 2), n(32, 2), n(31, 2), n(32, 2),
+        // 13-16小節：クライマックス＆終止
+        n([33, 37], 4), n([34, 38], 4), n([35, 39], 4), n([33, 37], 4),
+        n([34, 38], 4), n([32, 36], 4), n([33, 37], 4), n([35, 39], 4),
+        n([36, 40], 4), n([35, 39], 4), n([34, 38], 4), n([33, 37], 4),
+        n([29, 33, 37], 16)
+      ],
+      lh: [
+        // 1-4小節：カノン進行（D - A - Bm - F#m - G - D - G - A）
+        n([15, 22], 8), n([12, 19], 8),
+        n([13, 20], 8), n([10, 17], 8),
+        n([11, 18], 8), n([8, 15], 8),
+        n([11, 18], 8), n([12, 19], 8),
+        // 5-8小節：アルペジオ伴奏パターン1
+        n(15, 2), n(19, 2), n(22, 2), n(19, 2), n(12, 2), n(16, 2), n(19, 2), n(16, 2),
+        n(13, 2), n(17, 2), n(20, 2), n(17, 2), n(10, 2), n(14, 2), n(17, 2), n(14, 2),
+        n(11, 2), n(15, 2), n(18, 2), n(15, 2), n(8, 2), n(12, 2), n(15, 2), n(12, 2),
+        n(11, 2), n(15, 2), n(18, 2), n(15, 2), n(12, 2), n(16, 2), n(19, 2), n(16, 2),
+        // 9-12小節：アルペジオ伴奏パターン2
+        n(15, 2), n(19, 2), n(22, 2), n(24, 2), n(12, 2), n(16, 2), n(19, 2), n(21, 2),
+        n(13, 2), n(17, 2), n(20, 2), n(22, 2), n(10, 2), n(14, 2), n(17, 2), n(19, 2),
+        n(11, 2), n(15, 2), n(18, 2), n(20, 2), n(8, 2), n(12, 2), n(15, 2), n(17, 2),
+        n(11, 2), n(15, 2), n(18, 2), n(20, 2), n(12, 2), n(16, 2), n(19, 2), n(21, 2),
+        // 13-16小節：重厚なバス＋和音
+        n([8, 15], 4), n([17, 22], 4), n([12, 19], 4), n([16, 21], 4),
+        n([13, 20], 4), n([17, 22], 4), n([10, 17], 4), n([14, 19], 4),
+        n([11, 18], 4), n([15, 20], 4), n([12, 19], 4), n([16, 21], 4),
+        n([8, 15, 22], 16)
+      ]
+    },
+
+    // 4. エリーゼのために（イ短調 / 3/8拍子=6単位/小節 × 24小節 = 144単位）
+    elise: {
+      title: "エリーゼのために（Aメロ〜ハ長調中間部）",
+      bpm: 124, num: 3, den: 8, fifths: 0, clef: "grand", inst: "epiano",
+      rh: [
+        // 1-8小節：おなじみのAメロ（アウフタクト風導入＋テーマ）
+        r(4), n(37, 1), n(36, 1, { 36: 1 }),
+        n(37, 1), n(36, 1, { 36: 1 }), n(37, 1), n(34, 1), n(36, 1, { 36: 0 }), n(35, 1),
+        n(33, 2), r(1), n(28, 1), n(30, 1), n(33, 1),
+        n(34, 2), r(1), n(30, 1), n(32, 1, { 32: 1 }), n(34, 1),
+        n(35, 2), r(1), n(30, 1), n(37, 1), n(36, 1, { 36: 1 }),
+        n(37, 1), n(36, 1, { 36: 1 }), n(37, 1), n(34, 1), n(36, 1, { 36: 0 }), n(35, 1),
+        n(33, 2), r(1), n(28, 1), n(30, 1), n(33, 1),
+        n(34, 2), r(1), n(30, 1), n(35, 1), n(34, 1),
+        // 9-16小節：ハ長調への明るい中間部（Bメロ）
+        n(33, 2), r(1), n(34, 1), n(35, 1), n(36, 1),
+        n(37, 3), n(32, 1), n(38, 1), n(37, 1),
+        n(36, 3), n(31, 1), n(37, 1), n(36, 1),
+        n(35, 3), n(30, 1), n(36, 1), n(35, 1),
+        n(34, 2), r(1), n(30, 1), n(37, 1), r(1),
+        r(1), n(37, 1), n(44, 1), r(2), n(36, 1, { 36: 1 }),
+        n(37, 1), r(1), n(36, 1, { 36: 1 }), n(37, 1), n(36, 1, { 36: 1 }), n(37, 1),
+        n(37, 1), n(36, 1, { 36: 1 }), n(37, 1), n(34, 1), n(36, 1, { 36: 0 }), n(35, 1),
+        // 17-24小節：Aメロ再現〜終止
+        n(33, 2), r(1), n(28, 1), n(30, 1), n(33, 1),
+        n(34, 2), r(1), n(30, 1), n(32, 1, { 32: 1 }), n(34, 1),
+        n(35, 2), r(1), n(30, 1), n(37, 1), n(36, 1, { 36: 1 }),
+        n(37, 1), n(36, 1, { 36: 1 }), n(37, 1), n(34, 1), n(36, 1, { 36: 0 }), n(35, 1),
+        n(33, 2), r(1), n(28, 1), n(30, 1), n(33, 1),
+        n(34, 2), r(1), n(30, 1), n(35, 1), n(34, 1),
+        n([26, 30, 33], 4), r(2),
+        n([28, 33, 35], 6)
+      ],
+      lh: [
+        // 1-8小節：左手アルペジオ伴奏（Am - E7 - Am）
+        r(6),
+        r(6),
+        n(12, 1), n(16, 1), n(19, 1), r(3),
+        n(9, 1), n(16, 1), n(18, 1, { 18: 1 }), r(3),
+        n(12, 1), n(16, 1), n(19, 1), r(3),
+        r(6),
+        n(12, 1), n(16, 1), n(19, 1), r(3),
+        n(9, 1), n(16, 1), n(18, 1, { 18: 1 }), r(3),
+        // 9-16小節：ハ長調中間部の伴奏（C - G7 - Am - E）
+        n(12, 1), n(16, 1), n(19, 1), r(3),
+        n(14, 1), n(18, 1), n(21, 1), n(18, 1), n(21, 1), n(18, 1),
+        n(11, 1), n(18, 1), n(20, 1), n(18, 1), n(20, 1), n(18, 1),
+        n(12, 1), n(16, 1), n(19, 1), n(16, 1), n(19, 1), n(16, 1),
+        n(9, 1), n(16, 1), n(18, 1, { 18: 1 }), r(3),
+        r(6),
+        r(6),
+        r(6),
+        // 17-24小節：再現部伴奏
+        n(12, 1), n(16, 1), n(19, 1), r(3),
+        n(9, 1), n(16, 1), n(18, 1, { 18: 1 }), r(3),
+        n(12, 1), n(16, 1), n(19, 1), r(3),
+        r(6),
+        n(12, 1), n(16, 1), n(19, 1), r(3),
+        n(9, 1), n(16, 1), n(18, 1, { 18: 1 }), r(3),
+        n(12, 1), n(16, 1), n(19, 1), r(3),
+        n([12, 19], 6)
+      ]
+    },
+
+    // 5. 歓喜の歌（ハ長調 / 4/4拍子=16単位/小節 × 16小節 = 256単位）
+    ode: {
+      title: "歓喜の歌（ベートーヴェン交響曲第9番）",
+      bpm: 118, num: 4, den: 4, fifths: 0, clef: "grand", inst: "piano",
+      rh: [
+        // 1-4小節：テーマA
+        n([28, 32], 4), n([28, 32], 4), n([29, 33], 4), n([30, 34], 4),
+        n([30, 34], 4), n([29, 33], 4), n([28, 32], 4), n([27, 31], 4),
+        n([26, 30], 4), n([26, 30], 4), n([27, 31], 4), n([28, 32], 4),
+        n([28, 32], 6), n([27, 31], 2), n([27, 31], 8),
+        // 5-8小節：テーマA'
+        n([28, 32], 4), n([28, 32], 4), n([29, 33], 4), n([30, 34], 4),
+        n([30, 34], 4), n([29, 33], 4), n([28, 32], 4), n([27, 31], 4),
+        n([26, 30], 4), n([26, 30], 4), n([27, 31], 4), n([28, 32], 4),
+        n([27, 31], 6), n([26, 30], 2), n([26, 30], 8),
+        // 9-12小節：中間部B（対旋律と掛け合い）
+        n([27, 31], 4), n([27, 31], 4), n([28, 32], 4), n([26, 30], 4),
+        n([27, 31], 4), n(32, 2), n(33, 2), n([28, 32], 4), n([26, 30], 4),
+        n([27, 31], 4), n(32, 2), n(33, 2), n([28, 32], 4), n([27, 31], 4),
+        n([26, 30], 4), n([27, 31], 4), n([25, 29], 8),
+        // 13-16小節：フィナーレA'（重厚な和音締め）
+        n([28, 32], 4), n([28, 32], 4), n([29, 33], 4), n([30, 34], 4),
+        n([30, 34], 4), n([29, 33], 4), n([28, 32], 4), n([27, 31], 4),
+        n([26, 30], 4), n([26, 30], 4), n([27, 31], 4), n([28, 32], 4),
+        n([27, 31], 6), n([26, 30], 2), n([26, 28, 30], 8)
+      ],
+      lh: [
+        // 1-4小節
+        n([14, 18, 21], 8), n([14, 18, 21], 8),
+        n([11, 18, 20], 8), n([11, 18, 20], 8),
+        n([14, 18, 21], 8), n([10, 17, 19], 8),
+        n([11, 18], 8), n([11, 15, 18], 8),
+        // 5-8小節
+        n([14, 18, 21], 4), n(21, 4), n([14, 18, 21], 4), n(21, 4),
+        n([11, 18, 20], 4), n(20, 4), n([11, 18, 20], 4), n(20, 4),
+        n([14, 18, 21], 4), n(21, 4), n([10, 17, 19], 4), n(19, 4),
+        n([11, 18], 4), n([11, 15, 18], 4), n([14, 18, 21], 8),
+        // 9-12小節
+        n([11, 15, 18], 4), n(18, 4), n([14, 18], 4), n([12, 16], 4),
+        n([11, 15, 18], 8), n([14, 18], 4), n([12, 16], 4),
+        n([11, 15, 18], 8), n([14, 18], 4), n([11, 15], 4),
+        n([12, 16], 4), n([11, 15], 4), n([11, 15, 18], 8),
+        // 13-16小節
+        n([14, 21], 4), n([18, 23], 4), n([14, 21], 4), n([18, 23], 4),
+        n([11, 18], 4), n([15, 20], 4), n([11, 18], 4), n([15, 20], 4),
+        n([14, 21], 4), n([18, 23], 4), n([10, 17], 4), n([14, 19], 4),
+        n([11, 18], 4), n([11, 15, 18], 4), n([7, 14, 18, 21], 8)
+      ]
+    }
+  };
+
+  let S;
+  let hist = [];
+  let activeHand = "rh"; // "rh" (右手・上段) or "lh" (左手・下段)
+  let sel = { hand: "rh", idx: -1 };
+  let selTone = -1;
+  let tool = { dur: 4, dot: false, rest: false, acc: "auto", chordMode: false };
+  let playing = null;
+  let P = { rh: [], lh: [] };
+  let SY = [];
+  let ac = null;
+  let modalCallback = null;
+
+  const def = () => ({
+    title: "無題の楽譜",
+    bpm: 120,
+    num: 4,
+    den: 4,
+    fifths: 0,
+    clef: "grand",
+    inst: "piano",
+    lhVol: 100,
+    showFingering: true,
+    rh: [],
+    lh: []
+  });
+
+  function normalizeNote(item) {
+    if (!item || item.t === "r") {
+      return { t: "r", dur: Number(item && item.dur) || 4 };
+    }
+    let ds = Array.isArray(item.ds) ? [...item.ds] : Number.isFinite(item.d) ? [item.d] : [30];
+    ds = [...new Set(ds.map(v => Math.max(0, Math.min(60, Math.round(v)))))].sort((a, b) => a - b);
+    if (!ds.length) ds = [30];
+    const accs = {};
+    if (item.accs && typeof item.accs === "object") {
+      ds.forEach(d => {
+        if (item.accs[d] !== undefined && item.accs[d] !== null) accs[d] = item.accs[d];
+      });
+    } else if (item.acc !== undefined && item.acc !== null) {
+      accs[ds[0]] = item.acc;
+    }
+    const fingers = {};
+    if (item.fingers && typeof item.fingers === "object") {
+      ds.forEach(d => {
+        const fv = Number(item.fingers[d]);
+        if (fv >= 1 && fv <= 5) fingers[d] = fv;
+      });
+    }
+    const out = { t: "n", ds, dur: Number(item.dur) || 4, accs };
+    if (Object.keys(fingers).length) out.fingers = fingers;
+    if (item.tie) out.tie = 1;
+    return out;
+  }
+
+  function normalizeState(raw) {
+    const base = { ...def(), ...(raw || {}) };
+    if (base.showFingering === undefined) base.showFingering = true;
+    // 旧バージョン（単一 notes 配列）との後方互換マイグレーション
+    if (Array.isArray(raw && raw.notes) && !Array.isArray(raw && raw.rh)) {
+      if (base.clef === "bass") {
+        base.lh = raw.notes.map(normalizeNote);
+        base.rh = [];
+      } else {
+        base.rh = raw.notes.map(normalizeNote);
+        base.lh = [];
+      }
+      delete base.notes;
+    } else {
+      base.rh = Array.isArray(raw && raw.rh) ? raw.rh.map(normalizeNote) : [];
+      base.lh = Array.isArray(raw && raw.lh) ? raw.lh.map(normalizeNote) : [];
+    }
+    return base;
+  }
+
+  /* ---------- ピアノ運指（指番号 1〜5）自動計算エンジン ---------- */
+  let computedFingers = { rh: [], lh: [] };
+
+  function assignChordFingers(ds, hand, anchorD, anchorF) {
+    // 和音構成音（dsは昇順）に対して右手（下=1→上=5）・左手（下=5→上=1）で自然な指を割り当て
+    const n = ds.length;
+    const span = ds[n - 1] - ds[0];
+    if (n === 2) {
+      if (span <= 1) return hand === "rh" ? [1, 2] : [2, 1];
+      if (span <= 2) return hand === "rh" ? [1, 3] : [3, 1];
+      if (span <= 3) return hand === "rh" ? [1, 4] : [4, 1];
+      return hand === "rh" ? [1, 5] : [5, 1];
+    }
+    if (n === 3) {
+      if (span <= 4) return hand === "rh" ? [1, 3, 5] : [5, 3, 1];
+      if (span <= 6) return hand === "rh" ? [1, 2, 5] : [5, 2, 1];
+      return hand === "rh" ? [1, 3, 5] : [5, 3, 1];
+    }
+    if (n === 4) {
+      return hand === "rh" ? [1, 2, 3, 5] : [5, 3, 2, 1];
+    }
+    return ds.map((_, idx) => (hand === "rh" ? Math.min(5, idx + 1) : Math.max(1, 5 - idx)));
+  }
+
+  function computeHandFingering(hand) {
+    const list = S[hand] || [];
+    const res = new Array(list.length).fill(null);
+    let prevD = null;
+    let prevF = null;
+
+    for (let i = 0; i < list.length; i++) {
+      const item = list[i];
+      if (!item || item.t === "r") {
+        // 長い休符を挟んだら手のポジションをリセット
+        if (item && item.dur >= 8) {
+          prevD = null;
+          prevF = null;
+        }
+        continue;
+      }
+
+      // タイで前の音と繋がっている場合は同じ指番号を継承
+      if (i > 0 && list[i - 1] && list[i - 1].tie && list[i - 1].t === "n" && res[i - 1]) {
+        const inherited = {};
+        item.ds.forEach(d => {
+          if (item.fingers && item.fingers[d]) inherited[d] = item.fingers[d];
+          else if (res[i - 1][d] !== undefined) inherited[d] = res[i - 1][d];
+          else inherited[d] = hand === "rh" ? 1 : 5;
+        });
+        res[i] = inherited;
+        continue;
+      }
+
+      const ds = item.ds;
+      const map = {};
+
+      if (ds.length > 1) {
+        // 和音の場合
+        const autoArr = assignChordFingers(ds, hand, prevD, prevF);
+        ds.forEach((d, idx) => {
+          map[d] = item.fingers && item.fingers[d] ? item.fingers[d] : autoArr[idx];
+        });
+        const repIdx = hand === "rh" ? ds.length - 1 : 0;
+        prevD = ds[repIdx];
+        prevF = map[prevD];
+      } else {
+        // 単音の場合
+        const d = ds[0];
+        if (item.fingers && item.fingers[d]) {
+          map[d] = item.fingers[d];
+          prevD = d;
+          prevF = map[d];
+        } else if (prevD === null || prevF === null) {
+          // フレーズ開始時：音域に応じた自然なホームポジション
+          const defaultStart = hand === "rh" ? (d >= 35 ? 3 : 1) : (d <= 14 ? 5 : 3);
+          map[d] = defaultStart;
+          prevD = d;
+          prevF = defaultStart;
+        } else {
+          const diff = d - prevD;
+          let f = prevF;
+          if (diff === 0) {
+            // 同音連打：同じ指を維持（連続しすぎる場合は隣指へ入れ替えも可）
+            f = prevF;
+          } else if (hand === "rh") {
+            // 右手：上行(+diff)で指番号が増え、下行(-diff)で減る
+            if (diff > 0) {
+              if (prevF + diff <= 5) {
+                f = prevF + diff;
+              } else if (diff >= 6) {
+                f = 5; // オクターブ等の大跳躍は小指
+              } else {
+                // 親指くぐり（1指へ移動してポジション上へシフト）
+                f = prevF >= 3 ? 1 : Math.min(5, prevF + 1);
+              }
+            } else {
+              if (prevF + diff >= 1) {
+                f = prevF + diff;
+              } else if (diff <= -6) {
+                f = 1; // 下方大跳躍は親指
+              } else {
+                // 3指または4指を親指の上に越えさせる
+                f = prevF === 1 ? (diff <= -2 ? 3 : 3) : Math.max(1, prevF - 1);
+              }
+            }
+          } else {
+            // 左手：下行(-diff)で指番号が増え(1→5)、上行(+diff)で減る(5→1)
+            if (diff < 0) {
+              const stepDown = -diff;
+              if (prevF + stepDown <= 5) {
+                f = prevF + stepDown;
+              } else if (stepDown >= 6) {
+                f = 5;
+              } else {
+                f = prevF >= 3 ? 1 : Math.min(5, prevF + 1);
+              }
+            } else {
+              if (prevF - diff >= 1) {
+                f = prevF - diff;
+              } else if (diff >= 6) {
+                f = 1;
+              } else {
+                f = prevF === 1 ? 3 : Math.max(1, prevF - 1);
+              }
+            }
+          }
+          f = Math.max(1, Math.min(5, f));
+          map[d] = f;
+          prevD = d;
+          prevF = f;
+        }
+      }
+      res[i] = map;
+    }
+    return res;
+  }
+
+  function recomputeAllFingering() {
+    computedFingers.rh = computeHandFingering("rh");
+    computedFingers.lh = computeHandFingering("lh");
+  }
+
+  function getFingerFor(hand, idx, d) {
+    const item = S[hand] && S[hand][idx];
+    if (item && item.fingers && item.fingers[d]) return item.fingers[d];
+    const row = computedFingers[hand] && computedFingers[hand][idx];
+    return row && row[d] ? row[d] : null;
+  }
+
+  // パートごとの基準音（下第1線：右手/ト音=E4(30), 左手/ヘ音=G2(18)）
+  const staffClef = hand => (S.clef === "grand" ? (hand === "lh" ? "bass" : "treble") : S.clef);
+  const DB = hand => (staffClef(hand) === "bass" ? 18 : 30);
+  const ML = () => (S.num * 16) / S.den;
+
+  function visibleHands() {
+    if (S.clef === "grand") return ["rh", "lh"];
+    if (S.clef === "bass") return ["lh"];
+    return ["rh"];
+  }
+
+  function ensureValidHand() {
+    const hands = visibleHands();
+    if (!hands.includes(activeHand)) {
+      activeHand = hands[0];
+    }
+    if (sel.idx >= 0 && !hands.includes(sel.hand)) {
+      sel = { hand: activeHand, idx: -1 };
+    }
+  }
+
+  function kacc(l) {
+    const f = S.fifths;
+    return f > 0 ? (LS.indexOf(l) < f ? 1 : 0) : f < 0 ? (LF.indexOf(l) < -f ? -1 : 0) : 0;
+  }
+
+  const toneAcc = (item, d) => (item.accs && item.accs[d] !== undefined ? item.accs[d] : kacc(d % 7));
+  const toneMidi = (item, d) => Math.max(0, Math.min(127, (Math.floor(d / 7) + 1) * 12 + SEMI[d % 7] + toneAcc(item, d)));
+  const noteMidis = item => (item.t === "r" ? [] : item.ds.map(d => toneMidi(item, d)));
+  const nm = (d, a) => L[d % 7] + (a > 0 ? "♯" : a < 0 ? "♭" : "") + Math.floor(d / 7);
+
+  /* ---------- UIフィードバック（トースト＆カスタム確認モーダル） ---------- */
+  let toastTimer = null;
+  function showToast(msg) {
+    const el = $("#toast");
+    el.textContent = msg;
+    el.classList.add("show");
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(() => el.classList.remove("show"), 2400);
+  }
+
+  function showConfirm(title, message, onConfirm) {
+    $("#modalTitle").textContent = title;
+    $("#modalMessage").textContent = message;
+    modalCallback = onConfirm;
+    $("#confirmModal").classList.add("show");
+  }
+
+  function closeConfirm() {
+    $("#confirmModal").classList.remove("show");
+    modalCallback = null;
+  }
+
+  $("#modalCancel").onclick = closeConfirm;
+  $("#modalOk").onclick = () => {
+    const cb = modalCallback;
+    closeConfirm();
+    if (cb) cb();
+  };
+  $("#confirmModal").onclick = e => {
+    if (e.target === $("#confirmModal")) closeConfirm();
+  };
+
+  /* ---------- Web Audio API 音源エンジン（5音色・両手ポリフォニー対応） ---------- */
+  function AC() {
+    if (!ac) {
+      const Ctx = window.AudioContext || window.webkitAudioContext;
+      ac = new Ctx();
+    }
+    return ac;
+  }
+
+  function ensureAudioReady() {
+    const a = AC();
+    if (a.state === "suspended") {
+      return a.resume().then(() => a);
+    }
+    return Promise.resolve(a);
+  }
+
+  function tone(m, t, dur, out, polyScale = 1) {
+    const a = AC();
+    const startT = Math.max(t, a.currentTime + 0.005);
+    const f = 440 * Math.pow(2, (m - 69) / 12);
+    const inst = S.inst || "piano";
+    const g = a.createGain();
+    g.connect(out);
+    // 小型スピーカーでも低音域（C4=60未満）が埋もれないよう等ラウドネス補正を強化
+    const bassBoost = m < 60 ? 1 + Math.min(0.65, (60 - m) * 0.028) : 1;
+    const peak = Math.max(0.01, (0.28 * bassBoost) / Math.sqrt(Math.max(1, polyScale)));
+
+    if (inst === "musicbox") {
+      const o1 = a.createOscillator();
+      const o2 = a.createOscillator();
+      const h = a.createGain();
+      o1.type = "sine";
+      o2.type = "sine";
+      o1.frequency.setValueAtTime(f, startT);
+      o2.frequency.setValueAtTime(f * (m < 55 ? 2 : 4), startT);
+      h.gain.setValueAtTime(m < 55 ? 0.28 : 0.14, startT);
+      h.gain.exponentialRampToValueAtTime(0.001, startT + 0.35);
+
+      o1.connect(g);
+      o2.connect(h);
+      h.connect(g);
+
+      const rel = Math.max(dur, 0.45) + 0.55;
+      g.gain.setValueAtTime(0.0001, startT);
+      g.gain.linearRampToValueAtTime(peak, startT + 0.006);
+      g.gain.exponentialRampToValueAtTime(0.0008, startT + rel);
+
+      o1.start(startT); o2.start(startT);
+      o1.stop(startT + rel + 0.05); o2.stop(startT + rel + 0.05);
+    } else if (inst === "epiano") {
+      const o1 = a.createOscillator();
+      const o2 = a.createOscillator();
+      const h = a.createGain();
+      o1.type = "sine";
+      o2.type = "triangle";
+      o1.frequency.setValueAtTime(f, startT);
+      o2.frequency.setValueAtTime(f * 2, startT);
+      h.gain.setValueAtTime(m < 55 ? 0.36 : 0.22, startT);
+      h.gain.exponentialRampToValueAtTime(0.03, startT + 0.4);
+
+      o1.connect(g);
+      o2.connect(h);
+      h.connect(g);
+
+      const e = startT + Math.max(dur, 0.14);
+      g.gain.setValueAtTime(0.0001, startT);
+      g.gain.linearRampToValueAtTime(peak, startT + 0.01);
+      g.gain.exponentialRampToValueAtTime(Math.max(0.001, peak * 0.28), e);
+      g.gain.linearRampToValueAtTime(0.0001, e + 0.18);
+
+      o1.start(startT); o2.start(startT);
+      o1.stop(e + 0.2); o2.stop(e + 0.2);
+    } else if (inst === "flute") {
+      const o1 = a.createOscillator();
+      const o2 = a.createOscillator();
+      const h = a.createGain();
+      const lfo = a.createOscillator();
+      const lfoGain = a.createGain();
+      o1.type = "sine";
+      o2.type = "sine";
+      o1.frequency.setValueAtTime(f, startT);
+      o2.frequency.setValueAtTime(f * 2, startT);
+      h.gain.setValueAtTime(m < 55 ? 0.25 : 0.06, startT);
+
+      lfo.type = "sine";
+      lfo.frequency.setValueAtTime(5.2, startT);
+      lfoGain.gain.setValueAtTime(f * 0.006, startT);
+      lfo.connect(lfoGain);
+      lfoGain.connect(o1.frequency);
+
+      o1.connect(g);
+      o2.connect(h);
+      h.connect(g);
+
+      const e = startT + Math.max(dur, 0.12);
+      g.gain.setValueAtTime(0.0001, startT);
+      g.gain.linearRampToValueAtTime(peak * 0.85, startT + 0.045);
+      g.gain.setValueAtTime(peak * 0.8, Math.max(startT + 0.05, e - 0.03));
+      g.gain.linearRampToValueAtTime(0.0001, e + 0.09);
+
+      o1.start(startT); o2.start(startT); lfo.start(startT);
+      o1.stop(e + 0.12); o2.stop(e + 0.12); lfo.stop(e + 0.12);
+    } else if (inst === "pizz") {
+      const o1 = a.createOscillator();
+      const filter = a.createBiquadFilter();
+      o1.type = "sawtooth";
+      o1.frequency.setValueAtTime(f, startT);
+
+      filter.type = "lowpass";
+      filter.frequency.setValueAtTime(Math.min(18000, f * 5.0), startT);
+      filter.frequency.exponentialRampToValueAtTime(Math.max(260, f * 1.4), startT + 0.22);
+
+      o1.connect(filter);
+      filter.connect(g);
+
+      const rel = Math.min(0.32, Math.max(0.18, dur * 0.8));
+      g.gain.setValueAtTime(0.0001, startT);
+      g.gain.linearRampToValueAtTime(peak, startT + 0.005);
+      g.gain.exponentialRampToValueAtTime(0.0008, startT + rel);
+
+      o1.start(startT);
+      o1.stop(startT + rel + 0.04);
+    } else {
+      // ピアノ音源：低音域では2倍音＋3倍音を加えて輪郭と厚みを明瞭に響かせる
+      const o1 = a.createOscillator();
+      const o2 = a.createOscillator();
+      const o3 = a.createOscillator();
+      const h2 = a.createGain();
+      const h3 = a.createGain();
+      o1.type = "triangle";
+      o2.type = "sine";
+      o3.type = "sine";
+      o1.frequency.setValueAtTime(f, startT);
+      o2.frequency.setValueAtTime(f * 2, startT);
+      o3.frequency.setValueAtTime(f * 3, startT);
+
+      const isBass = m < 58;
+      h2.gain.setValueAtTime(isBass ? 0.38 : 0.24, startT);
+      h3.gain.setValueAtTime(isBass ? 0.18 : 0.06, startT);
+
+      o1.connect(g);
+      o2.connect(h2); h2.connect(g);
+      o3.connect(h3); h3.connect(g);
+
+      const e = startT + Math.max(dur, 0.12);
+      g.gain.setValueAtTime(0.0001, startT);
+      g.gain.linearRampToValueAtTime(peak, startT + 0.008);
+      g.gain.exponentialRampToValueAtTime(Math.max(0.001, peak * 0.24), e);
+      g.gain.linearRampToValueAtTime(0.0001, e + 0.15);
+
+      o1.start(startT); o2.start(startT); o3.start(startT);
+      o1.stop(e + 0.17); o2.stop(e + 0.17); o3.stop(e + 0.17);
+    }
+  }
+
+  // スライダー値（0〜200%）を聴感上の明確なゲインカーブへ変換
+  function calcBalanceGains(pct) {
+    const ratio = Math.max(0, Math.min(200, Number(pct) ?? 100)) / 100;
+    if (ratio === 0) return { rh: 1.0, lh: 0.0 };
+    // 100%を1.0とし、200%時は左手を2.6倍(+8.3dB)＆右手を0.75倍に抑えて明確に聴かせる
+    const lh = ratio <= 1 ? Math.pow(ratio, 1.35) : 1 + (ratio - 1) * 1.6;
+    const rh = ratio <= 1 ? 1.0 : Math.max(0.72, 1 - (ratio - 1) * 0.28);
+    return { rh, lh };
+  }
+
+  function pingChord(midis, hand = "rh") {
+    if (!midis || !midis.length) return;
+    ensureAudioReady().then(a => {
+      const g = a.createGain();
+      const bal = calcBalanceGains(S.lhVol);
+      g.gain.value = hand === "lh" ? Math.max(0.2, bal.lh) : bal.rh;
+      g.connect(a.destination);
+      midis.forEach(m => tone(m, a.currentTime + 0.005, 0.44, g, midis.length));
+    });
+  }
+
+  function updatePlayhead(pos, E) {
+    const ph = document.getElementById("playhead");
+    if (!ph || !SY.length) return;
+
+    // 現在の拍位置が何小節目（0始まり）か算出
+    const M = ML();
+    const totalBarsCount = SY.reduce((sum, s) => sum + s.ms.length, 0);
+    const mIdx = Math.max(0, Math.min(totalBarsCount - 1, Math.floor(pos / M)));
+    const localT = Math.max(0, Math.min(M, pos - mIdx * M));
+
+    // mIdx に該当する小節ボックスを検索
+    let targetSys = null;
+    let targetMeas = null;
+    let count = 0;
+    for (const s of SY) {
+      if (mIdx < count + s.ms.length) {
+        targetSys = s;
+        targetMeas = s.ms[mIdx - count];
+        break;
+      }
+      count += s.ms.length;
+    }
+
+    if (!targetSys || !targetMeas) return;
+
+    // 小節内の共通タイムライン座標（timePoints）間で線形補間してX座標を算出
+    let x = targetMeas.x + 16;
+    const pts = targetMeas.timePoints;
+    if (pts && pts.length >= 2) {
+      for (let i = 0; i < pts.length - 1; i++) {
+        const p0 = pts[i];
+        const p1 = pts[i + 1];
+        if (localT >= p0.t && localT <= p1.t) {
+          const span = Math.max(0.0001, p1.t - p0.t);
+          const ratio = (localT - p0.t) / span;
+          x = p0.x + (p1.x - p0.x) * ratio;
+          break;
+        }
+      }
+    }
+
+    const yTop = targetSys.yRh - 16;
+    const yBot = S.clef === "grand" ? targetSys.yLh + 56 : targetSys.yRh + 56;
+
+    ph.setAttribute("x1", x.toFixed(1));
+    ph.setAttribute("x2", x.toFixed(1));
+    ph.setAttribute("y1", yTop);
+    ph.setAttribute("y2", yBot);
+    ph.setAttribute("visibility", "visible");
+  }
+
+  function loop() {
+    const p = playing;
+    if (!p) return;
+    const pos = Math.max(p.off, (AC().currentTime - p.st) / p.s16 + p.off);
+    if (pos >= p.E.T + 0.5) {
+      stop();
+      return;
+    }
+    let cRh = -1;
+    if (visibleHands().includes("rh")) {
+      for (let i = 0; i < S.rh.length; i++) {
+        if (p.E.rh.t0[i] <= pos && pos < p.E.rh.t0[i] + S.rh[i].dur) {
+          cRh = i;
+          break;
+        }
+      }
+    }
+    let cLh = -1;
+    if (visibleHands().includes("lh")) {
+      for (let i = 0; i < S.lh.length; i++) {
+        if (p.E.lh.t0[i] <= pos && pos < p.E.lh.t0[i] + S.lh[i].dur) {
+          cLh = i;
+          break;
+        }
+      }
+    }
+
+    if (cRh !== p.curRh || cLh !== p.curLh) {
+      mark("rh", p.curRh, 0);
+      mark("lh", p.curLh, 0);
+      mark("rh", cRh, 1);
+      mark("lh", cLh, 1);
+      p.curRh = cRh;
+      p.curLh = cLh;
+      updateKeys(cRh, cLh);
+    }
+    updatePlayhead(pos, p.E);
+    p.raf = requestAnimationFrame(loop);
+  }
+
+  function stop() {
+    const p = playing;
+    if (!p) return;
+    cancelAnimationFrame(p.raf);
+    try {
+      p.m.gain.setTargetAtTime(0, AC().currentTime, 0.03);
+      setTimeout(() => { try { p.m.disconnect(); } catch (e) {} }, 350);
+    } catch (e) {}
+    mark("rh", p.curRh, 0);
+    mark("lh", p.curLh, 0);
+    updateKeys(-1, -1);
+    const ph = document.getElementById("playhead");
+    if (ph) ph.setAttribute("visibility", "hidden");
+    playing = null;
+    const btn = $("#play");
+    btn.textContent = "▶ 再生";
+    btn.classList.remove("playing");
+    btn.classList.add("primary");
+  }
+
+  /* ---------- 大譜表＆単一段 レイアウト・SVG五線譜描画 ---------- */
+  function decomposeDur(dur) {
+    const dottedMap = { 24: [16, true], 12: [8, true], 6: [4, true], 3: [2, true] };
+    if (dottedMap[dur]) return { base: dottedMap[dur][0], dot: true };
+    return { base: dur, dot: false };
+  }
+
+  function splitIntoMeasures(list, M) {
+    const ms = [];
+    let c = [];
+    let a = 0;
+    list.forEach((item, i) => {
+      c.push({ idx: i, tStart: a });
+      a += item.dur;
+      if (a >= M) {
+        ms.push(c);
+        c = [];
+        a = 0;
+      }
+    });
+    if (c.length) ms.push(c);
+    return ms;
+  }
+
+  function layout(ex) {
+    const M = ML();
+    const isGrand = S.clef === "grand";
+    const rhMs = visibleHands().includes("rh") ? splitIntoMeasures(S.rh, M) : [];
+    const lhMs = visibleHands().includes("lh") ? splitIntoMeasures(S.lh, M) : [];
+
+    let totalBars = Math.max(1, rhMs.length, lhMs.length);
+    // 編集中は末尾に空小節を1つ確保して追加入力しやすくする
+    if (!ex) {
+      const rhLast = rhMs[rhMs.length - 1];
+      const lhLast = lhMs[lhMs.length - 1];
+      const rhComplete = rhLast && rhLast.reduce((s, e) => s + S.rh[e.idx].dur, 0) >= M;
+      const lhComplete = lhLast && lhLast.reduce((s, e) => s + S.lh[e.idx].dur, 0) >= M;
+      if (rhComplete || lhComplete) {
+        totalBars++;
+      }
+    }
+
+    // 共通タイムライン・スロット幅（最小幅保証＋音価比例幅）
+    const slotW = dt => 24 + dt * 4.5;
+
+    const barMeta = [];
+    for (let b = 0; b < totalBars; b++) {
+      const rEntries = rhMs[b] || [];
+      const lEntries = lhMs[b] || [];
+
+      // 右手・左手の全イベント開始タイミング（tStart: 0〜M）を重複なしで収集・昇順ソート
+      const timeSet = new Set([0]);
+      rEntries.forEach(e => timeSet.add(Math.min(M, e.tStart)));
+      lEntries.forEach(e => timeSet.add(Math.min(M, e.tStart)));
+      const times = [...timeSet].sort((a, b) => a - b);
+
+      // 隣接するイベント時点の間隔ごとにスロット幅と臨時記号の追加余白を計算
+      const slots = [];
+      let baseTotalW = 14; // 左端パディング（1拍目が小節線に近すぎないよう確保）
+      for (let k = 0; k < times.length; k++) {
+        const tCurr = times[k];
+        const tNext = k + 1 < times.length ? times[k + 1] : M;
+        const dt = Math.max(0.5, tNext - tCurr);
+
+        // このタイミング tCurr に存在する右手・左手音符の臨時記号数をチェック
+        let accExtra = 0;
+        rEntries.forEach(e => {
+          if (e.tStart === tCurr) {
+            const it = S.rh[e.idx];
+            if (it && it.t === "n" && it.accs) accExtra = Math.max(accExtra, Object.keys(it.accs).length * 7);
+          }
+        });
+        lEntries.forEach(e => {
+          if (e.tStart === tCurr) {
+            const it = S.lh[e.idx];
+            if (it && it.t === "n" && it.accs) accExtra = Math.max(accExtra, Object.keys(it.accs).length * 7);
+          }
+        });
+
+        const sw = slotW(dt) + accExtra;
+        slots.push({ t: tCurr, dt, sw, accExtra });
+        baseTotalW += sw;
+      }
+
+      barMeta.push({
+        rEntries,
+        lEntries,
+        slots,
+        w: Math.max(96, baseTotalW)
+      });
+    }
+
+    const A = W - LM - RM;
+    const hd = firstSys => 48 + Math.abs(S.fifths) * 9 + (firstSys ? 28 : 0);
+    const sysStep = isGrand ? 228 : 138;
+
+    SY = [];
+    P = { rh: [], lh: [] };
+
+    for (let b = 0; b < totalBars; b++) {
+      const bm = barMeta[b];
+      let s = SY[SY.length - 1];
+      if (!s || s.w + bm.w > A - s.h) {
+        const yRh = 92 + SY.length * sysStep;
+        s = {
+          ms: [],
+          w: 0,
+          h: hd(!SY.length),
+          yRh,
+          yLh: yRh + 92
+        };
+        SY.push(s);
+      }
+      s.ms.push({
+        rEntries: bm.rEntries,
+        lEntries: bm.lEntries,
+        slots: bm.slots,
+        w: bm.w
+      });
+      s.w += bm.w;
+    }
+
+    // システムごとの横幅均等割り付けと共通タイムラインX座標の確定
+    SY.forEach((s, si) => {
+      const k = si < SY.length - 1 ? (A - s.h) / s.w : 1;
+      let x = LM + s.h;
+      s.ms.forEach(m => {
+        m.x = x;
+        m.w *= k;
+        x += m.w;
+
+        const baseSum = m.slots.reduce((sum, sl) => sum + sl.sw, 0);
+        const padLeft = 14 * k;
+        const availW = Math.max(10, m.w - padLeft);
+        const scale = baseSum > 0 ? availW / baseSum : 1;
+
+        const timePoints = [];
+        let curX = m.x + padLeft;
+        m.slots.forEach(sl => {
+          timePoints.push({ t: sl.t, x: curX });
+          curX += sl.sw * scale;
+        });
+        timePoints.push({ t: M, x: m.x + m.w });
+        m.timePoints = timePoints;
+
+        const xForTime = tVal => {
+          for (let j = 0; j < timePoints.length - 1; j++) {
+            const p0 = timePoints[j];
+            const p1 = timePoints[j + 1];
+            if (tVal <= p0.t + 0.001) return p0.x;
+            if (tVal < p1.t) {
+              const r = (tVal - p0.t) / Math.max(0.001, p1.t - p0.t);
+              return p0.x + (p1.x - p0.x) * r;
+            }
+          }
+          return timePoints[timePoints.length - 1].x;
+        };
+
+        m.rEntries.forEach(e => {
+          const item = S.rh[e.idx];
+          const midD = item.t === "r" ? DB("rh") + 4 : (item.ds[0] + item.ds[item.ds.length - 1]) / 2;
+          P.rh[e.idx] = {
+            x: xForTime(e.tStart),
+            s: si,
+            y: item.t === "r" ? s.yRh + 20 : s.yRh + 40 - (midD - DB("rh")) * 5
+          };
+        });
+
+        m.lEntries.forEach(e => {
+          const item = S.lh[e.idx];
+          const yBase = isGrand ? s.yLh : s.yRh;
+          const midD = item.t === "r" ? DB("lh") + 4 : (item.ds[0] + item.ds[item.ds.length - 1]) / 2;
+          P.lh[e.idx] = {
+            x: xForTime(e.tStart),
+            s: si,
+            y: item.t === "r" ? yBase + 20 : yBase + 40 - (midD - DB("lh")) * 5
+          };
+        });
+      });
+      s.xe = x;
+    });
+  }
+
+  /* ---------- 再生イベント集計・視覚ハイライト ---------- */
+  function handEvents(list) {
+    const o = [];
+    const t0 = [];
+    let t = 0;
+    for (let i = 0; i < list.length; i++) {
+      const item = list[i];
+      t0[i] = t;
+      if (item.t === "r") {
+        t += item.dur;
+        continue;
+      }
+      let len = item.dur;
+      let j = i;
+      const ms = noteMidis(item);
+      while (
+        list[j].tie &&
+        list[j + 1] &&
+        list[j + 1].t === "n" &&
+        noteMidis(list[j + 1]).join(",") === ms.join(",")
+      ) {
+        j++;
+        t0[j] = t + len;
+        len += list[j].dur;
+      }
+      o.push({ s: t, l: len, ms });
+      t += len;
+      i = j;
+    }
+    return { o, t0, T: t };
+  }
+
+  function allEvents() {
+    const hands = visibleHands();
+    const rh = hands.includes("rh") ? handEvents(S.rh) : { o: [], t0: [], T: 0 };
+    const lh = hands.includes("lh") ? handEvents(S.lh) : { o: [], t0: [], T: 0 };
+    return { rh, lh, T: Math.max(rh.T, lh.T) };
+  }
+
+  function mark(hand, i, on) {
+    if (i < 0) return;
+    const el = document.getElementById(`n_${hand}_${i}`);
+    if (el) el.classList.toggle("play", !!on);
+  }
+
+  function updateKeys(cRh, cLh) {
+    document.querySelectorAll("#kb .on-rh, #kb .on-lh, #kb .on-both").forEach(k => {
+      k.classList.remove("on-rh", "on-lh", "on-both");
+    });
+    document.querySelectorAll("#kb .key-finger").forEach(el => el.remove());
+
+    const rhMap = new Map();
+    const lhMap = new Map();
+
+    // 再生中は演奏中の音符、停止中は選択中の音符の指番号を鍵盤上にガイド表示
+    const targetRhIdx = playing ? cRh : (sel.hand === "rh" ? sel.idx : -1);
+    const targetLhIdx = playing ? cLh : (sel.hand === "lh" ? sel.idx : -1);
+
+    if (targetRhIdx >= 0 && S.rh[targetRhIdx] && S.rh[targetRhIdx].t === "n") {
+      S.rh[targetRhIdx].ds.forEach(d => {
+        rhMap.set(toneMidi(S.rh[targetRhIdx], d), getFingerFor("rh", targetRhIdx, d));
+      });
+    }
+    if (targetLhIdx >= 0 && S.lh[targetLhIdx] && S.lh[targetLhIdx].t === "n") {
+      S.lh[targetLhIdx].ds.forEach(d => {
+        lhMap.set(toneMidi(S.lh[targetLhIdx], d), getFingerFor("lh", targetLhIdx, d));
+      });
+    }
+
+    const allM = new Set([...rhMap.keys(), ...lhMap.keys()]);
+    allM.forEach(m => {
+      const k = document.querySelector(`#kb [data-m="${m}"]`);
+      if (!k) return;
+      const inRh = rhMap.has(m);
+      const inLh = lhMap.has(m);
+      if (inRh && inLh) k.classList.add("on-both");
+      else if (inRh) k.classList.add("on-rh");
+      else k.classList.add("on-lh");
+
+      if (S.showFingering) {
+        const fRh = rhMap.get(m);
+        const fLh = lhMap.get(m);
+        const label = inRh && inLh ? `${fRh}/${fLh}` : inRh ? `${fRh || ""}` : `${fLh || ""}`;
+        if (label) {
+          const badge = document.createElement("i");
+          badge.className = "key-finger";
+          badge.textContent = label;
+          k.appendChild(badge);
+        }
+      }
+    });
+  }
+
+  function play() {
+    if (playing) {
+      stop();
+      return;
+    }
+    const E = allEvents();
+    if (E.T <= 0 || (!E.rh.o.length && !E.lh.o.length)) {
+      showToast("再生する音符がありません");
+      return;
+    }
+    ensureAudioReady().then(a => {
+      if (playing) return;
+      const m = a.createGain();
+      m.gain.value = 0.85;
+      m.connect(a.destination);
+      const bal = calcBalanceGains(S.lhVol);
+
+      // 右手・左手で個別のGainNodeを用意し、再生中のスライダー操作でもリアルタイムにバランス追従させる
+      const rhGain = a.createGain();
+      rhGain.gain.value = bal.rh;
+      rhGain.connect(m);
+
+      const lhGain = a.createGain();
+      lhGain.gain.value = bal.lh;
+      lhGain.connect(m);
+
+      const s16 = 60 / S.bpm / 4;
+      let off = 0;
+      if (sel.idx >= 0 && E[sel.hand] && E[sel.hand].t0[sel.idx] !== undefined) {
+        off = E[sel.hand].t0[sel.idx];
+      }
+      const st = a.currentTime + 0.08;
+      const polyFactor = S.clef === "grand" ? 2.1 : 1.3;
+
+      [
+        ["rh", rhGain],
+        ["lh", lhGain]
+      ].forEach(([h, handOut]) => {
+        E[h].o.forEach(e => {
+          if (e.s + e.l > off) {
+            const startT = Math.max(e.s, off);
+            const playDur = e.s + e.l - startT;
+            e.ms.forEach(midiVal => {
+              tone(midiVal, st + (startT - off) * s16, playDur * s16, handOut, e.ms.length * polyFactor);
+            });
+          }
+        });
+      });
+
+      playing = { m, rhGain, lhGain, E, st, off, s16, curRh: -1, curLh: -1, raf: 0 };
+      const btn = $("#play");
+      btn.textContent = "■ 停止";
+      btn.classList.remove("primary");
+      btn.classList.add("playing");
+      loop();
+    });
+  }
+
+  function led(x, d, y0, baseD) {
+    let o = "";
+    const y = k => y0 + 40 - (k - baseD) * 5;
+    const l = k => `<line x1="${x - 10}" x2="${x + 10}" y1="${y(k)}" y2="${y(k)}" stroke="#1e293b" stroke-width="1.15"/>`;
+    for (let k = baseD - 2; k >= d; k -= 2) o += l(k);
+    for (let k = baseD + 10; k <= d; k += 2) o += l(k);
+    return o;
+  }
+
+  function note(hand, i, y0, ex) {
+    const item = S[hand][i];
+    const p = P[hand][i];
+    if (!p) return "";
+    const x = p.x;
+    const c = "#1e293b";
+    const baseD = DB(hand);
+    const { base: d, dot } = decomposeDur(item.dur);
+    const isSel = sel.hand === hand && sel.idx === i && !ex;
+    const selClass = isSel ? (hand === "lh" ? " sel-lh" : " sel") : "";
+
+    let g = `<g class="nt${selClass}" id="n_${hand}_${i}">`;
+    g += `<rect x="${x - 14}" y="${y0 - 26}" width="28" height="92" fill="transparent"/>`;
+
+    if (item.t === "r") {
+      if (d >= 8) {
+        g += `<rect class="f" x="${x - 7}" y="${y0 + (d === 16 ? 10 : 15)}" width="14" height="5" fill="${c}"/>`;
+      } else if (d === 4) {
+        g += `<path d="M${x - 3} ${y0 + 8}l6 8l-7 8l6 7l-3 5" fill="none" stroke="${c}" stroke-width="2.3" stroke-linecap="round"/>`;
+      } else {
+        g += `<circle class="f" cx="${x - 2}" cy="${y0 + 15}" r="2.7" fill="${c}"/><path d="M${x + 3} ${y0 + 14}l-6 20" stroke="${c}" stroke-width="1.7" fill="none"/>`;
+        if (d === 1) {
+          g += `<circle class="f" cx="${x - 4}" cy="${y0 + 25}" r="2.7" fill="${c}"/>`;
+        }
+      }
+      if (dot) {
+        g += `<circle class="f" cx="${x + 11}" cy="${y0 + 15}" r="2.2" fill="${c}"/>`;
+      }
+      return g + "</g>";
+    }
+
+    const ds = item.ds;
+    const midD = (ds[0] + ds[ds.length - 1]) / 2;
+    const up = midD < baseD + 4;
+    const sx = up ? x + 5.5 : x - 5.5;
+
+    g += led(x, ds[0], y0, baseD);
+    if (ds.length > 1) g += led(x, ds[ds.length - 1], y0, baseD);
+
+    const offsets = new Array(ds.length).fill(0);
+    if (up) {
+      for (let k = 1; k < ds.length; k++) {
+        if (ds[k] - ds[k - 1] === 1 && offsets[k - 1] === 0) offsets[k] = 11;
+      }
+    } else {
+      for (let k = ds.length - 2; k >= 0; k--) {
+        if (ds[k + 1] - ds[k] === 1 && offsets[k + 1] === 0) offsets[k] = -11;
+      }
+    }
+
+    ds.forEach((dv, idx) => {
+      const cy = y0 + 40 - (dv - baseD) * 5;
+      const hx = x + offsets[idx];
+      g += `<ellipse${d >= 8 ? "" : ' class="f"'} cx="${hx}" cy="${cy}" rx="6" ry="4.3" transform="rotate(-20 ${hx} ${cy})" fill="${d >= 8 ? "#ffffff" : c}" stroke="${c}" stroke-width="1.55"/>`;
+      if (dot) {
+        const dotY = dv % 2 === 0 ? cy - 3 : cy;
+        g += `<circle class="f" cx="${hx + 10.5}" cy="${dotY}" r="2.1" fill="${c}"/>`;
+      }
+    });
+
+    if (d < 16) {
+      const yLow = y0 + 40 - (ds[0] - baseD) * 5;
+      const yHigh = y0 + 40 - (ds[ds.length - 1] - baseD) * 5;
+      const stemStart = up ? yLow : yHigh;
+      const stemEnd = up ? yHigh - 32 : yLow + 32;
+      g += `<line x1="${sx}" x2="${sx}" y1="${stemStart}" y2="${stemEnd}" stroke="${c}" stroke-width="1.45"/>`;
+      const flags = d === 2 ? 1 : d === 1 ? 2 : 0;
+      for (let f = 0; f < flags; f++) {
+        const o = up ? f * 7 : -f * 7;
+        g += `<path d="M${sx} ${stemEnd + o}${up ? "c0 8 10 11 8 21" : "c0 -8 10 -11 8 -21"}" fill="none" stroke="${c}" stroke-width="1.9"/>`;
+      }
+    }
+
+    let accCol = 0;
+    let lastAccD = -99;
+    ds.forEach((dv, idx) => {
+      if (item.accs && item.accs[dv] !== undefined) {
+        if (dv - lastAccD < 4) accCol++;
+        else accCol = 0;
+        lastAccD = dv;
+        const cy = y0 + 40 - (dv - baseD) * 5;
+        const baseShift = offsets[idx] < 0 ? offsets[idx] : 0;
+        const ax = x - 15 + baseShift - accCol * 10.5;
+        g += `<text class="f" x="${ax}" y="${cy + 6}" font-size="17" text-anchor="middle" fill="${c}">${["♭", "♮", "♯"][item.accs[dv] + 1]}</text>`;
+      }
+    });
+
+    const q = S[hand][i + 1];
+    if (item.tie && q && q.t === "n" && P[hand][i + 1] && P[hand][i + 1].s === p.s) {
+      ds.forEach(dv => {
+        if (q.ds.includes(dv)) {
+          const cy = y0 + 40 - (dv - baseD) * 5;
+          const tieUp = dv < baseD + 4;
+          const yy = cy + (tieUp ? 7 : -7);
+          const m = (x + P[hand][i + 1].x) / 2;
+          g += `<path d="M${x + 3} ${yy}Q${m} ${yy + (tieUp ? 9 : -9)} ${P[hand][i + 1].x - 3} ${yy}" fill="none" stroke="${c}" stroke-width="1.35"/>`;
+        }
+      });
+    }
+
+    // 指番号（1〜5）の描画：右手は符頭上側、左手は符頭下側へ配置
+    if (S.showFingering) {
+      const fColor = hand === "lh" ? "#0f766e" : "#3730a3";
+      if (ds.length === 1) {
+        const dv = ds[0];
+        const fNum = getFingerFor(hand, i, dv);
+        if (fNum) {
+          const cy = y0 + 40 - (dv - baseD) * 5;
+          let fy;
+          if (hand === "rh") {
+            // 上向き符幹がある場合は符幹頂点よりさらに上、下向きなら符頭の上
+            const topEdge = up && d < 16 ? cy - 35 : cy - 9;
+            fy = Math.min(y0 - 6, topEdge);
+          } else {
+            // 左手は符頭または下向き符幹の下側へ配置
+            const botEdge = !up && d < 16 ? cy + 43 : cy + 17;
+            fy = Math.max(y0 + 54, botEdge);
+          }
+          g += `<text x="${x}" y="${fy}" font-size="11.5" font-weight="800" text-anchor="middle" fill="${fColor}" pointer-events="none">${fNum}</text>`;
+        }
+      } else {
+        // 和音の指番号は上から下へ縦一列に並べて視認性を確保
+        const topNoteY = y0 + 40 - (ds[ds.length - 1] - baseD) * 5;
+        const botNoteY = y0 + 40 - (ds[0] - baseD) * 5;
+        if (hand === "rh") {
+          const baseTop = Math.min(y0 - 6, up && d < 16 ? topNoteY - 35 : topNoteY - 9);
+          ds.forEach((dv, idx) => {
+            const fNum = getFingerFor(hand, i, dv);
+            if (!fNum) return;
+            const fy = baseTop - idx * 12;
+            g += `<text x="${x}" y="${fy}" font-size="11" font-weight="800" text-anchor="middle" fill="${fColor}" pointer-events="none">${fNum}</text>`;
+          });
+        } else {
+          const baseBot = Math.max(y0 + 54, !up && d < 16 ? botNoteY + 43 : botNoteY + 17);
+          ds.forEach((dv, idx) => {
+            const fNum = getFingerFor(hand, i, dv);
+            if (!fNum) return;
+            const rankFromTop = ds.length - 1 - idx;
+            const fy = baseBot + rankFromTop * 12;
+            g += `<text x="${x}" y="${fy}" font-size="11" font-weight="800" text-anchor="middle" fill="${fColor}" pointer-events="none">${fNum}</text>`;
+          });
+        }
+      }
+    }
+
+    return g + "</g>";
+  }
+
+  function drawStaffHeader(y0, clefType, showMeter, xe) {
+    const c = "#1e293b";
+    const bass = clefType === "bass";
+    const baseD = bass ? 18 : 30;
+    const f = S.fifths;
+    const af = Math.abs(f);
+    let out = "";
+
+    for (let k = 0; k < 5; k++) {
+      out += `<line x1="${LM}" x2="${xe}" y1="${y0 + k * 10}" y2="${y0 + k * 10}" stroke="${c}" stroke-width="1.15"/>`;
+    }
+    out += `<text x="${LM + 4}" y="${bass ? y0 + 10 : y0 + 31}" font-size="40" font-family="${CF}" fill="${c}">${bass ? "𝄢" : "𝄞"}</text>`;
+
+    for (let i = 0; i < af; i++) {
+      const d = (f > 0 ? SH : FL)[i] - (bass ? 14 : 0);
+      out += `<text x="${LM + 42 + i * 9}" y="${y0 + 40 - (d - baseD) * 5 + 6}" font-size="18" text-anchor="middle" fill="${c}">${f > 0 ? "♯" : "♭"}</text>`;
+    }
+
+    if (showMeter) {
+      const tx = LM + 42 + af * 9 + 16;
+      out += `<text x="${tx}" y="${y0 + 19}" font-size="21" font-weight="700" text-anchor="middle" fill="${c}">${S.num}</text>`;
+      out += `<text x="${tx}" y="${y0 + 39}" font-size="21" font-weight="700" text-anchor="middle" fill="${c}">${S.den}</text>`;
+    }
+    return out;
+  }
+
+  function render(ex) {
+    layout(ex);
+    const isGrand = S.clef === "grand";
+    const sysStep = isGrand ? 228 : 138;
+    const H = sysStep * SY.length + 58;
+    const c = "#1e293b";
+    const instLabel = INSTRUMENTS[S.inst] ? INSTRUMENTS[S.inst].name : "ピアノ";
+    const modeLabel = isGrand ? "大譜表（両手）" : S.clef === "bass" ? "ヘ音記号" : "ト音記号";
+
+    let o = `<svg ${ex ? `width="${W}" height="${H}"` : 'id="sc"'} xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${W} ${H}" font-family="-apple-system,BlinkMacSystemFont,'Hiragino Sans','Yu Gothic',sans-serif">`;
+    if (ex) {
+      o += `<rect width="${W}" height="${H}" fill="#ffffff"/>`;
+    }
+    o += `<text x="${W / 2}" y="34" text-anchor="middle" font-size="22" font-weight="700" fill="${c}">${esc(S.title || "無題の楽譜")}</text>`;
+    o += `<text x="${LM}" y="56" font-size="13" font-weight="600" fill="#475569">♩ = ${S.bpm}　|　${esc(instLabel)}　|　${modeLabel}</text>`;
+
+    SY.forEach((s, si) => {
+      const yTop = s.yRh;
+      const yBot = isGrand ? s.yLh + 40 : s.yRh + 40;
+
+      // 大譜表の左端大括弧（{）と連結線
+      if (isGrand) {
+        const midY = (yTop + yBot) / 2;
+        o += `<path d="M${LM - 3} ${yTop} C${LM - 14} ${yTop + 8}, ${LM - 7} ${midY - 12}, ${LM - 17} ${midY} C${LM - 7} ${midY + 12}, ${LM - 14} ${yBot - 8}, ${LM - 3} ${yBot}" fill="none" stroke="${c}" stroke-width="2.1" stroke-linecap="round"/>`;
+      }
+      o += `<line x1="${LM}" x2="${LM}" y1="${yTop}" y2="${yBot}" stroke="${c}" stroke-width="1.6"/>`;
+
+      if (isGrand) {
+        o += drawStaffHeader(s.yRh, "treble", !si, s.xe);
+        o += drawStaffHeader(s.yLh, "bass", !si, s.xe);
+      } else {
+        o += drawStaffHeader(s.yRh, S.clef, !si, s.xe);
+      }
+
+      s.ms.forEach((m, mi) => {
+        const bx = m.x + m.w;
+        const last = si === SY.length - 1 && mi === s.ms.length - 1;
+        o += `<line x1="${bx}" x2="${bx}" y1="${yTop}" y2="${yBot}" stroke="${c}" stroke-width="${last && ex ? 3 : 1.3}"/>`;
+
+        if (isGrand) {
+          m.rEntries.forEach(e => (o += note("rh", e.idx, s.yRh, ex)));
+          m.lEntries.forEach(e => (o += note("lh", e.idx, s.yLh, ex)));
+        } else {
+          const h = S.clef === "bass" ? "lh" : "rh";
+          const entries = h === "lh" ? m.lEntries : m.rEntries;
+          entries.forEach(e => (o += note(h, e.idx, s.yRh, ex)));
+        }
+      });
+    });
+
+    if (!ex) {
+      o += `<line id="playhead" x1="0" y1="0" x2="0" y2="0" stroke="#ea580c" stroke-width="2.2" stroke-linecap="round" visibility="hidden" pointer-events="none"/>`;
+      o += `<g id="ov" pointer-events="none"></g>`;
+    }
+    return o + "</svg>";
+  }
+
+  function paint() {
+    recomputeAllFingering();
+    $("#paper").innerHTML = render(false);
+    if (playing) {
+      playing.curRh = -2;
+      playing.curLh = -2;
+    } else {
+      updateKeys(-1, -1);
+    }
+    updateHandUI();
+    updateSelBar();
+  }
+
+  /* ---------- 選択音符・和音ミニ編集バー更新 ---------- */
+  function durText(dur) {
+    const map = {
+      24: "付点全音符", 16: "全音符",
+      12: "付点2分音符", 8: "2分音符",
+      6: "付点4分音符", 4: "4分音符",
+      3: "付点8分音符", 2: "8分音符",
+      1: "16分音符"
+    };
+    return map[dur] || `${dur}/16拍`;
+  }
+
+  function updateHandUI() {
+    const isGrand = S.clef === "grand";
+    $("#handTools").style.display = isGrand ? "inline-flex" : "none";
+    $("#handDivider").style.display = isGrand ? "block" : "none";
+    $("#lhVolField").style.display = S.clef === "treble" ? "none" : "flex";
+    document.querySelectorAll("[data-hand]").forEach(b => {
+      const h = b.dataset.hand;
+      b.classList.remove("active", "active-lh");
+      if (h === activeHand) {
+        b.classList.add(h === "lh" ? "active-lh" : "active");
+      }
+    });
+  }
+
+  function updateSelBar() {
+    const list = S[sel.hand] || [];
+    const item = sel.idx >= 0 ? list[sel.idx] : null;
+    const statusEl = $("#selStatus");
+    const addToneBtn = $("#addToneQuick");
+    const upBtn = $("#stepUp");
+    const downBtn = $("#stepDown");
+    const accBtn = $("#cycleAcc");
+    const delBtn = $("#del");
+    const fingerBtns = document.querySelectorAll("[data-set-finger]");
+
+    if (!item) {
+      selTone = -1;
+      statusEl.innerHTML = '選択中の音符：<span>なし（音符をタップして選択）</span>';
+      addToneBtn.disabled = true;
+      upBtn.disabled = true;
+      downBtn.disabled = true;
+      accBtn.disabled = true;
+      delBtn.disabled = true;
+      fingerBtns.forEach(b => { b.disabled = true; b.classList.remove("active"); });
+      return;
+    }
+
+    const handLabel = sel.hand === "lh" ? "左手" : "右手";
+    const dLabel = durText(item.dur);
+    if (item.t === "r") {
+      selTone = -1;
+      statusEl.innerHTML = `選択中（${handLabel}）：<span>休符（${dLabel}）</span>`;
+      addToneBtn.disabled = true;
+      upBtn.disabled = true;
+      downBtn.disabled = true;
+      accBtn.disabled = true;
+      delBtn.disabled = false;
+      fingerBtns.forEach(b => { b.disabled = true; b.classList.remove("active"); });
+      return;
+    }
+
+    if (!item.ds.includes(selTone)) {
+      selTone = item.ds[item.ds.length - 1];
+    }
+
+    const chips = item.ds.map(dv => {
+      const a = toneAcc(item, dv);
+      const isAct = dv === selTone;
+      const lhCls = sel.hand === "lh" ? " lh-chip" : "";
+      const fVal = getFingerFor(sel.hand, sel.idx, dv);
+      const fTag = fVal ? ` [${fVal}指]` : "";
+      const rmHtml = item.ds.length > 1 ? `<span class="rm-tone" data-rm-tone="${dv}" title="この音を和音から削除">×</span>` : "";
+      return `<span class="tone-chip${lhCls}${isAct ? " active-tone" : ""}" data-pick-tone="${dv}">${nm(dv, a)}(${SOL[dv % 7]})${fTag}${rmHtml}</span>`;
+    }).join("");
+
+    const kindLabel = item.ds.length > 1 ? `和音(${item.ds.length}音)` : "単音";
+    statusEl.innerHTML = `【${handLabel}】${kindLabel}・${dLabel}：<span class="chord-tones">${chips}</span>`;
+    addToneBtn.disabled = false;
+    upBtn.disabled = false;
+    downBtn.disabled = false;
+    accBtn.disabled = false;
+    delBtn.disabled = false;
+
+    const manualF = item.fingers && item.fingers[selTone] ? item.fingers[selTone] : 0;
+    fingerBtns.forEach(b => {
+      b.disabled = false;
+      b.classList.toggle("active", +b.dataset.setFinger === manualF);
+    });
+  }
+
+  $("#selStatus").onclick = e => {
+    const rm = e.target.closest("[data-rm-tone]");
+    const list = S[sel.hand] || [];
+    const item = sel.idx >= 0 ? list[sel.idx] : null;
+    if (rm && item && item.t === "n") {
+      e.stopPropagation();
+      const targetD = +rm.dataset.rmTone;
+      if (item.ds.length <= 1) return;
+      snap();
+      item.ds = item.ds.filter(v => v !== targetD);
+      if (item.accs) delete item.accs[targetD];
+      if (selTone === targetD) selTone = item.ds[item.ds.length - 1];
+      pingChord(noteMidis(item), sel.hand);
+      save();
+      paint();
+      return;
+    }
+    const pick = e.target.closest("[data-pick-tone]");
+    if (pick) {
+      selTone = +pick.dataset.pickTone;
+      updateSelBar();
+    }
+  };
+
+  /* ---------- 編集・自動保存・和音操作 ---------- */
+  function save() {
+    try {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(S));
+      $("#saveStatus").textContent = "✓ 自動保存済み";
+    } catch (e) {
+      $("#saveStatus").textContent = "保存不可";
+    }
+  }
+
+  function snap() {
+    hist.push(JSON.stringify(S));
+    if (hist.length > 60) hist.shift();
+  }
+
+  function currentDur() {
+    return tool.dot && tool.dur >= 2 ? tool.dur * 1.5 : tool.dur;
+  }
+
+  function splitDurationPieces(chLen) {
+    const res = [];
+    let r = chLen;
+    for (const p of [24, 16, 12, 8, 6, 4, 3, 2, 1]) {
+      while (r >= p) {
+        res.push(p);
+        r -= p;
+      }
+    }
+    return res;
+  }
+
+  function add(hand, idx, item) {
+    snap();
+    const list = S[hand];
+    let off = 0;
+    for (let i = 0; i < idx; i++) off += list[i].dur;
+    const M = ML();
+    const out = [];
+    let left = item.dur;
+
+    while (left > 0) {
+      const chLen = Math.min(left, M - (off % M));
+      const pieces = splitDurationPieces(chLen);
+      pieces.forEach(p => {
+        const cloned = item.t === "r"
+          ? { t: "r", dur: p }
+          : { t: "n", ds: [...item.ds], dur: p, accs: { ...(item.accs || {}) } };
+        out.push(cloned);
+      });
+      left -= chLen;
+      off += chLen;
+    }
+
+    if (item.t === "n") {
+      out.forEach((o, i) => {
+        if (i < out.length - 1) o.tie = 1;
+      });
+    }
+    list.splice(idx, 0, ...out);
+    activeHand = hand;
+    sel = { hand, idx: idx + out.length - 1 };
+    if (item.t === "n") selTone = item.ds[item.ds.length - 1];
+    save();
+    paint();
+  }
+
+  function addToneToChord(hand, idx, d, a) {
+    const target = S[hand] && S[hand][idx];
+    if (!target || target.t !== "n") return false;
+    snap();
+    if (!target.ds.includes(d)) {
+      target.ds.push(d);
+      target.ds.sort((x, y) => x - y);
+    }
+    if (!target.accs) target.accs = {};
+    if (a !== undefined) target.accs[d] = a;
+    else delete target.accs[d];
+
+    activeHand = hand;
+    sel = { hand, idx };
+    selTone = d;
+    pingChord(noteMidis(target), hand);
+    save();
+    paint();
+    return true;
+  }
+
+  function place(hand, idx, d, a) {
+    if (!tool.rest && tool.chordMode && sel.hand === hand && sel.idx >= 0 && S[hand][sel.idx] && S[hand][sel.idx].t === "n") {
+      addToneToChord(hand, sel.idx, d, a);
+      return;
+    }
+    const dur = currentDur();
+    const item = tool.rest
+      ? { t: "r", dur }
+      : { t: "n", ds: [d], dur, accs: a !== undefined ? { [d]: a } : {} };
+    add(hand, idx, item);
+    if (!tool.rest) pingChord(noteMidis(item), hand);
+  }
+
+  function fromMidi(m) {
+    const o = Math.floor(m / 12) - 1;
+    const pc = m % 12;
+    const w = SEMI.indexOf(pc);
+    let l, a;
+    if (w >= 0) {
+      l = w;
+      a = 0;
+    } else if (S.fifths < 0) {
+      l = SEMI.indexOf(pc + 1);
+      a = -1;
+    } else {
+      l = SEMI.indexOf(pc - 1);
+      a = 1;
+    }
+    return { d: o * 7 + l, a: a !== kacc(l) ? a : undefined };
+  }
+
+  function pt(e) {
+    const svg = $("#sc");
+    const r = svg.getBoundingClientRect();
+    const k = W / r.width;
+    return { x: (e.clientX - r.left) * k, y: (e.clientY - r.top) * k };
+  }
+
+  // クリックされたY座標から「システム番号」と「右手／左手のどちらの五線か」を判定
+  function hitStaff(y) {
+    const isGrand = S.clef === "grand";
+    let bestSys = 0;
+    let bestDist = 1e9;
+    SY.forEach((s, i) => {
+      const centerY = isGrand ? (s.yRh + s.yLh + 40) / 2 : s.yRh + 20;
+      const dist = Math.abs(y - centerY);
+      if (dist < bestDist) {
+        bestDist = dist;
+        bestSys = i;
+      }
+    });
+
+    const sys = SY[bestSys];
+    if (!isGrand) {
+      const h = S.clef === "bass" ? "lh" : "rh";
+      return { s: bestSys, hand: h, y0: sys.yRh };
+    }
+    const splitY = (sys.yRh + 40 + sys.yLh) / 2;
+    if (y <= splitY) {
+      return { s: bestSys, hand: "rh", y0: sys.yRh };
+    } else {
+      return { s: bestSys, hand: "lh", y0: sys.yLh };
+    }
+  }
+
+  const dAt = (hand, y0, y) => {
+    const baseD = DB(hand);
+    return Math.max(0, Math.max(baseD - 10, Math.min(baseD + 18, Math.round(baseD + (y0 + 40 - y) / 5))));
+  };
+
+  $("#paper").onclick = e => {
+    if (!$("#sc") || !SY.length) return;
+    const p = pt(e);
+    const { s, hand, y0 } = hitStaff(p.y);
+    const clickedD = dAt(hand, y0, p.y);
+    const list = S[hand];
+    const pList = P[hand];
+
+    for (let i = 0; i < list.length; i++) {
+      const q = pList[i];
+      if (!q || q.s !== s) continue;
+      if (Math.abs(q.x - p.x) < 13) {
+        const item = list[i];
+        if (!tool.rest && tool.chordMode && item.t === "n") {
+          activeHand = hand;
+          sel = { hand, idx: i };
+          addToneToChord(hand, i, clickedD, AM[tool.acc]);
+          return;
+        }
+        if (item.t === "n") {
+          const baseD = DB(hand);
+          const hitD = item.ds.find(dv => Math.abs((y0 + 40 - (dv - baseD) * 5) - p.y) < 9);
+          if (hitD !== undefined) {
+            activeHand = hand;
+            sel = { hand, idx: i };
+            selTone = hitD;
+            paint();
+            pingChord(noteMidis(item), hand);
+            return;
+          }
+          if (sel.hand === hand && sel.idx === i && !tool.rest && Math.abs(p.y - q.y) < 62) {
+            addToneToChord(hand, i, clickedD, AM[tool.acc]);
+            return;
+          }
+        } else if (Math.abs(q.y - p.y) < 16) {
+          activeHand = hand;
+          sel = { hand, idx: i };
+          paint();
+          return;
+        }
+      }
+    }
+
+    let idx = list.length;
+    let last = -1;
+    let found = false;
+    const sys = SY[s];
+    const targetM = sys && sys.ms.find(m => p.x >= m.x && p.x <= m.x + m.w);
+
+    if (targetM) {
+      const entries = hand === "lh" ? targetM.lEntries : targetM.rEntries;
+      for (const e of entries) {
+        const q = pList[e.idx];
+        if (!q) continue;
+        last = e.idx;
+        if (!found && q.x > p.x) {
+          idx = e.idx;
+          found = true;
+        }
+      }
+      if (!found) {
+        if (last >= 0) {
+          idx = last + 1;
+        } else {
+          // クリックした小節の該当パートが空の場合、その小節より前の小節にある最後の音符の直後へ挿入
+          for (let bIdx = 0; bIdx < sys.ms.length; bIdx++) {
+            const m = sys.ms[bIdx];
+            if (m === targetM) break;
+            const prevEntries = hand === "lh" ? m.lEntries : m.rEntries;
+            if (prevEntries.length) last = prevEntries[prevEntries.length - 1].idx;
+          }
+          if (last < 0) {
+            for (let siPrev = 0; siPrev < s; siPrev++) {
+              for (const m of SY[siPrev].ms) {
+                const prevEntries = hand === "lh" ? m.lEntries : m.rEntries;
+                if (prevEntries.length) last = prevEntries[prevEntries.length - 1].idx;
+              }
+            }
+          }
+          idx = last >= 0 ? last + 1 : 0;
+        }
+      }
+    } else {
+      for (let i = 0; i < list.length; i++) {
+        if (!pList[i] || pList[i].s !== s) continue;
+        last = i;
+        if (!found && pList[i].x > p.x) {
+          idx = i;
+          found = true;
+        }
+      }
+      if (!found && last >= 0) idx = last + 1;
+    }
+    place(hand, idx, clickedD, AM[tool.acc]);
+  };
+
+  $("#paper").onmousemove = e => {
+    const ov = $("#ov");
+    if (!ov || !SY.length) return;
+    const p = pt(e);
+    const { s, hand, y0 } = hitStaff(p.y);
+    const handTag = hand === "lh" ? "左手(ヘ音)" : "右手(ト音)";
+
+    if (tool.rest) {
+      ov.innerHTML = "";
+      $("#info").textContent = `【${handTag}】休符モード：クリックで休符を配置`;
+      return;
+    }
+    const baseD = DB(hand);
+    const d = dAt(hand, y0, p.y);
+    const y = y0 + 40 - (d - baseD) * 5;
+    const a = tool.acc === "auto" ? kacc(d % 7) : AM[tool.acc];
+    const isChordTarget = tool.chordMode && sel.hand === hand && sel.idx >= 0 && P[hand][sel.idx] && P[hand][sel.idx].s === s;
+    const ghostX = isChordTarget ? P[hand][sel.idx].x : p.x;
+    const fillCol = hand === "lh" ? "rgba(13, 148, 136, 0.45)" : "rgba(79, 70, 229, 0.42)";
+
+    ov.innerHTML = led(ghostX, d, y0, baseD) + `<ellipse cx="${ghostX}" cy="${y}" rx="6" ry="4.3" transform="rotate(-20 ${ghostX} ${y})" fill="${fillCol}"/>`;
+    const modePrefix = isChordTarget ? "和音追加：" : "";
+    $("#info").textContent = `【${handTag}】${modePrefix}${nm(d, a)} / ${SOL[d % 7]}`;
+  };
+
+  $("#paper").onmouseleave = () => {
+    const ov = $("#ov");
+    if (ov) ov.innerHTML = "";
+    $("#info").textContent = "五線譜にカーソルを合わせると音名を表示します";
+  };
+
+  /* ---------- 4オクターブ ピアノ鍵盤（C2〜C6: MIDI 36〜84） ---------- */
+  (function buildKeyboard() {
+    const wh = [];
+    for (let m = 36; m <= 84; m++) {
+      if (![1, 3, 6, 8, 10].includes(m % 12)) wh.push(m);
+    }
+    const u = 100 / wh.length;
+    let h = "";
+    wh.forEach(m => {
+      h += `<div class="w" data-m="${m}" style="width:${u}%">${m % 12 === 0 ? "<span>C" + (m / 12 - 1) + "</span>" : ""}</div>`;
+    });
+    wh.forEach((m, i) => {
+      if ([0, 2, 5, 7, 9].includes(m % 12) && m + 1 <= 84) {
+        h += `<div class="b" data-m="${m + 1}" style="left:${(i + 1) * u - u * 0.3}%;width:${u * 0.6}%"></div>`;
+      }
+    });
+    $("#kb").innerHTML = h;
+  })();
+
+  $("#kb").onpointerdown = e => {
+    const k = e.target.closest("[data-m]");
+    if (!k) return;
+    const m = +k.dataset.m;
+    const r = fromMidi(m);
+    const hand = activeHand;
+    const insertIdx = sel.hand === hand && sel.idx >= 0 ? sel.idx + 1 : S[hand].length;
+    place(hand, insertIdx, r.d, r.a);
+    if (!tool.rest) {
+      const cls = hand === "lh" ? "on-lh" : "on-rh";
+      k.classList.add(cls);
+      setTimeout(() => k.classList.remove(cls), 190);
+    }
+  };
+
+  /* ---------- MIDI（Format 1 両手2トラック / Format 0 単一段）・画像・JSON ---------- */
+  const vlq = v => {
+    const b = [v & 127];
+    while ((v >>= 7)) b.unshift((v & 127) | 128);
+    return b;
+  };
+
+  function buildTrackChunk(eventsBytes) {
+    const n = eventsBytes.length;
+    return [
+      0x4d, 0x54, 0x72, 0x6b,
+      (n >>> 24) & 255, (n >> 16) & 255, (n >> 8) & 255, n & 255,
+      ...eventsBytes
+    ];
+  }
+
+  function handTrackBytes(hand, chIdx, trackLabel, prog) {
+    const E = handEvents(S[hand]);
+    const T = 120; // 16分音符あたりのtick数（4分音符=480）
+    const ev = [];
+    const baseVel = hand === "lh"
+      ? Math.max(20, Math.min(127, Math.round(86 * ((Number(S.lhVol) || 100) / 100))))
+      : 96;
+    E.o.forEach(e => {
+      e.ms.forEach(rawM => {
+        const m = Math.max(0, Math.min(127, rawM));
+        ev.push([e.s * T, 1, [0x90 | chIdx, m, baseVel]], [(e.s + e.l) * T, 0, [0x80 | chIdx, m, 0]]);
+      });
+    });
+    ev.sort((a, b) => a[0] - b[0] || a[1] - b[1]);
+
+    const nameBytes = [...new TextEncoder().encode(trackLabel)];
+    const tr = [
+      0, 0xff, 0x03, ...vlq(nameBytes.length), ...nameBytes,
+      0, 0xc0 | chIdx, prog
+    ];
+
+    let last = 0;
+    ev.forEach(([t, , b]) => {
+      tr.push(...vlq(t - last), ...b);
+      last = t;
+    });
+    tr.push(0, 0xff, 0x2f, 0x00);
+    return tr;
+  }
+
+  function midiBlob() {
+    const isGrand = S.clef === "grand";
+    const prog = INSTRUMENTS[S.inst] ? INSTRUMENTS[S.inst].prog : 0;
+    const titleBytes = [...new TextEncoder().encode(S.title || "Score Studio")];
+    const mt = Math.round(60000000 / S.bpm);
+
+    if (isGrand) {
+      // SMF Format 1（Track 0: テンポ・拍子・調号 / Track 1: 右手 Ch 0 / Track 2: 左手 Ch 1）
+      const metaTrack = [
+        0, 0xff, 0x03, ...vlq(titleBytes.length), ...titleBytes,
+        0, 0xff, 0x51, 0x03, (mt >> 16) & 255, (mt >> 8) & 255, mt & 255,
+        0, 0xff, 0x58, 0x04, S.num, Math.log2(S.den), 24, 8,
+        0, 0xff, 0x59, 0x02, S.fifths & 255, 0,
+        0, 0xff, 0x2f, 0x00
+      ];
+      const rhTrack = handTrackBytes("rh", 0, "Right Hand", prog);
+      const lhTrack = handTrackBytes("lh", 1, "Left Hand", prog);
+
+      const header = [0x4d, 0x54, 0x68, 0x64, 0, 0, 0, 6, 0, 1, 0, 3, 480 >> 8, 480 & 255];
+      return new Blob(
+        [new Uint8Array([...header, ...buildTrackChunk(metaTrack), ...buildTrackChunk(rhTrack), ...buildTrackChunk(lhTrack)])],
+        { type: "audio/midi" }
+      );
+    } else {
+      // SMF Format 0（単一段）
+      const h = S.clef === "bass" ? "lh" : "rh";
+      const E = handEvents(S[h]);
+      const T = 120;
+      const ev = [];
+      E.o.forEach(e => {
+        e.ms.forEach(rawM => {
+          const m = Math.max(0, Math.min(127, rawM));
+          ev.push([e.s * T, 1, [0x90, m, 94]], [(e.s + e.l) * T, 0, [0x80, m, 0]]);
+        });
+      });
+      ev.sort((a, b) => a[0] - b[0] || a[1] - b[1]);
+
+      const tr = [
+        0, 0xff, 0x03, ...vlq(titleBytes.length), ...titleBytes,
+        0, 0xff, 0x51, 0x03, (mt >> 16) & 255, (mt >> 8) & 255, mt & 255,
+        0, 0xff, 0x58, 0x04, S.num, Math.log2(S.den), 24, 8,
+        0, 0xff, 0x59, 0x02, S.fifths & 255, 0,
+        0, 0xc0, prog
+      ];
+      let last = 0;
+      ev.forEach(([t, , b]) => {
+        tr.push(...vlq(t - last), ...b);
+        last = t;
+      });
+      tr.push(0, 0xff, 0x2f, 0x00);
+
+      const header = [0x4d, 0x54, 0x68, 0x64, 0, 0, 0, 6, 0, 0, 0, 1, 480 >> 8, 480 & 255];
+      return new Blob([new Uint8Array([...header, ...buildTrackChunk(tr)])], { type: "audio/midi" });
+    }
+  }
+
+  const fname = () => (S.title || "score").replace(/[\\/:*?"<>|]/g, "_");
+
+  function dl(blob, name) {
+    const a = document.createElement("a");
+    const url = URL.createObjectURL(blob);
+    a.href = url;
+    a.download = name;
+    a.click();
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
+  }
+
+  $("#xmid").onclick = () => {
+    dl(midiBlob(), fname() + ".mid");
+    showToast(S.clef === "grand" ? "両手MIDI (.mid / Format 1) を書き出しました" : "MIDIファイル (.mid) を書き出しました");
+  };
+
+  $("#xsvg").onclick = () => {
+    const svgStr = render(true);
+    layout(false);
+    dl(new Blob([svgStr], { type: "image/svg+xml;charset=utf-8" }), fname() + ".svg");
+    showToast("SVG画像を保存しました");
+  };
+
+  $("#xpng").onclick = () => {
+    const svgStr = render(true);
+    layout(false);
+    const im = new Image();
+    im.onload = () => {
+      const c = document.createElement("canvas");
+      c.width = im.width * 2;
+      c.height = im.height * 2;
+      const ctx = c.getContext("2d");
+      ctx.fillStyle = "#ffffff";
+      ctx.fillRect(0, 0, c.width, c.height);
+      ctx.drawImage(im, 0, 0, c.width, c.height);
+      c.toBlob(b => {
+        if (b) dl(b, fname() + ".png");
+        showToast("PNG画像（高解像度）を保存しました");
+      }, "image/png");
+    };
+    im.src = "data:image/svg+xml;charset=utf-8," + encodeURIComponent(svgStr);
+  };
+
+  $("#xjson").onclick = () => {
+    dl(new Blob([JSON.stringify(S, null, 2)], { type: "application/json" }), fname() + ".json");
+    showToast("JSONプロジェクトを保存しました");
+  };
+
+  $("#ijson").onclick = () => $("#file").click();
+  $("#file").onchange = e => {
+    const f = e.target.files[0];
+    if (!f) return;
+    const r = new FileReader();
+    r.onload = () => {
+      try {
+        const j = JSON.parse(r.result);
+        if (!j || (!Array.isArray(j.rh) && !Array.isArray(j.notes))) throw new Error("形式エラー");
+        stop();
+        snap();
+        S = normalizeState(j);
+        ensureValidHand();
+        sel = { hand: activeHand, idx: -1 };
+        selTone = -1;
+        sync();
+        save();
+        paint();
+        showToast("JSONプロジェクトを読み込みました");
+      } catch (err) {
+        showToast("エラー：読み込めないJSONファイルです");
+      }
+    };
+    r.readAsText(f);
+    e.target.value = "";
+  };
+
+  $("#printBtn").onclick = () => window.print();
+
+  /* ---------- コントロールイベント ---------- */
+  function tb() {
+    document.querySelectorAll("[data-dur]").forEach(b => b.classList.toggle("active", +b.dataset.dur === tool.dur));
+    document.querySelectorAll("[data-acc]").forEach(b => b.classList.toggle("active", b.dataset.acc === tool.acc));
+    $("#dotBtn").classList.toggle("active", tool.dot);
+    $("#dotBtn").disabled = tool.dur === 1;
+    $("#rest").classList.toggle("active", tool.rest);
+    $("#chordModeBtn").classList.toggle("active", tool.chordMode);
+  }
+
+  document.querySelectorAll("[data-hand]").forEach(b => {
+    b.onclick = () => {
+      activeHand = b.dataset.hand;
+      updateHandUI();
+    };
+  });
+
+  document.querySelectorAll("[data-dur]").forEach(b => {
+    b.onclick = () => {
+      tool.dur = +b.dataset.dur;
+      if (tool.dur === 1) tool.dot = false;
+      tb();
+    };
+  });
+
+  $("#dotBtn").onclick = () => {
+    if (tool.dur === 1) return;
+    tool.dot = !tool.dot;
+    tb();
+  };
+
+  document.querySelectorAll("[data-acc]").forEach(b => {
+    b.onclick = () => {
+      tool.acc = b.dataset.acc;
+      tb();
+    };
+  });
+
+  $("#rest").onclick = () => {
+    tool.rest = !tool.rest;
+    if (tool.rest) tool.chordMode = false;
+    tb();
+  };
+
+  $("#chordModeBtn").onclick = () => {
+    tool.chordMode = !tool.chordMode;
+    if (tool.chordMode) tool.rest = false;
+    tb();
+    if (tool.chordMode) {
+      showToast("和音追加モード ON：五線譜や鍵盤で音を重ねられます");
+    }
+  };
+
+  $("#addToneQuick").onclick = () => {
+    const list = S[sel.hand] || [];
+    const item = sel.idx >= 0 ? list[sel.idx] : null;
+    if (!item || item.t !== "n") return;
+    const baseD = item.ds.includes(selTone) ? selTone : item.ds[item.ds.length - 1];
+    const nextD = Math.min(60, baseD + 2);
+    addToneToChord(sel.hand, sel.idx, nextD, AM[tool.acc]);
+  };
+
+  $("#key").innerHTML = KN.map((k, i) => {
+    const f = i - 7;
+    const label = f > 0 ? `♯${f}` : f < 0 ? `♭${-f}` : "調号なし";
+    return `<option value="${f}">${k}長調（${label}）</option>`;
+  }).join("");
+
+  function sync() {
+    $("#title").value = S.title;
+    $("#clef").value = S.clef;
+    $("#ts").value = S.num + "/" + S.den;
+    $("#key").value = String(S.fifths);
+    $("#inst").value = S.inst || "piano";
+    $("#bpm").value = S.bpm;
+    $("#bpmr").value = S.bpm;
+    const v = Math.max(0, Math.min(200, S.lhVol !== undefined ? Number(S.lhVol) : 100));
+    S.lhVol = v;
+    $("#lhVol").value = v;
+    $("#lhVolVal").textContent = v + "%";
+    $("#fingeringToggleBtn").classList.toggle("active", S.showFingering !== false);
+  }
+
+  const chg = fn => {
+    snap();
+    fn();
+    ensureValidHand();
+    save();
+    paint();
+  };
+
+  $("#title").oninput = e => {
+    S.title = e.target.value;
+    save();
+    paint();
+  };
+  $("#clef").onchange = e => chg(() => (S.clef = e.target.value));
+  $("#ts").onchange = e => chg(() => ([S.num, S.den] = e.target.value.split("/").map(Number)));
+  $("#key").onchange = e => chg(() => (S.fifths = +e.target.value));
+  $("#inst").onchange = e => chg(() => (S.inst = e.target.value));
+
+  const setBpm = v => {
+    S.bpm = Math.max(40, Math.min(240, +v || 120));
+    $("#bpm").value = $("#bpmr").value = S.bpm;
+    save();
+    paint();
+  };
+  $("#bpm").onchange = e => setBpm(e.target.value);
+  $("#bpmr").oninput = e => setBpm(e.target.value);
+
+  $("#lhVol").oninput = e => {
+    const v = Math.max(0, Math.min(200, Number(e.target.value) || 0));
+    S.lhVol = v;
+    $("#lhVolVal").textContent = v + "%";
+    if (playing && playing.lhGain && playing.rhGain && ac) {
+      const bal = calcBalanceGains(v);
+      playing.rhGain.gain.setTargetAtTime(bal.rh, ac.currentTime, 0.02);
+      playing.lhGain.gain.setTargetAtTime(bal.lh, ac.currentTime, 0.02);
+    }
+    save();
+  };
+
+  $("#play").onclick = play;
+
+  function undo() {
+    if (!hist.length) return;
+    stop();
+    S = normalizeState(JSON.parse(hist.pop()));
+    ensureValidHand();
+    sel = { hand: activeHand, idx: -1 };
+    selTone = -1;
+    sync();
+    save();
+    paint();
+    showToast("ひとつ前の状態に戻しました");
+  }
+
+  function del() {
+    const list = S[sel.hand] || [];
+    if (sel.idx < 0 || !list[sel.idx]) return;
+    snap();
+    list.splice(sel.idx, 1);
+    sel.idx = Math.min(sel.idx, list.length - 1);
+    selTone = -1;
+    save();
+    paint();
+  }
+
+  function stepPitch(delta, wholeChord = false) {
+    const list = S[sel.hand] || [];
+    const item = sel.idx >= 0 ? list[sel.idx] : null;
+    if (!item || item.t !== "n") return;
+    snap();
+    if (wholeChord || item.ds.length === 1) {
+      const nextAccs = {};
+      item.ds = item.ds.map(dv => {
+        const nd = Math.max(0, Math.min(60, dv + delta));
+        if (item.accs && item.accs[dv] !== undefined) nextAccs[nd] = item.accs[dv];
+        return nd;
+      });
+      item.ds = [...new Set(item.ds)].sort((a, b) => a - b);
+      item.accs = nextAccs;
+      selTone = item.ds[item.ds.length - 1];
+    } else {
+      const target = item.ds.includes(selTone) ? selTone : item.ds[item.ds.length - 1];
+      const nd = Math.max(0, Math.min(60, target + delta));
+      const oldAcc = item.accs ? item.accs[target] : undefined;
+      item.ds = item.ds.filter(v => v !== target);
+      if (item.accs) delete item.accs[target];
+      if (!item.ds.includes(nd)) item.ds.push(nd);
+      item.ds.sort((a, b) => a - b);
+      if (oldAcc !== undefined) {
+        if (!item.accs) item.accs = {};
+        item.accs[nd] = oldAcc;
+      }
+      selTone = nd;
+    }
+    pingChord(noteMidis(item), sel.hand);
+    save();
+    paint();
+  }
+
+  function cycleAccidental() {
+    const list = S[sel.hand] || [];
+    const item = sel.idx >= 0 ? list[sel.idx] : null;
+    if (!item || item.t !== "n") return;
+    snap();
+    const target = item.ds.includes(selTone) ? selTone : item.ds[item.ds.length - 1];
+    if (!item.accs) item.accs = {};
+    const cur = item.accs[target];
+    const order = [undefined, 1, -1, 0];
+    const nextIdx = (order.indexOf(cur) + 1) % order.length;
+    if (order[nextIdx] === undefined) delete item.accs[target];
+    else item.accs[target] = order[nextIdx];
+    pingChord(noteMidis(item), sel.hand);
+    save();
+    paint();
+  }
+
+  $("#undo").onclick = undo;
+  $("#del").onclick = del;
+  $("#stepUp").onclick = () => stepPitch(1, false);
+  $("#stepDown").onclick = () => stepPitch(-1, false);
+  $("#cycleAcc").onclick = cycleAccidental;
+
+  function setManualFinger(fNum) {
+    const list = S[sel.hand] || [];
+    const item = sel.idx >= 0 ? list[sel.idx] : null;
+    if (!item || item.t !== "n") return;
+    snap();
+    const target = item.ds.includes(selTone) ? selTone : item.ds[item.ds.length - 1];
+    if (!item.fingers) item.fingers = {};
+    if (fNum >= 1 && fNum <= 5) {
+      item.fingers[target] = fNum;
+    } else {
+      delete item.fingers[target];
+      if (!Object.keys(item.fingers).length) delete item.fingers;
+    }
+    save();
+    paint();
+  }
+
+  document.querySelectorAll("[data-set-finger]").forEach(b => {
+    b.onclick = () => setManualFinger(+b.dataset.setFinger);
+  });
+
+  $("#fingeringToggleBtn").onclick = () => {
+    S.showFingering = !S.showFingering;
+    $("#fingeringToggleBtn").classList.toggle("active", S.showFingering);
+    save();
+    paint();
+    showToast(S.showFingering ? "指番号（1〜5）表示を ON にしました" : "指番号表示を OFF にしました");
+  };
+
+  function openFingerHelp() {
+    $("#fingerHelpModal").classList.add("show");
+  }
+  function closeFingerHelp() {
+    $("#fingerHelpModal").classList.remove("show");
+  }
+  $("#fingerHelpBtn").onclick = openFingerHelp;
+  $("#fingerHelpOk").onclick = closeFingerHelp;
+  $("#fingerHelpCloseX").onclick = closeFingerHelp;
+  $("#fingerHelpModal").onclick = e => {
+    if (e.target === $("#fingerHelpModal")) closeFingerHelp();
+  };
+
+  $("#clr").onclick = () => {
+    if (!S.rh.length && !S.lh.length) return;
+    showConfirm("全消去の確認", "配置されている右手・左手のすべての音符を削除しますか？", () => {
+      stop();
+      snap();
+      S.rh = [];
+      S.lh = [];
+      sel = { hand: activeHand, idx: -1 };
+      selTone = -1;
+      save();
+      paint();
+      showToast("すべての音符を消去しました");
+    });
+  };
+
+  $("#newBtn").onclick = () => {
+    const resetAction = () => {
+      stop();
+      snap();
+      S = def();
+      activeHand = "rh";
+      sel = { hand: "rh", idx: -1 };
+      selTone = -1;
+      sync();
+      save();
+      paint();
+      showToast("新規大譜表を作成しました");
+    };
+    if (S.rh.length || S.lh.length) {
+      showConfirm("新規作成の確認", "現在の譜面をリセットして新しい楽譜を作成しますか？", resetAction);
+    } else {
+      resetAction();
+    }
+  };
+
+  $("#presetSelect").onchange = e => {
+    const key = e.target.value;
+    if (!key || !PRESETS[key]) return;
+    const loadPreset = () => {
+      stop();
+      snap();
+      const p = PRESETS[key];
+      S = normalizeState({
+        title: p.title,
+        bpm: p.bpm,
+        num: p.num,
+        den: p.den,
+        fifths: p.fifths,
+        clef: p.clef,
+        inst: p.inst,
+        rh: p.rh.map(item => (item.t === "r" ? { t: "r", dur: item.dur } : { t: "n", ds: [...item.ds], dur: item.dur, accs: { ...(item.accs || {}) } })),
+        lh: p.lh.map(item => (item.t === "r" ? { t: "r", dur: item.dur } : { t: "n", ds: [...item.ds], dur: item.dur, accs: { ...(item.accs || {}) } }))
+      });
+      activeHand = "rh";
+      sel = { hand: "rh", idx: -1 };
+      selTone = -1;
+      sync();
+      save();
+      paint();
+      showToast(`サンプル曲「${p.title}」を読み込みました`);
+    };
+    e.target.value = "";
+    if (S.rh.length || S.lh.length) {
+      showConfirm("サンプル曲の読込", `現在の譜面を置き換えて「${PRESETS[key].title}」を読み込みますか？`, loadPreset);
+    } else {
+      loadPreset();
+    }
+  };
+
+  // キーボードショートカット
+  document.onkeydown = e => {
+    if (/INPUT|SELECT|TEXTAREA/.test(document.activeElement.tagName)) return;
+    if ($("#fingerHelpModal").classList.contains("show")) {
+      if (e.key === "Escape") closeFingerHelp();
+      return;
+    }
+    if ($("#confirmModal").classList.contains("show")) {
+      if (e.key === "Escape") closeConfirm();
+      return;
+    }
+    const list = S[sel.hand] || [];
+    const item = sel.idx >= 0 ? list[sel.idx] : null;
+
+    if (e.key === "ArrowUp" || e.key === "ArrowDown") {
+      if (item && item.t === "n") {
+        e.preventDefault();
+        stepPitch(e.key === "ArrowUp" ? 1 : -1, e.shiftKey);
+      }
+    } else if (e.key === "ArrowLeft" || e.key === "ArrowRight") {
+      if (list.length && sel.idx >= 0) {
+        e.preventDefault();
+        sel.idx = Math.max(0, Math.min(list.length - 1, sel.idx + (e.key === "ArrowLeft" ? -1 : 1)));
+        selTone = -1;
+        paint();
+      }
+    } else if (e.key === "Delete" || e.key === "Backspace") {
+      if (sel.idx >= 0) {
+        e.preventDefault();
+        del();
+      }
+    } else if (e.key === " ") {
+      e.preventDefault();
+      play();
+    } else if (["0", "1", "2", "3", "4", "5"].includes(e.key) && !e.ctrlKey && !e.metaKey) {
+      if (item && item.t === "n") {
+        e.preventDefault();
+        setManualFinger(+e.key);
+      }
+    } else if (e.key.toLowerCase() === "c" && !e.ctrlKey && !e.metaKey) {
+      e.preventDefault();
+      $("#chordModeBtn").click();
+    } else if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "z") {
+      e.preventDefault();
+      undo();
+    }
+  };
+
+  /* ---------- 初期化 ---------- */
+  try {
+    const saved = JSON.parse(localStorage.getItem(STORAGE_KEY));
+    S = saved && (Array.isArray(saved.rh) || Array.isArray(saved.notes)) ? normalizeState(saved) : def();
+  } catch (e) {
+    S = def();
+  }
+  ensureValidHand();
+  sync();
+  tb();
+  paint();
+})();
+</script>
+</body>
+</html>

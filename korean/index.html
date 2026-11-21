@@ -1,0 +1,1783 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Korean Hub - 韓国語学習ハブ</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&family=JetBrains+Mono:wght@500;700&family=Noto+Sans+JP:wght@400;500;700;900&family=Noto+Sans+KR:wght@400;700;900&display=swap" rel="stylesheet">
+  <style>
+    body {
+      font-family: 'Inter', 'Noto Sans JP', sans-serif;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .font-kr {
+      font-family: 'Noto Sans KR', 'Noto Sans JP', sans-serif;
+    }
+    .font-mono-num {
+      font-family: 'JetBrains Mono', monospace;
+    }
+    /* 3D Flip Card */
+    .perspective-1000 {
+      perspective: 1000px;
+    }
+    .transform-style-3d {
+      transform-style: preserve-3d;
+      transition: transform 0.55s cubic-bezier(0.23, 1, 0.32, 1);
+    }
+    .rotate-y-180 {
+      transform: rotateY(180deg);
+    }
+    .backface-hidden {
+      -webkit-backface-visibility: hidden;
+      backface-visibility: hidden;
+    }
+  </style>
+</head>
+<body class="bg-slate-50 text-slate-800 min-h-screen flex flex-col">
+
+  <!-- Header -->
+  <header class="bg-white border-b border-slate-200/80 sticky top-0 z-30">
+    <div class="max-w-5xl mx-auto px-4 py-3 flex items-center justify-between gap-2">
+      <!-- Left: Apps Hub Return Link -->
+      <a href="../" class="inline-flex items-center gap-1.5 text-xs font-semibold text-slate-500 hover:text-slate-900 transition py-1.5 px-3 rounded-xl bg-slate-100 hover:bg-slate-200 shrink-0">
+        <i class="fa-solid fa-arrow-left text-[10px]"></i>
+        <span>Apps Hub</span>
+      </a>
+
+      <!-- Center: App Title -->
+      <div class="flex items-center gap-2 min-w-0">
+        <div class="w-8 h-8 rounded-xl bg-indigo-600 text-white flex items-center justify-center font-kr font-black text-base shadow-xs shrink-0">
+          한
+        </div>
+        <div class="truncate">
+          <h1 class="text-sm sm:text-base font-extrabold text-slate-900 tracking-tight truncate">Korean Hub</h1>
+          <p class="text-[10px] text-slate-400 font-medium hidden sm:block">実践韓国語 語彙・フレーズ・文法・数字</p>
+        </div>
+      </div>
+
+      <!-- Right: Voice Controls & Backup -->
+      <div class="flex items-center gap-1.5 shrink-0">
+        <button id="speedToggleBtn" onclick="toggleSpeechRate()" title="読み上げ速度切替" class="px-2.5 py-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-xs font-bold font-mono-num text-slate-700 transition">
+          1.0x
+        </button>
+        <button id="muteToggleBtn" onclick="toggleMute()" title="音声ON/OFF" class="w-8 h-8 rounded-xl bg-indigo-50 text-indigo-600 hover:bg-indigo-100 flex items-center justify-center text-xs transition">
+          <i id="muteIcon" class="fa-solid fa-volume-high"></i>
+        </button>
+        <button onclick="openBackupModal()" title="進捗バックアップ・復元" class="w-8 h-8 rounded-xl bg-slate-100 text-slate-600 hover:bg-slate-200 flex items-center justify-center text-xs transition">
+          <i class="fa-solid fa-floppy-disk"></i>
+        </button>
+      </div>
+    </div>
+
+    <!-- Main 4-Tab Navigation -->
+    <div class="max-w-5xl mx-auto px-4 pb-2.5">
+      <nav class="grid grid-cols-4 gap-1.5 bg-slate-100 p-1 rounded-2xl">
+        <button onclick="switchMainTab('vocab')" id="tab-vocab" class="main-tab py-2 px-2 rounded-xl text-xs font-bold transition flex items-center justify-center gap-1.5 bg-white text-indigo-600 shadow-2xs">
+          <i class="fa-solid fa-layer-group"></i>
+          <span>語彙・テスト</span>
+        </button>
+        <button onclick="switchMainTab('phrases')" id="tab-phrases" class="main-tab py-2 px-2 rounded-xl text-xs font-bold transition flex items-center justify-center gap-1.5 text-slate-500 hover:text-slate-800">
+          <i class="fa-solid fa-comments"></i>
+          <span>フレーズ</span>
+        </button>
+        <button onclick="switchMainTab('grammar')" id="tab-grammar" class="main-tab py-2 px-2 rounded-xl text-xs font-bold transition flex items-center justify-center gap-1.5 text-slate-500 hover:text-slate-800">
+          <i class="fa-solid fa-puzzle-piece"></i>
+          <span>助詞・語順</span>
+        </button>
+        <button onclick="switchMainTab('numbers')" id="tab-numbers" class="main-tab py-2 px-2 rounded-xl text-xs font-bold transition flex items-center justify-center gap-1.5 text-slate-500 hover:text-slate-800">
+          <i class="fa-solid fa-hashtag"></i>
+          <span>数字・時間</span>
+        </button>
+      </nav>
+    </div>
+  </header>
+
+  <!-- Main Content -->
+  <main class="flex-1 max-w-5xl w-full mx-auto px-4 py-5">
+
+    <!-- ========================================================= -->
+    <!-- TAB 1: 語彙カード＆テスト (Vocab & Quiz) -->
+    <!-- ========================================================= -->
+    <section id="view-vocab" class="space-y-4">
+      <!-- Top Control & Multi-Facet Filter Bar -->
+      <div class="bg-white p-4 rounded-2xl border border-slate-200/80 shadow-xs space-y-3">
+        <div class="flex flex-wrap items-center justify-between gap-2">
+          <div class="flex items-center gap-2 flex-wrap">
+            <span class="text-xs font-extrabold text-slate-800">実践韓国語 語彙マスター</span>
+            <span id="vocabTotalBadge" class="text-[11px] font-bold px-2.5 py-0.5 rounded-full bg-indigo-50 text-indigo-600 font-mono-num">読込中...</span>
+            <span id="vocabFilteredBadge" class="text-[11px] font-bold px-2.5 py-0.5 rounded-full bg-slate-100 text-slate-600 font-mono-num">抽出: 0 語</span>
+          </div>
+          <div class="flex items-center gap-2 text-xs font-bold">
+            <span class="text-slate-500">習得済み:</span>
+            <span id="learnedCountText" class="text-emerald-600 font-mono-num">0 / 0</span>
+          </div>
+        </div>
+
+        <!-- Progress Bar -->
+        <div class="w-full h-2 bg-slate-100 rounded-full overflow-hidden">
+          <div id="learnedProgressBar" class="h-full bg-emerald-500 transition-all duration-300" style="width: 0%"></div>
+        </div>
+
+        <!-- Sub-mode Switch & Multi-Facet Filters -->
+        <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-2.5 pt-1">
+          <div class="flex items-center gap-1 bg-slate-100 p-1 rounded-xl self-start">
+            <button onclick="switchVocabSubMode('card')" id="vsub-card" class="vsub-btn px-3 py-1.5 rounded-lg text-xs font-bold bg-white text-slate-900 shadow-2xs transition">
+              <i class="fa-solid fa-clone mr-1 text-indigo-500"></i>カード学習
+            </button>
+            <button onclick="switchVocabSubMode('quiz')" id="vsub-quiz" class="vsub-btn px-3 py-1.5 rounded-lg text-xs font-bold text-slate-500 hover:text-slate-800 transition">
+              <i class="fa-solid fa-circle-question mr-1 text-amber-500"></i>4択テスト
+            </button>
+            <button onclick="switchVocabSubMode('list')" id="vsub-list" class="vsub-btn px-3 py-1.5 rounded-lg text-xs font-bold text-slate-500 hover:text-slate-800 transition">
+              <i class="fa-solid fa-list mr-1 text-slate-500"></i>辞書一覧
+            </button>
+          </div>
+
+          <div class="grid grid-cols-2 sm:grid-cols-4 gap-1.5">
+            <!-- Level / Status Filter -->
+            <select id="vocabLevelFilter" onchange="onVocabFilterChange()" title="レベル・学習状態" class="px-2.5 py-1.5 rounded-xl bg-slate-50 border border-slate-200 text-xs font-bold text-slate-700 focus:outline-none focus:border-indigo-400">
+              <option value="topik1">初級 (TOPIK 1〜2級)</option>
+              <option value="topik2">中級 (TOPIK 3〜4級)</option>
+              <option value="topik3">上級 (TOPIK 5〜6級)</option>
+              <option value="all">すべてのレベル</option>
+              <option value="unlearned">未習得のみ</option>
+            </select>
+
+            <!-- Part-of-Speech Filter -->
+            <select id="vocabPosFilter" onchange="onVocabFilterChange()" title="品詞フィルター" class="px-2.5 py-1.5 rounded-xl bg-slate-50 border border-slate-200 text-xs font-bold text-slate-700 focus:outline-none focus:border-indigo-400">
+              <option value="all">すべての品詞</option>
+              <option value="名詞">名詞</option>
+              <option value="動詞">動詞</option>
+              <option value="形容詞">形容詞</option>
+              <option value="副詞">副詞</option>
+              <option value="連体詞">連体詞</option>
+              <option value="代名詞">代名詞</option>
+              <option value="数詞">数詞</option>
+              <option value="感動詞">感動詞</option>
+              <option value="語彙">語彙</option>
+            </select>
+
+            <!-- Syllable / Character Length Filter -->
+            <select id="vocabLenFilter" onchange="onVocabFilterChange()" title="文字数フィルター" class="px-2.5 py-1.5 rounded-xl bg-slate-50 border border-slate-200 text-xs font-bold text-slate-700 focus:outline-none focus:border-indigo-400">
+              <option value="all">すべての文字数</option>
+              <option value="1">1文字</option>
+              <option value="2">2文字</option>
+              <option value="3">3文字</option>
+              <option value="4plus">4文字以上</option>
+            </select>
+
+            <!-- Pronunciation Change Filter -->
+            <select id="vocabPronFilter" onchange="onVocabFilterChange()" title="発音変化フィルター" class="px-2.5 py-1.5 rounded-xl bg-slate-50 border border-slate-200 text-xs font-bold text-slate-700 focus:outline-none focus:border-indigo-400">
+              <option value="all">発音変化すべて</option>
+              <option value="changed">発音変化あり</option>
+              <option value="same">綴り通り・変化なし</option>
+            </select>
+          </div>
+        </div>
+      </div>
+
+      <!-- Sub-view A: Flashcard -->
+      <div id="vocab-card-area" class="space-y-4">
+        <div class="flex items-center justify-between px-1 text-xs font-bold text-slate-400">
+          <span id="cardIndexIndicator" class="font-mono-num">1 / 1</span>
+          <div class="flex items-center gap-3">
+            <button onclick="resetVocabFilters()" class="text-slate-500 hover:text-slate-800 flex items-center gap-1">
+              <i class="fa-solid fa-rotate-left"></i> 絞込リセット
+            </button>
+            <button onclick="shuffleVocabDeck()" class="text-indigo-600 hover:text-indigo-800 flex items-center gap-1">
+              <i class="fa-solid fa-shuffle"></i> シャッフル
+            </button>
+          </div>
+        </div>
+
+        <!-- 3D Card Container -->
+        <div class="perspective-1000 w-full max-w-xl mx-auto">
+          <div id="flashcardInner" onclick="flipCard()" class="relative w-full h-64 sm:h-72 cursor-pointer transform-style-3d">
+            <!-- Front -->
+            <div class="absolute inset-0 bg-white rounded-3xl border border-slate-200/80 shadow-xs p-6 flex flex-col justify-between backface-hidden">
+              <div class="flex items-center justify-between gap-2">
+                <div class="flex items-center gap-1.5 flex-wrap">
+                  <span id="cardLevelTag" class="px-2.5 py-1 rounded-lg bg-indigo-50 text-indigo-600 text-[11px] font-bold">初級</span>
+                  <span id="cardFrontPosTag" class="px-2.5 py-1 rounded-lg bg-slate-100 text-slate-600 text-[11px] font-bold">名詞</span>
+                </div>
+                <span id="cardLearnedBadge" class="hidden px-2.5 py-1 rounded-lg bg-emerald-50 text-emerald-600 text-[11px] font-bold shrink-0">
+                  <i class="fa-solid fa-check mr-1"></i>習得済み
+                </span>
+              </div>
+
+              <div class="text-center my-auto space-y-2">
+                <div id="cardHangul" class="text-4xl sm:text-5xl font-black font-kr text-slate-900 tracking-tight">한국어</div>
+                <div id="cardPron" class="text-sm font-bold text-indigo-600 font-kr">[한구거]</div>
+                <div id="cardKana" class="text-xs text-slate-400 font-medium"></div>
+              </div>
+
+              <div class="flex items-center justify-between pt-2 border-t border-slate-100">
+                <span class="text-[11px] text-slate-400"><i class="fa-solid fa-rotate mr-1"></i>タップで意味を表示</span>
+                <button onclick="event.stopPropagation(); speakCurrentCard()" class="px-3.5 py-1.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold flex items-center gap-1.5 shadow-2xs transition">
+                  <i class="fa-solid fa-volume-high"></i> 発音
+                </button>
+              </div>
+            </div>
+
+            <!-- Back (Clean layout without untranslated examples) -->
+            <div class="absolute inset-0 bg-slate-900 text-white rounded-3xl border border-slate-800 shadow-xs p-6 flex flex-col justify-between backface-hidden rotate-y-180">
+              <div class="flex items-center justify-between">
+                <span id="cardPosTag" class="px-2.5 py-1 rounded-lg bg-slate-800 text-slate-300 text-[11px] font-bold">名詞</span>
+                <button onclick="event.stopPropagation(); speakCurrentCard()" class="px-3 py-1 rounded-lg bg-indigo-500 hover:bg-indigo-600 text-white text-xs font-bold flex items-center gap-1">
+                  <i class="fa-solid fa-volume-high"></i> 単語音声
+                </button>
+              </div>
+
+              <div class="text-center my-auto px-3 space-y-2">
+                <div id="cardBackHangul" class="text-sm font-bold font-kr text-indigo-300">한국어</div>
+                <div id="cardMeaning" class="text-2xl sm:text-3xl font-extrabold text-white leading-snug break-words">韓国語</div>
+              </div>
+
+              <div class="text-center text-[11px] text-slate-400">
+                <i class="fa-solid fa-rotate mr-1"></i>タップで表面へ戻る
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Card Navigation & Status Buttons -->
+        <div class="max-w-xl mx-auto grid grid-cols-4 gap-2">
+          <button onclick="prevCard()" class="py-3 rounded-2xl bg-white border border-slate-200 hover:bg-slate-100 text-slate-700 font-bold text-xs transition">
+            <i class="fa-solid fa-chevron-left mr-1"></i>前へ
+          </button>
+          <button onclick="markCardStatus(false)" class="py-3 rounded-2xl bg-amber-50 border border-amber-200 hover:bg-amber-100 text-amber-700 font-bold text-xs transition">
+            <i class="fa-solid fa-rotate-left mr-1"></i>まだ
+          </button>
+          <button onclick="markCardStatus(true)" class="py-3 rounded-2xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs shadow-2xs transition">
+            <i class="fa-solid fa-check mr-1"></i>覚えた
+          </button>
+          <button onclick="nextCard()" class="py-3 rounded-2xl bg-white border border-slate-200 hover:bg-slate-100 text-slate-700 font-bold text-xs transition">
+            次へ<i class="fa-solid fa-chevron-right ml-1"></i>
+          </button>
+        </div>
+      </div>
+
+      <!-- Sub-view B: 4-Choice Quiz -->
+      <div id="vocab-quiz-area" class="hidden max-w-xl mx-auto">
+        <div id="quizActiveCard" class="bg-white p-6 rounded-3xl border border-slate-200/80 shadow-xs space-y-5">
+          <div class="flex items-center justify-between text-xs font-bold">
+            <span class="text-indigo-600">4択実力テスト（全10問）</span>
+            <span id="quizProgressText" class="font-mono-num text-slate-400">1 / 10</span>
+          </div>
+
+          <div class="text-center py-4 bg-slate-50 rounded-2xl border border-slate-100 space-y-1.5">
+            <div id="quizQuestionHangul" class="text-4xl font-black font-kr text-slate-900">단어</div>
+            <div id="quizQuestionPron" class="text-xs font-bold text-indigo-600 font-kr"></div>
+            <button onclick="speakQuizWord()" class="mt-2 inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-white border border-slate-200 text-xs font-bold text-slate-700 hover:border-indigo-400">
+              <i class="fa-solid fa-volume-high text-indigo-600"></i> 音声を聞く
+            </button>
+          </div>
+
+          <div id="quizOptionsGrid" class="grid grid-cols-1 gap-2.5"></div>
+          <div id="quizFeedback" class="hidden text-center text-xs font-bold py-2 rounded-xl"></div>
+        </div>
+
+        <!-- Quiz Result Card -->
+        <div id="quizResultCard" class="hidden bg-white p-6 rounded-3xl border border-slate-200/80 shadow-xs text-center space-y-4">
+          <div class="w-14 h-14 rounded-2xl bg-indigo-50 text-indigo-600 flex items-center justify-center text-2xl mx-auto">
+            <i class="fa-solid fa-trophy"></i>
+          </div>
+          <div>
+            <h3 class="text-lg font-extrabold text-slate-900">テスト完了！</h3>
+            <p id="quizScoreText" class="text-2xl font-black text-indigo-600 font-mono-num mt-1">8 / 10 正解</p>
+            <p class="text-xs text-slate-500 mt-1">正解した単語は自動的に「習得済み」に記録されました。</p>
+          </div>
+          <button onclick="startVocabQuiz()" class="w-full py-3 rounded-2xl bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs transition">
+            もう一度テストする
+          </button>
+        </div>
+      </div>
+
+      <!-- Sub-view C: Dictionary List (Paginated) -->
+      <div id="vocab-list-area" class="hidden space-y-3">
+        <div class="bg-white p-3.5 rounded-2xl border border-slate-200/80 shadow-xs flex flex-wrap items-center gap-2">
+          <div class="relative flex-1 min-w-[200px]">
+            <i class="fa-solid fa-magnifying-glass absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-xs"></i>
+            <input type="text" id="vocabSearchInput" oninput="onVocabSearchInput()" placeholder="ハングル・日本語訳で検索（例: 가다, 食べる, 旅行...）" class="w-full pl-8 pr-3 py-2 rounded-xl bg-slate-50 border border-slate-200 text-xs focus:bg-white focus:outline-none focus:border-indigo-400">
+          </div>
+          <span id="listHitCount" class="text-xs font-bold text-slate-500 font-mono-num px-2">0 件</span>
+        </div>
+
+        <div id="vocabListContainer" class="space-y-2"></div>
+
+        <!-- Pagination Controls -->
+        <div class="flex items-center justify-between bg-white px-4 py-2.5 rounded-2xl border border-slate-200/80 text-xs font-bold">
+          <button onclick="changeListPage(-1)" id="listPrevBtn" class="px-3 py-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 disabled:opacity-40">
+            <i class="fa-solid fa-chevron-left mr-1"></i>前の50件
+          </button>
+          <span id="listPageIndicator" class="font-mono-num text-slate-600">1 / 1 ページ</span>
+          <button onclick="changeListPage(1)" id="listNextBtn" class="px-3 py-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 disabled:opacity-40">
+            次の50件<i class="fa-solid fa-chevron-right ml-1"></i>
+          </button>
+        </div>
+      </div>
+    </section>
+
+    <!-- ========================================================= -->
+    <!-- TAB 2: トラベル＆日常フレーズ (Phrases) -->
+    <!-- ========================================================= -->
+    <section id="view-phrases" class="hidden space-y-4">
+      <div class="bg-white p-4 rounded-2xl border border-slate-200/80 shadow-xs space-y-3">
+        <div class="flex flex-wrap items-center justify-between gap-2">
+          <div>
+            <h2 class="text-sm font-extrabold text-slate-900">シーン別 実践フレーズ集</h2>
+            <p class="text-[11px] text-slate-500">丁寧な「ヘヨ体」とタメ口の「パンマル」を切り替えて比較できます</p>
+          </div>
+          <!-- Speech Style Toggle -->
+          <div class="flex items-center gap-1 bg-slate-100 p-1 rounded-xl text-xs font-bold">
+            <button onclick="setPhraseStyle('polite')" id="style-polite" class="px-3 py-1.5 rounded-lg bg-white text-indigo-600 shadow-2xs transition">
+              ヘヨ体（丁寧）
+            </button>
+            <button onclick="setPhraseStyle('casual')" id="style-casual" class="px-3 py-1.5 rounded-lg text-slate-500 hover:text-slate-800 transition">
+              パンマル（タメ口）
+            </button>
+          </div>
+        </div>
+
+        <!-- Scene Category Pills -->
+        <div class="flex flex-wrap gap-1.5 pt-1" id="phraseCategoryPills">
+          <button onclick="filterPhrases('greeting')" data-cat="greeting" class="phrase-cat-btn px-3 py-1.5 rounded-xl text-xs font-bold bg-indigo-600 text-white transition">あいさつ・基本</button>
+          <button onclick="filterPhrases('food')" data-cat="food" class="phrase-cat-btn px-3 py-1.5 rounded-xl text-xs font-bold bg-slate-100 text-slate-600 hover:bg-slate-200 transition">食堂・カフェ</button>
+          <button onclick="filterPhrases('shopping')" data-cat="shopping" class="phrase-cat-btn px-3 py-1.5 rounded-xl text-xs font-bold bg-slate-100 text-slate-600 hover:bg-slate-200 transition">買い物</button>
+          <button onclick="filterPhrases('transit')" data-cat="transit" class="phrase-cat-btn px-3 py-1.5 rounded-xl text-xs font-bold bg-slate-100 text-slate-600 hover:bg-slate-200 transition">移動・ホテル</button>
+          <button onclick="filterPhrases('oshi')" data-cat="oshi" class="phrase-cat-btn px-3 py-1.5 rounded-xl text-xs font-bold bg-slate-100 text-slate-600 hover:bg-slate-200 transition">推し活・SNS</button>
+        </div>
+      </div>
+
+      <div id="phraseCardsContainer" class="grid grid-cols-1 md:grid-cols-2 gap-3"></div>
+    </section>
+
+    <!-- ========================================================= -->
+    <!-- TAB 3: 助詞・語順＆活用ラボ (Grammar) -->
+    <!-- ========================================================= -->
+    <section id="view-grammar" class="hidden space-y-4">
+      <!-- Sub-navigation -->
+      <div class="grid grid-cols-3 gap-2 bg-white p-2 rounded-2xl border border-slate-200/80 shadow-xs">
+        <button onclick="switchGrammarSub('particle')" id="gsub-particle" class="gsub-btn py-2 px-2 rounded-xl text-xs font-bold bg-indigo-50 text-indigo-600 transition">
+          ① パッチム助詞判定
+        </button>
+        <button onclick="switchGrammarSub('order')" id="gsub-order" class="gsub-btn py-2 px-2 rounded-xl text-xs font-bold text-slate-500 hover:text-slate-800 transition">
+          ② SOV語順パズル
+        </button>
+        <button onclick="switchGrammarSub('conjugation')" id="gsub-conjugation" class="gsub-btn py-2 px-2 rounded-xl text-xs font-bold text-slate-500 hover:text-slate-800 transition">
+          ③ ヘヨ体活用表
+        </button>
+      </div>
+
+      <!-- ① Particle Trainer -->
+      <div id="grammar-particle-area" class="bg-white p-6 rounded-3xl border border-slate-200/80 shadow-xs max-w-xl mx-auto space-y-5">
+        <div class="flex items-center justify-between">
+          <div class="flex items-center gap-2">
+            <span class="text-xs font-extrabold text-indigo-600">初級名詞 パッチム助詞判定</span>
+            <span id="particlePoolBadge" class="text-[10px] font-bold px-2 py-0.5 rounded-full bg-slate-100 text-slate-500 font-mono-num">無限出題</span>
+          </div>
+          <span id="particleStreak" class="text-xs font-bold font-mono-num text-emerald-600">連続正解: 0</span>
+        </div>
+
+        <div class="bg-slate-50 p-5 rounded-2xl border border-slate-100 text-center space-y-2">
+          <div class="text-xs text-slate-500" id="particleHint">最後の文字のパッチム有無を見て正しい助詞を選択</div>
+          <div class="flex items-center justify-center gap-2 text-3xl sm:text-4xl font-black font-kr text-slate-900">
+            <span id="particleNoun">학생</span>
+            <span id="particleBlank" class="px-3 py-1 rounded-xl bg-indigo-100 text-indigo-600 border-2 border-dashed border-indigo-400">？</span>
+          </div>
+          <div id="particleMeaning" class="text-xs font-bold text-slate-500">学生 ＋（〜は）</div>
+        </div>
+
+        <div id="particleChoices" class="grid grid-cols-2 gap-3"></div>
+        <div id="particleResultBox" class="hidden p-3.5 rounded-2xl text-xs font-bold text-center"></div>
+      </div>
+
+      <!-- ② SOV Sentence Order Puzzle -->
+      <div id="grammar-order-area" class="hidden bg-white p-6 rounded-3xl border border-slate-200/80 shadow-xs max-w-xl mx-auto space-y-5">
+        <div class="flex items-center justify-between">
+          <span class="text-xs font-extrabold text-indigo-600">初級実用文 SOV語順パズル</span>
+          <span id="orderCounter" class="text-xs font-mono-num text-slate-400">1 / 24</span>
+        </div>
+
+        <div class="bg-slate-50 p-4 rounded-2xl border border-slate-100 text-center space-y-1">
+          <div class="text-[11px] font-bold text-slate-400">お題の日本語</div>
+          <div id="orderPromptJa" class="text-base sm:text-lg font-extrabold text-slate-900">私は韓国語を勉強します。</div>
+        </div>
+
+        <!-- Answer Slots -->
+        <div class="min-h-[56px] p-3 rounded-2xl bg-indigo-50/60 border-2 border-dashed border-indigo-200 flex flex-wrap items-center justify-center gap-2" id="orderSelectedArea">
+          <span class="text-xs text-slate-400">下のブロックをタップして文を組み立ててください</span>
+        </div>
+
+        <!-- Word Bank -->
+        <div class="flex flex-wrap items-center justify-center gap-2" id="orderBankArea"></div>
+
+        <div id="orderFeedback" class="hidden p-3 rounded-xl text-xs font-bold text-center"></div>
+
+        <div class="flex gap-2">
+          <button onclick="resetOrderPuzzle()" class="flex-1 py-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs transition">
+            やり直す
+          </button>
+          <button onclick="nextOrderPuzzle()" class="flex-1 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs transition">
+            別の問題へ
+          </button>
+        </div>
+      </div>
+
+      <!-- ③ Heyo-tai Conjugation Table -->
+      <div id="grammar-conjugation-area" class="hidden bg-white p-5 rounded-3xl border border-slate-200/80 shadow-xs space-y-4">
+        <div class="space-y-1">
+          <h3 class="text-sm font-extrabold text-slate-900">初級必須用言の「ヘヨ体（〜です/ます）」活用ルール</h3>
+          <p class="text-xs text-slate-500">語幹の最後の母音が <strong>ㅏ / ㅗ</strong> なら「아요」、それ以外なら「어요」、<strong>하다</strong> は「해요」になります。</p>
+        </div>
+
+        <div class="overflow-x-auto">
+          <table class="w-full text-left border-collapse text-xs">
+            <thead>
+              <tr class="bg-slate-100 text-slate-600 border-b border-slate-200">
+                <th class="py-2.5 px-3 font-extrabold rounded-tl-xl">辞書形（原形）</th>
+                <th class="py-2.5 px-3 font-extrabold">意味</th>
+                <th class="py-2.5 px-3 font-extrabold">ルール区分</th>
+                <th class="py-2.5 px-3 font-extrabold">ヘヨ体（現在形）</th>
+                <th class="py-2.5 px-3 font-extrabold rounded-tr-xl text-center">音声</th>
+              </tr>
+            </thead>
+            <tbody id="conjugationTableBody" class="divide-y divide-slate-100"></tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- ========================================================= -->
+    <!-- TAB 4: 韓国語の数字・時間マスター (Numbers) -->
+    <!-- ========================================================= -->
+    <section id="view-numbers" class="hidden space-y-4">
+      <div class="bg-white p-4 rounded-2xl border border-slate-200/80 shadow-xs space-y-3">
+        <div class="flex flex-wrap items-center justify-between gap-2">
+          <div>
+            <h2 class="text-sm font-extrabold text-slate-900">2系統の数字マスター盤</h2>
+            <p class="text-[11px] text-slate-500">金額・日付・分は「漢数詞」、年齢・個数・時は「固有数詞」を使い分けます</p>
+          </div>
+          <div class="flex items-center gap-1 bg-slate-100 p-1 rounded-xl text-xs font-bold">
+            <button onclick="switchNumberTab('chart')" id="numtab-chart" class="px-3 py-1.5 rounded-lg bg-white text-indigo-600 shadow-2xs transition">数字対照盤</button>
+            <button onclick="switchNumberTab('quiz')" id="numtab-quiz" class="px-3 py-1.5 rounded-lg text-slate-500 hover:text-slate-800 transition">無限実践クイズ</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Number Chart -->
+      <div id="numbers-chart-area" class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <!-- Sino-Korean -->
+        <div class="bg-white p-5 rounded-3xl border border-slate-200/80 shadow-xs space-y-3">
+          <div class="flex items-center justify-between border-b border-slate-100 pb-2.5">
+            <div>
+              <span class="px-2 py-0.5 rounded bg-sky-50 text-sky-700 text-[10px] font-extrabold">漢数詞（일, 이, 삼...）</span>
+              <h3 class="text-sm font-extrabold text-slate-900 mt-1">金額・日付・電話番号・分・階</h3>
+            </div>
+          </div>
+          <div id="sinoNumberGrid" class="grid grid-cols-2 gap-2"></div>
+        </div>
+
+        <!-- Native Korean -->
+        <div class="bg-white p-5 rounded-3xl border border-slate-200/80 shadow-xs space-y-3">
+          <div class="flex items-center justify-between border-b border-slate-100 pb-2.5">
+            <div>
+              <span class="px-2 py-0.5 rounded bg-amber-50 text-amber-700 text-[10px] font-extrabold">固有数詞（하나, 둘, 셋...）</span>
+              <h3 class="text-sm font-extrabold text-slate-900 mt-1">時間（〜時）・年齢・個数・人数</h3>
+            </div>
+          </div>
+          <div id="nativeNumberGrid" class="grid grid-cols-2 gap-2"></div>
+        </div>
+      </div>
+
+      <!-- Number Practical Quiz -->
+      <div id="numbers-quiz-area" class="hidden max-w-xl mx-auto bg-white p-6 rounded-3xl border border-slate-200/80 shadow-xs space-y-5">
+        <div class="flex items-center justify-between text-xs font-bold">
+          <span class="text-indigo-600">数字・助数詞 実践クイズ（ランダム無限出題）</span>
+          <span id="numQuizStreak" class="font-mono-num text-emerald-600">連続正解: 0</span>
+        </div>
+
+        <div class="bg-slate-50 p-5 rounded-2xl border border-slate-100 text-center space-y-2">
+          <div id="numQuizContext" class="text-[11px] font-bold text-indigo-600">カフェで注文する時</div>
+          <div id="numQuizPrompt" class="text-2xl font-black text-slate-900">アメリカーノ 2杯</div>
+        </div>
+
+        <div id="numQuizOptions" class="grid grid-cols-1 gap-2.5"></div>
+        <div id="numQuizFeedback" class="hidden p-3.5 rounded-2xl text-xs font-bold text-center"></div>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- Large Screen Show Modal (For Travel Phrases) -->
+  <div id="bigPhraseModal" onclick="closeBigModal()" class="hidden fixed inset-0 z-50 bg-slate-900/90 backdrop-blur-xs flex items-center justify-center p-4">
+    <div onclick="event.stopPropagation()" class="bg-white rounded-3xl max-w-lg w-full p-8 text-center space-y-5 shadow-xl">
+      <div class="text-xs font-bold text-slate-400">相手に画面を見せて伝える</div>
+      <div id="bigModalKo" class="text-4xl sm:text-5xl font-black font-kr text-slate-900 leading-tight break-keep">감사합니다</div>
+      <div id="bigModalPron" class="text-base font-bold text-indigo-600">カムサハムニダ</div>
+      <div id="bigModalJa" class="text-sm font-bold text-slate-500 pt-2 border-t border-slate-100">ありがとうございます</div>
+      <div class="flex gap-2 pt-2">
+        <button onclick="speakBigModal()" class="flex-1 py-3.5 rounded-2xl bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-sm flex items-center justify-center gap-2">
+          <i class="fa-solid fa-volume-high"></i> 音声を鳴らす
+        </button>
+        <button onclick="closeBigModal()" class="px-5 py-3.5 rounded-2xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-sm">
+          閉じる
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Backup / Restore Modal -->
+  <div id="backupModal" onclick="closeBackupModal()" class="hidden fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4">
+    <div onclick="event.stopPropagation()" class="bg-white rounded-3xl max-w-md w-full p-6 space-y-4 shadow-xl border border-slate-200">
+      <div class="flex items-center justify-between">
+        <h3 class="text-base font-extrabold text-slate-900">学習データのバックアップ・復元</h3>
+        <button onclick="closeBackupModal()" class="text-slate-400 hover:text-slate-700"><i class="fa-solid fa-xmark"></i></button>
+      </div>
+      <p class="text-xs text-slate-500 leading-relaxed">
+        習得済みの単語記録はブラウザ内に保存されます。ブラウザのデータ消去に備え、JSONファイルとして書き出し・復元ができます。
+      </p>
+      <div class="grid grid-cols-1 gap-2.5 pt-1">
+        <button onclick="exportBackupJSON()" class="w-full py-3 rounded-2xl bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs flex items-center justify-center gap-2 transition">
+          <i class="fa-solid fa-download"></i> JSONバックアップを保存
+        </button>
+        <label class="w-full py-3 rounded-2xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs flex items-center justify-center gap-2 cursor-pointer transition">
+          <i class="fa-solid fa-upload"></i> JSONファイルから復元
+          <input type="file" accept=".json" onchange="importBackupJSON(event)" class="hidden">
+        </label>
+      </div>
+    </div>
+  </div>
+
+  <!-- Status Toast Message Box (replaces alert()) -->
+  <div id="statusToast" class="hidden fixed bottom-5 left-1/2 -translate-x-1/2 z-50 px-4 py-2.5 rounded-2xl bg-slate-900 text-white text-xs font-bold shadow-lg"></div>
+
+  <!-- Attribution Card (Directly Above Footer) -->
+  <div class="max-w-4xl w-full mx-auto px-4 mt-8">
+    <div class="bg-white rounded-2xl border border-slate-200/80 p-4 shadow-xs text-[11px] text-slate-500 space-y-1">
+      <div class="font-bold text-slate-700 flex items-center gap-1.5">
+        <i class="fa-solid fa-book-open text-indigo-500"></i>
+        <span>収録データ・出典・ライセンス表記</span>
+      </div>
+      <p>
+        本アプリの語彙・発音表記データの一部には、大韓民国 文化体育観光部 国立国語院（National Institute of Korean Language）公開の
+        <a href="https://krdict.korean.go.kr/jpn" target="_blank" rel="noopener noreferrer" class="text-indigo-600 hover:underline font-semibold">『韓国語-日本語学習辞典（한국어-일본어 학습사전）』</a>
+        （ライセンス：<span class="font-semibold text-slate-700">CC BY-SA 2.0 KR / 表示-継承</span>）を加工・編集して利用しています。
+      </p>
+    </div>
+  </div>
+
+  <!-- Official Apps Hub One-Liner Disclaimer Footer (No Copyright) -->
+  <footer class="mt-6 py-6 text-center border-t border-slate-200">
+    <div class="max-w-4xl mx-auto px-4">
+      <p class="text-[11px] text-slate-400">
+        ※個人開発プロトタイプにつき無保証・自己責任にてご利用ください（データは端末内完結・サポート対象外）
+      </p>
+    </div>
+  </footer>
+
+  <script>
+    // =================================================================
+    // 1. FALLBACK VOCABULARY DATA (Used if korean_words.json is absent)
+    // =================================================================
+    const FALLBACK_WORDS = [
+      { id: 1, ko: "한국어", pron: "[한구거]", kana: "ハングゴ", pos: "名詞", meaning: "韓国語", level: "topik1", levelLabel: "初級 (TOPIK 1〜2級)" },
+      { id: 2, ko: "감사합니다", pron: "[감사함니다]", kana: "カムサハムニダ", pos: "感動詞", meaning: "ありがとうございます", level: "topik1", levelLabel: "初級 (TOPIK 1〜2級)" },
+      { id: 3, ko: "사랑", pron: "", kana: "サラン", pos: "名詞", meaning: "愛", level: "topik1", levelLabel: "初級 (TOPIK 1〜2級)" },
+      { id: 4, ko: "친구", pron: "", kana: "チング", pos: "名詞", meaning: "友達", level: "topik1", levelLabel: "初級 (TOPIK 1〜2級)" },
+      { id: 5, ko: "학교", pron: "[학꾜]", kana: "ハッキョ", pos: "名詞", meaning: "学校", level: "topik1", levelLabel: "初級 (TOPIK 1〜2級)" },
+      { id: 6, ko: "먹다", pron: "[먹따]", kana: "モクタ", pos: "動詞", meaning: "食べる", level: "topik1", levelLabel: "初級 (TOPIK 1〜2級)" },
+      { id: 7, ko: "마시다", pron: "", kana: "マシダ", pos: "動詞", meaning: "飲む", level: "topik1", levelLabel: "初級 (TOPIK 1〜2級)" },
+      { id: 8, ko: "가다", pron: "", kana: "カダ", pos: "動詞", meaning: "行く", level: "topik1", levelLabel: "初級 (TOPIK 1〜2級)" },
+      { id: 9, ko: "오다", pron: "", kana: "オダ", pos: "動詞", meaning: "来る", level: "topik1", levelLabel: "初級 (TOPIK 1〜2級)" },
+      { id: 10, ko: "보다", pron: "", kana: "ポダ", pos: "動詞", meaning: "見る", level: "topik1", levelLabel: "初級 (TOPIK 1〜2級)" },
+      { id: 11, ko: "좋다", pron: "[조타]", kana: "チョタ", pos: "形容詞", meaning: "良い、好きだ", level: "topik1", levelLabel: "初級 (TOPIK 1〜2級)" },
+      { id: 12, ko: "맛있다", pron: "[마싣따]", kana: "マシッタ", pos: "形容詞", meaning: "美味しい", level: "topik1", levelLabel: "初級 (TOPIK 1〜2級)" },
+      { id: 13, ko: "여행", pron: "", kana: "ヨヘン", pos: "名詞", meaning: "旅行", level: "topik1", levelLabel: "初級 (TOPIK 1〜2級)" },
+      { id: 14, ko: "시간", pron: "", kana: "シガン", pos: "名詞", meaning: "時間", level: "topik1", levelLabel: "初級 (TOPIK 1〜2級)" },
+      { id: 15, ko: "가방", pron: "", kana: "カバン", pos: "名詞", meaning: "かばん", level: "topik1", levelLabel: "初級 (TOPIK 1〜2級)" },
+      { id: 16, ko: "사과", pron: "", kana: "サグァ", pos: "名詞", meaning: "りんご", level: "topik1", levelLabel: "初級 (TOPIK 1〜2級)" },
+      { id: 17, ko: "약속", pron: "[약쏙]", kana: "ヤクソク", pos: "名詞", meaning: "約束", level: "topik2", levelLabel: "中級 (TOPIK 3〜4級)" },
+      { id: 18, ko: "준비하다", pron: "", kana: "チュンビハダ", pos: "動詞", meaning: "準備する", level: "topik2", levelLabel: "中級 (TOPIK 3〜4級)" }
+    ];
+
+    // =================================================================
+    // 2. STATIC DATA FOR PHRASES, GRAMMAR, CONJUGATION, NUMBERS
+    // =================================================================
+    const PHRASES_DATA = [
+      { cat: "greeting", ja: "こんにちは", politeKo: "안녕하세요", politePron: "アンニョンハセヨ", casualKo: "안녕", casualPron: "アンニョン" },
+      { cat: "greeting", ja: "ありがとうございます", politeKo: "감사합니다", politePron: "カムサハムニダ", casualKo: "고마워", casualPron: "コマウォ" },
+      { cat: "greeting", ja: "すみません / ごめんなさい", politeKo: "죄송합니다", politePron: "チェソンハムニダ", casualKo: "미안해", casualPron: "ミアネ" },
+      { cat: "greeting", ja: "はい / いいえ", politeKo: "네 / 아니요", politePron: "ネ / アニヨ", casualKo: "응 / 아니", casualPron: "ウン / アニ" },
+      { cat: "greeting", ja: "大丈夫です", politeKo: "괜찮아요", politePron: "ケンチャナヨ", casualKo: "괜찮아", casualPron: "ケンチャナ" },
+      { cat: "greeting", ja: "会いたかったです", politeKo: "보고 싶었어요", politePron: "ポゴ シポッソヨ", casualKo: "보고 싶었어", casualPron: "ポゴ シポッソ" },
+      { cat: "food", ja: "これをください", politeKo: "이거 주세요", politePron: "イゴ ジュセヨ", casualKo: "이거 줘", casualPron: "イゴ ジョ" },
+      { cat: "food", ja: "とても美味しいです", politeKo: "정말 맛있어요", politePron: "チョンマル マシッソヨ", casualKo: "진짜 맛있어", casualPron: "チンチャ マシッソ" },
+      { cat: "food", ja: "お水をください", politeKo: "물 좀 주세요", politePron: "ムル チョム ジュセヨ", casualKo: "물 좀 줘", casualPron: "ムル チョム ジョ" },
+      { cat: "food", ja: "辛くしないでください", politeKo: "안 맵게 해 주세요", politePron: "アン メプケ ヘ ジュセヨ", casualKo: "안 맵게 해 줘", casualPron: "アン メプケ ヘ ジョ" },
+      { cat: "food", ja: "お会計お願いします", politeKo: "계산해 주세요", politePron: "ケサネ ジュセヨ", casualKo: "계산해 줘", casualPron: "ケサネ ジョ" },
+      { cat: "shopping", ja: "いくらですか？", politeKo: "얼마예요?", politePron: "オルマエヨ？", casualKo: "얼마야?", casualPron: "オルマヤ？" },
+      { cat: "shopping", ja: "ちょっと見ているだけです", politeKo: "그냥 구경하는 거예요", politePron: "クニャン クギョンハヌン ゴエヨ", casualKo: "그냥 구경하는 거야", casualPron: "クニャン クギョンハヌン ゴヤ" },
+      { cat: "shopping", ja: "試着してもいいですか？", politeKo: "입어 봐도 돼요?", politePron: "イボ バド ドェヨ？", casualKo: "입어 봐도 돼?", casualPron: "イボ バド ドェ？" },
+      { cat: "shopping", ja: "カードで払います", politeKo: "카드로 계산할게요", politePron: "カドゥロ ケサナルケヨ", casualKo: "카드로 계산할게", casualPron: "カドゥロ ケサナルケ" },
+      { cat: "transit", ja: "トイレはどこですか？", politeKo: "화장실이 어디예요?", politePron: "ファジャンシリ オディエヨ？", casualKo: "화장실 어디야?", casualPron: "ファジャンシル オディヤ？" },
+      { cat: "transit", ja: "ここに行ってください", politeKo: "여기로 가 주세요", politePron: "ヨギロ カ ジュセヨ", casualKo: "여기로 가 줘", casualPron: "ヨギロ カ ジョ" },
+      { cat: "transit", ja: "写真を撮ってもらえますか？", politeKo: "사진 좀 찍어 주시겠어요?", politePron: "サジン チョム チゴ ジュシゲッソヨ？", casualKo: "사진 좀 찍어 줄래?", casualPron: "サジン チョム チゴ ジュルレ？" },
+      { cat: "oshi", ja: "いつも応援しています！", politeKo: "항상 응원하고 있어요!", politePron: "ハンサン ウンウォナゴ イッソヨ！", casualKo: "항상 응원하고 있어!", casualPron: "ハンサン ウンウォナゴ イッソ！" },
+      { cat: "oshi", ja: "最高です！かっこいい！", politeKo: "최고예요! 멋있어요!", politePron: "チェゴエヨ！ モシッソヨ！", casualKo: "최고야! 멋있어!", casualPron: "チェゴヤ！ モシッソ！" },
+      { cat: "oshi", ja: "日本にも来てください", politeKo: "일본에도 와 주세요", politePron: "イルボネド ワ ジュセヨ", casualKo: "일본에도 와 줘", casualPron: "イルボネド ワ ジョ" }
+    ];
+
+    const ORDER_PUZZLES = [
+      { ja: "私は韓国語を勉強します。", blocks: ["저는", "한국어를", "공부해요."] },
+      { ja: "友達とカフェでコーヒーを飲みます。", blocks: ["친구와", "카페에서", "커피를", "마셔요."] },
+      { ja: "今日、ソウルは天気が良いです。", blocks: ["오늘", "서울은", "날씨가", "좋아요."] },
+      { ja: "私は明日、韓国に行きます。", blocks: ["저는", "내일", "한국에", "가요."] },
+      { ja: "このビビンバはとても美味しいです。", blocks: ["이", "비빔밥은", "정말", "맛있어요."] },
+      { ja: "駅の近くに大きい病院があります。", blocks: ["역", "근처에", "큰", "병원이", "있어요."] },
+      { ja: "私は毎日朝ご飯を食べます。", blocks: ["저는", "매일", "아침밥을", "먹어요."] },
+      { ja: "週末にデパートで服を買います。", blocks: ["주말에", "백화점에서", "옷을", "사요."] },
+      { ja: "図書館で静かに本を読みます。", blocks: ["도서관에서", "조용히", "책을", "읽어요."] },
+      { ja: "明日は時間がありません。", blocks: ["내일은", "시간이", "없어요."] },
+      { ja: "私は韓国ドラマが好きです。", blocks: ["저는", "한국", "드라마를", "좋아해요."] },
+      { ja: "地下鉄で会社まで行きます。", blocks: ["지하철로", "회사까지", "가요."] },
+      { ja: "昨日の夜、映画を見ました。", blocks: ["어제", "밤에", "영화를", "봤어요."] },
+      { ja: "このかばんは少し高いです。", blocks: ["이", "가방은", "조금", "비싸요."] },
+      { ja: "冷たいお水をください。", blocks: ["차가운", "물을", "주세요."] },
+      { ja: "私は日本人です。", blocks: ["저는", "일본", "사람이에요."] },
+      { ja: "トイレは2階にあります。", blocks: ["화장실은", "이층에", "있어요."] },
+      { ja: "友達に誕生日プレゼントをあげます。", blocks: ["친구에게", "생일", "선물을", "줘요."] },
+      { ja: "今日は本当に暑いです。", blocks: ["오늘은", "정말", "더워요."] },
+      { ja: "明洞までどのくらいかかりますか？", blocks: ["명동까지", "얼마나", "걸려요?"] },
+      { ja: "私は辛い食べ物がよく食べられません。", blocks: ["저는", "매운", "음식을", "잘", "못", "먹어요."] },
+      { ja: "韓国の音楽を毎日聞きます。", blocks: ["한국", "음악을", "매일", "들어요."] },
+      { ja: "公園で一緒に写真を撮りましょう。", blocks: ["공원에서", "같이", "사진을", "찍어요."] },
+      { ja: "来月、家族と旅行に行きます。", blocks: ["다음", "달에", "가족과", "여행을", "가요."] }
+    ];
+
+    const CONJUGATION_LIST = [
+      { base: "가다", ja: "行く", rule: "ㅏ母音 → 아요", heyo: "가요" },
+      { base: "오다", ja: "来る", rule: "ㅗ母音 → 아요 (縮約)", heyo: "와요" },
+      { base: "보다", ja: "見る", rule: "ㅗ母音 → 아요 (縮約)", heyo: "봐요" },
+      { base: "사다", ja: "買う", rule: "ㅏ母音 → 아요", heyo: "사요" },
+      { base: "자다", ja: "寝る", rule: "ㅏ母音 → 아요", heyo: "자요" },
+      { base: "먹다", ja: "食べる", rule: "ㅓ母音 → 어요", heyo: "먹어요" },
+      { base: "마시다", ja: "飲む", rule: "ㅣ母音 → 어요 (縮約)", heyo: "마셔요" },
+      { base: "읽다", ja: "読む", rule: "ㅣ母音 → 어요", heyo: "읽어요" },
+      { base: "배우다", ja: "習う", rule: "ㅜ母音 → 어요 (縮約)", heyo: "배워요" },
+      { base: "주다", ja: "あげる・くれる", rule: "ㅜ母音 → 어요 (縮約)", heyo: "줘요" },
+      { base: "하다", ja: "する", rule: "하다 → 해요", heyo: "해요" },
+      { base: "공부하다", ja: "勉強する", rule: "하다 → 해요", heyo: "공부해요" },
+      { base: "좋아하다", ja: "好きだ", rule: "하다 → 해요", heyo: "좋아해요" },
+      { base: "운동하다", ja: "運動する", rule: "하다 → 해요", heyo: "운동해요" }
+    ];
+
+    const SINO_NUMBERS = [
+      { num: "1", ko: "일", kana: "イル" }, { num: "2", ko: "이", kana: "イ" },
+      { num: "3", ko: "삼", kana: "サム" }, { num: "4", ko: "사", kana: "サ" },
+      { num: "5", ko: "오", kana: "オ" }, { num: "6", ko: "육", kana: "ユク" },
+      { num: "7", ko: "칠", kana: "チル" }, { num: "8", ko: "팔", kana: "パル" },
+      { num: "9", ko: "구", kana: "ク" }, { num: "10", ko: "십", kana: "シプ" },
+      { num: "100", ko: "백", kana: "ペク" }, { num: "1,000", ko: "천", kana: "チョン" },
+      { num: "10,000", ko: "만", kana: "マン" }, { num: "0", ko: "영 / 공", kana: "ヨン / コン" }
+    ];
+
+    const NATIVE_NUMBERS = [
+      { num: "1", ko: "하나 (한)", kana: "ハナ" }, { num: "2", ko: "둘 (두)", kana: "トゥル" },
+      { num: "3", ko: "셋 (세)", kana: "セッ" }, { num: "4", ko: "넷 (네)", kana: "ネッ" },
+      { num: "5", ko: "다섯", kana: "タソッ" }, { num: "6", ko: "여섯", kana: "ヨソッ" },
+      { num: "7", ko: "일곱", kana: "イルゴプ" }, { num: "8", ko: "여덟", kana: "ヨドル" },
+      { num: "9", ko: "아홉", kana: "アホプ" }, { num: "10", ko: "열", kana: "ヨル" },
+      { num: "20", ko: "스물 (스무)", kana: "スムル" }, { num: "30", ko: "서른", kana: "ソルン" }
+    ];
+
+    // =================================================================
+    // 3. APP STATE & PERSISTENCE
+    // =================================================================
+    const STORAGE_KEY = "korean_hub_progress_v1";
+    let ALL_WORDS = [];
+    let BEGINNER_NOUNS = [];
+    let filteredDeck = [];
+    let learnedSet = new Set();
+    let currentCardIdx = 0;
+    let isCardFlipped = false;
+
+    let isMuted = false;
+    let speechRate = 1.0;
+
+    // List pagination state
+    let listFilteredWords = [];
+    let currentListPage = 1;
+    const LIST_PAGE_SIZE = 50;
+
+    // Phrase state
+    let currentPhraseCat = "greeting";
+    let currentPhraseStyle = "polite";
+    let currentBigModalText = "";
+
+    // Quiz state
+    let quizQueue = [];
+    let quizIdx = 0;
+    let quizScore = 0;
+    let quizAnswered = false;
+
+    // Grammar state
+    let pStreak = 0;
+    let currentParticleQ = null;
+    let orderIdx = 0;
+    let orderSelected = [];
+    let orderShuffledBank = [];
+
+    // Number quiz state
+    let numStreak = 0;
+    let currentNumQ = null;
+
+    let toastTimer = null;
+
+    // =================================================================
+    // 4. INITIALIZATION & DATA LOADER
+    // =================================================================
+    window.addEventListener("DOMContentLoaded", async () => {
+      loadProgress();
+      await loadVocabularyDataset();
+      renderPhrases();
+      initParticleTrainer();
+      initOrderPuzzle();
+      renderConjugationTable();
+      renderNumberCharts();
+      initNumberQuiz();
+    });
+
+    function showToast(msg) {
+      const el = document.getElementById("statusToast");
+      if (!el) return;
+      el.textContent = msg;
+      el.classList.remove("hidden");
+      clearTimeout(toastTimer);
+      toastTimer = setTimeout(() => {
+        el.classList.add("hidden");
+      }, 2600);
+    }
+
+    function loadProgress() {
+      try {
+        const raw = localStorage.getItem(STORAGE_KEY);
+        if (raw) {
+          const parsed = JSON.parse(raw);
+          if (Array.isArray(parsed.learnedIds)) {
+            learnedSet = new Set(parsed.learnedIds.map(Number).filter(n => !isNaN(n)));
+          }
+        }
+      } catch (e) {
+        console.warn("Progress load fallback:", e);
+      }
+    }
+
+    function saveProgress() {
+      try {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify({
+          version: 1,
+          updatedAt: new Date().toISOString(),
+          learnedIds: Array.from(learnedSet)
+        }));
+      } catch (e) {
+        console.warn("Save failed:", e);
+      }
+      updateStatsUI();
+    }
+
+    function syncPosFilterOptions() {
+      const posSelect = document.getElementById("vocabPosFilter");
+      const currentVal = posSelect.value || "all";
+      const standardPos = ["名詞", "動詞", "形容詞", "副詞", "連体詞", "代名詞", "数詞", "感動詞", "語彙"];
+      const extraPos = Array.from(new Set(ALL_WORDS.map(w => w.pos).filter(p => p && !standardPos.includes(p))));
+      const allPos = [...standardPos, ...extraPos];
+
+      posSelect.innerHTML = `<option value="all">すべての品詞</option>` +
+        allPos.map(p => `<option value="${escapeAttr(p)}">${escapeHtml(p)}</option>`).join("");
+
+      if (Array.from(posSelect.options).some(opt => opt.value === currentVal)) {
+        posSelect.value = currentVal;
+      } else {
+        posSelect.value = "all";
+      }
+    }
+
+    async function loadVocabularyDataset() {
+      try {
+        const res = await fetch("./korean_words.json");
+        if (!res.ok) throw new Error("External JSON not found");
+        const data = await res.json();
+        if (Array.isArray(data) && data.length > 0) {
+          ALL_WORDS = data.map((item, idx) => ({
+            id: item.id ?? (idx + 1),
+            ko: item.ko || "",
+            pron: item.pron || "",
+            kana: item.kana || "",
+            pos: item.pos || "語彙",
+            meaning: item.meaning || "",
+            level: item.level || "topik1",
+            levelLabel: item.levelLabel || "初級"
+          }));
+        } else {
+          ALL_WORDS = [...FALLBACK_WORDS];
+        }
+      } catch (err) {
+        ALL_WORDS = [...FALLBACK_WORDS];
+      }
+
+      BEGINNER_NOUNS = ALL_WORDS.filter(w =>
+        w.level === "topik1" &&
+        w.pos === "名詞" &&
+        /^[가-힣]{1,4}$/.test(w.ko) &&
+        w.meaning &&
+        !w.meaning.includes("対訳")
+      );
+
+      if (BEGINNER_NOUNS.length < 10) {
+        BEGINNER_NOUNS = FALLBACK_WORDS.filter(w => w.pos === "名詞");
+      }
+
+      syncPosFilterOptions();
+      document.getElementById("vocabTotalBadge").textContent = `全 ${ALL_WORDS.length.toLocaleString()} 語`;
+      document.getElementById("particlePoolBadge").textContent = `初級名詞 ${BEGINNER_NOUNS.length.toLocaleString()}語から無限出題`;
+
+      onVocabFilterChange();
+      updateStatsUI();
+    }
+
+    function updateStatsUI() {
+      const total = ALL_WORDS.length;
+      const learned = Array.from(learnedSet).filter(id => id <= total).length;
+      document.getElementById("learnedCountText").textContent = `${learned.toLocaleString()} / ${total.toLocaleString()}`;
+      const pct = total > 0 ? Math.min(100, (learned / total) * 100) : 0;
+      document.getElementById("learnedProgressBar").style.width = `${pct.toFixed(1)}%`;
+    }
+
+    // =================================================================
+    // 5. SPEECH SYNTHESIS (ko-KR)
+    // =================================================================
+    function speakKorean(text) {
+      if (isMuted || !text || !("speechSynthesis" in window)) return;
+      window.speechSynthesis.cancel();
+      const cleanText = text.replace(/\[.*?\]/g, "").trim();
+      const utter = new SpeechSynthesisUtterance(cleanText);
+      utter.lang = "ko-KR";
+      utter.rate = speechRate;
+      window.speechSynthesis.speak(utter);
+    }
+
+    function toggleMute() {
+      isMuted = !isMuted;
+      const icon = document.getElementById("muteIcon");
+      const btn = document.getElementById("muteToggleBtn");
+      if (isMuted) {
+        window.speechSynthesis.cancel();
+        icon.className = "fa-solid fa-volume-xmark";
+        btn.className = "w-8 h-8 rounded-xl bg-slate-200 text-slate-500 flex items-center justify-center text-xs transition";
+      } else {
+        icon.className = "fa-solid fa-volume-high";
+        btn.className = "w-8 h-8 rounded-xl bg-indigo-50 text-indigo-600 hover:bg-indigo-100 flex items-center justify-center text-xs transition";
+      }
+    }
+
+    function toggleSpeechRate() {
+      speechRate = speechRate === 1.0 ? 0.75 : 1.0;
+      document.getElementById("speedToggleBtn").textContent = `${speechRate.toFixed(speechRate === 1.0 ? 1 : 2)}x`;
+    }
+
+    // =================================================================
+    // 6. MAIN TAB NAVIGATION
+    // =================================================================
+    function switchMainTab(tabName) {
+      ["vocab", "phrases", "grammar", "numbers"].forEach(name => {
+        document.getElementById(`view-${name}`).classList.toggle("hidden", name !== tabName);
+        const btn = document.getElementById(`tab-${name}`);
+        if (name === tabName) {
+          btn.className = "main-tab py-2 px-2 rounded-xl text-xs font-bold transition flex items-center justify-center gap-1.5 bg-white text-indigo-600 shadow-2xs";
+        } else {
+          btn.className = "main-tab py-2 px-2 rounded-xl text-xs font-bold transition flex items-center justify-center gap-1.5 text-slate-500 hover:text-slate-800";
+        }
+      });
+    }
+
+    // =================================================================
+    // 7. TAB 1: MULTI-FACET FILTERING, FLASHCARD, QUIZ & LIST
+    // =================================================================
+    function getHangulSyllableCount(word) {
+      if (!word) return 0;
+      const hangulMatches = word.match(/[가-힣]/g);
+      if (hangulMatches && hangulMatches.length > 0) {
+        return hangulMatches.length;
+      }
+      return word.replace(/\s+/g, "").length;
+    }
+
+    function hasPronunciationChange(wordObj) {
+      const pronRaw = (wordObj.pron || "").trim();
+      if (!pronRaw) return false;
+      const normalizedPron = pronRaw.replace(/^\[|\]$/g, "").trim();
+      const normalizedKo = (wordObj.ko || "").trim();
+      if (!normalizedPron || !normalizedKo) return false;
+      return normalizedPron !== normalizedKo;
+    }
+
+    function matchesMultiFacetFilters(wordObj) {
+      const levelVal = document.getElementById("vocabLevelFilter").value;
+      const posVal = document.getElementById("vocabPosFilter").value;
+      const lenVal = document.getElementById("vocabLenFilter").value;
+      const pronVal = document.getElementById("vocabPronFilter").value;
+
+      if (levelVal === "unlearned") {
+        if (learnedSet.has(wordObj.id)) return false;
+      } else if (levelVal !== "all") {
+        if (wordObj.level !== levelVal) return false;
+      }
+
+      if (posVal !== "all" && wordObj.pos !== posVal) {
+        return false;
+      }
+
+      if (lenVal !== "all") {
+        const len = getHangulSyllableCount(wordObj.ko);
+        if (lenVal === "4plus") {
+          if (len < 4) return false;
+        } else {
+          if (len !== Number(lenVal)) return false;
+        }
+      }
+
+      if (pronVal !== "all") {
+        const changed = hasPronunciationChange(wordObj);
+        if (pronVal === "changed" && !changed) return false;
+        if (pronVal === "same" && changed) return false;
+      }
+
+      return true;
+    }
+
+    function switchVocabSubMode(mode) {
+      ["card", "quiz", "list"].forEach(m => {
+        document.getElementById(`vocab-${m}-area`).classList.toggle("hidden", m !== mode);
+        const btn = document.getElementById(`vsub-${m}`);
+        if (m === mode) {
+          btn.className = "vsub-btn px-3 py-1.5 rounded-lg text-xs font-bold bg-white text-slate-900 shadow-2xs transition";
+        } else {
+          btn.className = "vsub-btn px-3 py-1.5 rounded-lg text-xs font-bold text-slate-500 hover:text-slate-800 transition";
+        }
+      });
+      if (mode === "quiz") startVocabQuiz();
+      if (mode === "list") onVocabSearchInput();
+    }
+
+    function onVocabFilterChange() {
+      filteredDeck = ALL_WORDS.filter(matchesMultiFacetFilters);
+      document.getElementById("vocabFilteredBadge").textContent = `抽出: ${filteredDeck.length.toLocaleString()} 語`;
+      currentCardIdx = 0;
+      renderFlashcard();
+      onVocabSearchInput();
+
+      const activeQuizView = !document.getElementById("vocab-quiz-area").classList.contains("hidden");
+      if (activeQuizView) {
+        startVocabQuiz();
+      }
+    }
+
+    function resetVocabFilters() {
+      document.getElementById("vocabLevelFilter").value = "topik1";
+      document.getElementById("vocabPosFilter").value = "all";
+      document.getElementById("vocabLenFilter").value = "all";
+      document.getElementById("vocabPronFilter").value = "all";
+      onVocabFilterChange();
+      showToast("フィルターを初級・全条件にリセットしました");
+    }
+
+    function renderFlashcard() {
+      if (filteredDeck.length === 0) {
+        isCardFlipped = false;
+        document.getElementById("flashcardInner").classList.remove("rotate-y-180");
+        document.getElementById("cardIndexIndicator").textContent = "0 / 0";
+        document.getElementById("cardLevelTag").textContent = "該当なし";
+        document.getElementById("cardFrontPosTag").textContent = "-";
+        document.getElementById("cardHangul").textContent = "該当なし";
+        document.getElementById("cardPron").textContent = "";
+        document.getElementById("cardKana").textContent = "";
+        document.getElementById("cardPosTag").textContent = "-";
+        document.getElementById("cardBackHangul").textContent = "";
+        document.getElementById("cardMeaning").textContent = "条件を変更してください";
+        document.getElementById("cardLearnedBadge").classList.add("hidden");
+        return;
+      }
+
+      const item = filteredDeck[currentCardIdx];
+      isCardFlipped = false;
+      document.getElementById("flashcardInner").classList.remove("rotate-y-180");
+
+      document.getElementById("cardIndexIndicator").textContent = `${(currentCardIdx + 1).toLocaleString()} / ${filteredDeck.length.toLocaleString()}`;
+      document.getElementById("cardLevelTag").textContent = item.levelLabel || "初級";
+      document.getElementById("cardFrontPosTag").textContent = item.pos || "語彙";
+      document.getElementById("cardHangul").textContent = item.ko;
+      document.getElementById("cardPron").textContent = item.pron || "";
+      document.getElementById("cardKana").textContent = item.kana || "";
+      document.getElementById("cardPosTag").textContent = item.pos || "語彙";
+      document.getElementById("cardBackHangul").textContent = item.pron ? `${item.ko} ${item.pron}` : item.ko;
+      document.getElementById("cardMeaning").textContent = item.meaning;
+
+      const badge = document.getElementById("cardLearnedBadge");
+      badge.classList.toggle("hidden", !learnedSet.has(item.id));
+    }
+
+    function flipCard() {
+      if (filteredDeck.length === 0) return;
+      isCardFlipped = !isCardFlipped;
+      document.getElementById("flashcardInner").classList.toggle("rotate-y-180", isCardFlipped);
+    }
+
+    function speakCurrentCard() {
+      const item = filteredDeck[currentCardIdx];
+      if (item) speakKorean(item.ko);
+    }
+
+    function nextCard() {
+      if (filteredDeck.length === 0) return;
+      currentCardIdx = (currentCardIdx + 1) % filteredDeck.length;
+      renderFlashcard();
+    }
+
+    function prevCard() {
+      if (filteredDeck.length === 0) return;
+      currentCardIdx = (currentCardIdx - 1 + filteredDeck.length) % filteredDeck.length;
+      renderFlashcard();
+    }
+
+    function shuffleVocabDeck() {
+      if (filteredDeck.length <= 1) return;
+      for (let i = filteredDeck.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [filteredDeck[i], filteredDeck[j]] = [filteredDeck[j], filteredDeck[i]];
+      }
+      currentCardIdx = 0;
+      renderFlashcard();
+    }
+
+    function markCardStatus(isLearned) {
+      const item = filteredDeck[currentCardIdx];
+      if (!item) return;
+      if (isLearned) {
+        learnedSet.add(item.id);
+      } else {
+        learnedSet.delete(item.id);
+      }
+      saveProgress();
+
+      if (document.getElementById("vocabLevelFilter").value === "unlearned" && isLearned) {
+        onVocabFilterChange();
+      } else {
+        nextCard();
+      }
+    }
+
+    // --- 4-Choice Quiz ---
+    function startVocabQuiz() {
+      const pool = filteredDeck.length > 0 ? filteredDeck : [];
+      if (pool.length === 0) {
+        document.getElementById("quizActiveCard").classList.remove("hidden");
+        document.getElementById("quizResultCard").classList.add("hidden");
+        document.getElementById("quizProgressText").textContent = "0 / 0";
+        document.getElementById("quizQuestionHangul").textContent = "該当なし";
+        document.getElementById("quizQuestionPron").textContent = "フィルター条件を変更してください";
+        document.getElementById("quizOptionsGrid").innerHTML = "";
+        document.getElementById("quizFeedback").classList.add("hidden");
+        return;
+      }
+
+      const shuffled = [...pool].sort(() => Math.random() - 0.5);
+      quizQueue = shuffled.slice(0, Math.min(10, shuffled.length));
+      quizIdx = 0;
+      quizScore = 0;
+      document.getElementById("quizActiveCard").classList.remove("hidden");
+      document.getElementById("quizResultCard").classList.add("hidden");
+      renderQuizQuestion();
+    }
+
+    function renderQuizQuestion() {
+      quizAnswered = false;
+      const q = quizQueue[quizIdx];
+      document.getElementById("quizProgressText").textContent = `${quizIdx + 1} / ${quizQueue.length}`;
+      document.getElementById("quizQuestionHangul").textContent = q.ko;
+      document.getElementById("quizQuestionPron").textContent = q.pron || "";
+      document.getElementById("quizFeedback").classList.add("hidden");
+
+      const pool = filteredDeck.length >= 4 ? filteredDeck : ALL_WORDS;
+      const distractors = [];
+      let tries = 0;
+      while (distractors.length < 3 && tries < 100) {
+        tries++;
+        const cand = pool[Math.floor(Math.random() * pool.length)];
+        if (cand && cand.id !== q.id && cand.meaning !== q.meaning && !distractors.includes(cand.meaning)) {
+          distractors.push(cand.meaning);
+        }
+      }
+      const options = [q.meaning, ...distractors].sort(() => Math.random() - 0.5);
+      const grid = document.getElementById("quizOptionsGrid");
+      grid.innerHTML = "";
+      options.forEach(opt => {
+        const btn = document.createElement("button");
+        btn.className = "w-full text-left px-4 py-3 rounded-2xl bg-slate-50 hover:bg-indigo-50 border border-slate-200 hover:border-indigo-300 text-xs sm:text-sm font-bold text-slate-800 transition";
+        btn.textContent = opt;
+        btn.onclick = () => submitQuizAnswer(btn, opt === q.meaning, q);
+        grid.appendChild(btn);
+      });
+    }
+
+    function speakQuizWord() {
+      const q = quizQueue[quizIdx];
+      if (q) speakKorean(q.ko);
+    }
+
+    function submitQuizAnswer(btn, isCorrect, q) {
+      if (quizAnswered) return;
+      quizAnswered = true;
+      speakKorean(q.ko);
+
+      const fb = document.getElementById("quizFeedback");
+      fb.classList.remove("hidden");
+
+      if (isCorrect) {
+        quizScore++;
+        learnedSet.add(q.id);
+        saveProgress();
+        btn.className = "w-full text-left px-4 py-3 rounded-2xl bg-emerald-600 text-white border border-emerald-600 text-xs sm:text-sm font-bold";
+        fb.className = "text-center text-xs font-bold py-2 rounded-xl bg-emerald-50 text-emerald-700";
+        fb.textContent = "⭕ 正解！習得済みに記録しました";
+      } else {
+        btn.className = "w-full text-left px-4 py-3 rounded-2xl bg-rose-600 text-white border border-rose-600 text-xs sm:text-sm font-bold";
+        fb.className = "text-center text-xs font-bold py-2 rounded-xl bg-rose-50 text-rose-700";
+        fb.textContent = `❌ 正解は「${q.meaning}」`;
+      }
+
+      setTimeout(() => {
+        quizIdx++;
+        if (quizIdx < quizQueue.length) {
+          renderQuizQuestion();
+        } else {
+          document.getElementById("quizActiveCard").classList.add("hidden");
+          document.getElementById("quizResultCard").classList.remove("hidden");
+          document.getElementById("quizScoreText").textContent = `${quizScore} / ${quizQueue.length} 正解`;
+        }
+      }, 1100);
+    }
+
+    // --- Paginated Dictionary List ---
+    function onVocabSearchInput() {
+      const q = document.getElementById("vocabSearchInput").value.trim().toLowerCase();
+      if (!q) {
+        listFilteredWords = filteredDeck;
+      } else {
+        listFilteredWords = filteredDeck.filter(w =>
+          w.ko.includes(q) || w.meaning.toLowerCase().includes(q) || (w.pron && w.pron.includes(q))
+        );
+      }
+      currentListPage = 1;
+      renderVocabListPage();
+    }
+
+    function escapeHtml(str) {
+      return String(str)
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;");
+    }
+
+    function escapeAttr(str) {
+      return escapeHtml(str).replace(/'/g, "&#39;");
+    }
+
+    function renderVocabListPage() {
+      const total = listFilteredWords.length;
+      const maxPage = Math.max(1, Math.ceil(total / LIST_PAGE_SIZE));
+      if (currentListPage > maxPage) currentListPage = maxPage;
+
+      document.getElementById("listHitCount").textContent = `${total.toLocaleString()} 件`;
+      document.getElementById("listPageIndicator").textContent = `${currentListPage} / ${maxPage.toLocaleString()} ページ`;
+      document.getElementById("listPrevBtn").disabled = currentListPage <= 1;
+      document.getElementById("listNextBtn").disabled = currentListPage >= maxPage;
+
+      const start = (currentListPage - 1) * LIST_PAGE_SIZE;
+      const slice = listFilteredWords.slice(start, start + LIST_PAGE_SIZE);
+
+      const container = document.getElementById("vocabListContainer");
+      container.innerHTML = "";
+
+      if (slice.length === 0) {
+        container.innerHTML = `<div class="bg-white p-8 rounded-2xl border border-slate-200 text-center text-xs text-slate-400">一致する単語が見つかりませんでした</div>`;
+        return;
+      }
+
+      slice.forEach(item => {
+        const isDone = learnedSet.has(item.id);
+        const lenCount = getHangulSyllableCount(item.ko);
+        const row = document.createElement("div");
+        row.className = "bg-white p-3.5 rounded-2xl border border-slate-200/80 shadow-2xs flex items-center justify-between gap-3 hover:border-indigo-300 transition";
+        row.innerHTML = `
+          <div class="min-w-0 flex-1">
+            <div class="flex items-center gap-2 flex-wrap">
+              <span class="text-base sm:text-lg font-black font-kr text-slate-900">${escapeHtml(item.ko)}</span>
+              ${item.pron ? `<span class="text-xs font-bold font-kr text-indigo-600">${escapeHtml(item.pron)}</span>` : ""}
+              <span class="text-[10px] px-2 py-0.5 rounded bg-slate-100 text-slate-500 font-bold">${escapeHtml(item.pos)}</span>
+              <span class="text-[10px] px-2 py-0.5 rounded bg-slate-50 text-slate-400 font-mono-num">${lenCount}字</span>
+            </div>
+            <div class="text-xs font-bold text-slate-700 mt-0.5 truncate">${escapeHtml(item.meaning)}</div>
+          </div>
+          <div class="flex items-center gap-1.5 shrink-0">
+            <button onclick="speakKorean('${item.ko.replace(/\\/g, "\\\\").replace(/'/g, "\\'")}')" class="w-8 h-8 rounded-xl bg-indigo-50 hover:bg-indigo-100 text-indigo-600 flex items-center justify-center text-xs transition">
+              <i class="fa-solid fa-volume-high"></i>
+            </button>
+            <button onclick="toggleListLearned(${item.id})" class="px-2.5 py-1.5 rounded-xl text-[11px] font-bold transition ${isDone ? 'bg-emerald-100 text-emerald-700' : 'bg-slate-100 text-slate-500 hover:bg-slate-200'}">
+              ${isDone ? '<i class="fa-solid fa-check mr-1"></i>済' : '未習得'}
+            </button>
+          </div>
+        `;
+        container.appendChild(row);
+      });
+    }
+
+    function changeListPage(delta) {
+      currentListPage += delta;
+      renderVocabListPage();
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    }
+
+    function toggleListLearned(id) {
+      if (learnedSet.has(id)) {
+        learnedSet.delete(id);
+      } else {
+        learnedSet.add(id);
+      }
+      saveProgress();
+      renderVocabListPage();
+    }
+
+    // =================================================================
+    // 8. TAB 2: TRAVEL & DAILY PHRASES
+    // =================================================================
+    function setPhraseStyle(style) {
+      currentPhraseStyle = style;
+      document.getElementById("style-polite").className = style === "polite"
+        ? "px-3 py-1.5 rounded-lg bg-white text-indigo-600 shadow-2xs transition"
+        : "px-3 py-1.5 rounded-lg text-slate-500 hover:text-slate-800 transition";
+      document.getElementById("style-casual").className = style === "casual"
+        ? "px-3 py-1.5 rounded-lg bg-white text-indigo-600 shadow-2xs transition"
+        : "px-3 py-1.5 rounded-lg text-slate-500 hover:text-slate-800 transition";
+      renderPhrases();
+    }
+
+    function filterPhrases(cat) {
+      currentPhraseCat = cat;
+      document.querySelectorAll(".phrase-cat-btn").forEach(btn => {
+        if (btn.dataset.cat === cat) {
+          btn.className = "phrase-cat-btn px-3 py-1.5 rounded-xl text-xs font-bold bg-indigo-600 text-white transition";
+        } else {
+          btn.className = "phrase-cat-btn px-3 py-1.5 rounded-xl text-xs font-bold bg-slate-100 text-slate-600 hover:bg-slate-200 transition";
+        }
+      });
+      renderPhrases();
+    }
+
+    function renderPhrases() {
+      const container = document.getElementById("phraseCardsContainer");
+      container.innerHTML = "";
+      const list = PHRASES_DATA.filter(p => p.cat === currentPhraseCat);
+
+      list.forEach(p => {
+        const ko = currentPhraseStyle === "polite" ? p.politeKo : p.casualKo;
+        const pron = currentPhraseStyle === "polite" ? p.politePron : p.casualPron;
+        const card = document.createElement("div");
+        card.className = "bg-white p-4 rounded-2xl border border-slate-200/80 shadow-xs flex flex-col justify-between space-y-3";
+        card.innerHTML = `
+          <div>
+            <div class="text-xs font-bold text-slate-500">${escapeHtml(p.ja)}</div>
+            <div class="text-xl font-black font-kr text-slate-900 mt-1">${escapeHtml(ko)}</div>
+            <div class="text-xs font-bold text-indigo-600 mt-0.5">${escapeHtml(pron)}</div>
+          </div>
+          <div class="flex items-center gap-2 pt-2 border-t border-slate-100">
+            <button onclick="speakKorean('${ko.replace(/\\/g, "\\\\").replace(/'/g, "\\'")}')" class="flex-1 py-2 rounded-xl bg-indigo-50 hover:bg-indigo-100 text-indigo-700 font-bold text-xs flex items-center justify-center gap-1.5 transition">
+              <i class="fa-solid fa-volume-high"></i> 音声再生
+            </button>
+            <button onclick="openBigModal('${ko.replace(/\\/g, "\\\\").replace(/'/g, "\\'")}', '${pron.replace(/\\/g, "\\\\").replace(/'/g, "\\'")}', '${p.ja.replace(/\\/g, "\\\\").replace(/'/g, "\\'")}')" class="px-3 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs transition" title="大画面で見せる">
+              <i class="fa-solid fa-expand"></i>
+            </button>
+          </div>
+        `;
+        container.appendChild(card);
+      });
+    }
+
+    function openBigModal(ko, pron, ja) {
+      currentBigModalText = ko;
+      document.getElementById("bigModalKo").textContent = ko;
+      document.getElementById("bigModalPron").textContent = pron;
+      document.getElementById("bigModalJa").textContent = ja;
+      document.getElementById("bigPhraseModal").classList.remove("hidden");
+      speakKorean(ko);
+    }
+
+    function speakBigModal() {
+      speakKorean(currentBigModalText);
+    }
+
+    function closeBigModal() {
+      document.getElementById("bigPhraseModal").classList.add("hidden");
+    }
+
+    // =================================================================
+    // 9. TAB 3: GRAMMAR LAB (PARTICLES, WORD ORDER, CONJUGATION)
+    // =================================================================
+    function switchGrammarSub(sub) {
+      ["particle", "order", "conjugation"].forEach(s => {
+        document.getElementById(`grammar-${s}-area`).classList.toggle("hidden", s !== sub);
+        const btn = document.getElementById(`gsub-${s}`);
+        btn.className = s === sub
+          ? "gsub-btn py-2 px-2 rounded-xl text-xs font-bold bg-indigo-50 text-indigo-600 transition"
+          : "gsub-btn py-2 px-2 rounded-xl text-xs font-bold text-slate-500 hover:text-slate-800 transition";
+      });
+    }
+
+    function getBatchimCode(hangulWord) {
+      const lastChar = hangulWord.charAt(hangulWord.length - 1);
+      const code = lastChar.charCodeAt(0);
+      if (code < 0xAC00 || code > 0xD7A3) return 0;
+      return (code - 0xAC00) % 28;
+    }
+
+    function initParticleTrainer() {
+      const pool = BEGINNER_NOUNS.length > 0 ? BEGINNER_NOUNS : FALLBACK_WORDS.filter(w => w.pos === "名詞");
+      const nounObj = pool[Math.floor(Math.random() * pool.length)];
+      const batchim = getBatchimCode(nounObj.ko);
+      const hasBatchim = batchim !== 0;
+      const isRieul = batchim === 8;
+
+      const particleTypes = [
+        {
+          label: "〜は（主題）",
+          options: ["은", "는"],
+          answer: hasBatchim ? "은" : "는",
+          reason: hasBatchim
+            ? `「${nounObj.ko}」の最後の文字にパッチムがあるため「은」を使います。`
+            : `「${nounObj.ko}」の最後の文字にパッチムがないため「는」を使います。`
+        },
+        {
+          label: "〜が（主格）",
+          options: ["이", "가"],
+          answer: hasBatchim ? "이" : "가",
+          reason: hasBatchim
+            ? `「${nounObj.ko}」の最後の文字にパッチムがあるため「이」を使います。`
+            : `「${nounObj.ko}」の最後の文字にパッチムがないため「가」を使います。`
+        },
+        {
+          label: "〜を（目的格）",
+          options: ["을", "를"],
+          answer: hasBatchim ? "을" : "를",
+          reason: hasBatchim
+            ? `「${nounObj.ko}」の最後の文字にパッチムがあるため「을」を使います。`
+            : `「${nounObj.ko}」の最後の文字にパッチムがないため「를」を使います。`
+        },
+        {
+          label: "〜と（並列・相手）",
+          options: ["과", "와"],
+          answer: hasBatchim ? "과" : "와",
+          reason: hasBatchim
+            ? `「${nounObj.ko}」の最後の文字にパッチムがあるため「과」を使います。`
+            : `「${nounObj.ko}」の最後の文字にパッチムがないため「와」を使います。`
+        },
+        {
+          label: "〜へ / 〜で（方向・手段）",
+          options: ["으로", "로"],
+          answer: (hasBatchim && !isRieul) ? "으로" : "로",
+          reason: isRieul
+            ? `「${nounObj.ko}」はㄹパッチムで終わる例外のため「로」を使います。`
+            : (hasBatchim
+              ? `「${nounObj.ko}」はㄹ以外のパッチムがあるため「으로」を使います。`
+              : `「${nounObj.ko}」はパッチムがないため「로」を使います。`)
+        }
+      ];
+
+      const pType = particleTypes[Math.floor(Math.random() * particleTypes.length)];
+      currentParticleQ = {
+        noun: nounObj.ko,
+        meaning: `${nounObj.meaning} ＋（${pType.label}）`,
+        options: pType.options,
+        answer: pType.answer,
+        reason: pType.reason
+      };
+
+      document.getElementById("particleNoun").textContent = currentParticleQ.noun;
+      document.getElementById("particleBlank").textContent = "？";
+      document.getElementById("particleBlank").className = "px-3 py-1 rounded-xl bg-indigo-100 text-indigo-600 border-2 border-dashed border-indigo-400";
+      document.getElementById("particleMeaning").textContent = currentParticleQ.meaning;
+      document.getElementById("particleResultBox").classList.add("hidden");
+
+      const choicesDiv = document.getElementById("particleChoices");
+      choicesDiv.innerHTML = "";
+      const shuffledOptions = [...currentParticleQ.options].sort(() => Math.random() - 0.5);
+      shuffledOptions.forEach(opt => {
+        const btn = document.createElement("button");
+        btn.className = "py-4 rounded-2xl bg-slate-50 hover:bg-indigo-50 border border-slate-200 hover:border-indigo-400 text-2xl font-black font-kr text-slate-800 transition";
+        btn.textContent = opt;
+        btn.onclick = () => checkParticleAnswer(opt);
+        choicesDiv.appendChild(btn);
+      });
+    }
+
+    function checkParticleAnswer(selected) {
+      const isOk = selected === currentParticleQ.answer;
+      const blank = document.getElementById("particleBlank");
+      blank.textContent = currentParticleQ.answer;
+      speakKorean(currentParticleQ.noun + currentParticleQ.answer);
+
+      const resBox = document.getElementById("particleResultBox");
+      resBox.classList.remove("hidden");
+
+      if (isOk) {
+        pStreak++;
+        blank.className = "px-3 py-1 rounded-xl bg-emerald-100 text-emerald-700 font-kr";
+        resBox.className = "p-3.5 rounded-2xl text-xs font-bold text-center bg-emerald-50 text-emerald-700 space-y-2";
+        resBox.innerHTML = `<div>⭕ 正解！ ${escapeHtml(currentParticleQ.reason)}</div><button onclick="initParticleTrainer()" class="px-4 py-1.5 rounded-xl bg-emerald-600 text-white text-xs">次の問題</button>`;
+      } else {
+        pStreak = 0;
+        blank.className = "px-3 py-1 rounded-xl bg-rose-100 text-rose-700 font-kr";
+        resBox.className = "p-3.5 rounded-2xl text-xs font-bold text-center bg-rose-50 text-rose-700 space-y-2";
+        resBox.innerHTML = `<div>❌ 不正解。${escapeHtml(currentParticleQ.reason)}</div><button onclick="initParticleTrainer()" class="px-4 py-1.5 rounded-xl bg-slate-800 text-white text-xs">次の問題</button>`;
+      }
+      document.getElementById("particleStreak").textContent = `連続正解: ${pStreak}`;
+    }
+
+    // --- SOV Word Order Puzzle ---
+    function initOrderPuzzle() {
+      const p = ORDER_PUZZLES[orderIdx % ORDER_PUZZLES.length];
+      orderSelected = [];
+      orderShuffledBank = [...p.blocks].sort(() => Math.random() - 0.5);
+      if (orderShuffledBank.join("") === p.blocks.join("") && p.blocks.length > 1) {
+        orderShuffledBank.reverse();
+      }
+      document.getElementById("orderCounter").textContent = `${(orderIdx % ORDER_PUZZLES.length) + 1} / ${ORDER_PUZZLES.length}`;
+      document.getElementById("orderPromptJa").textContent = p.ja;
+      document.getElementById("orderFeedback").classList.add("hidden");
+      renderOrderAreas();
+    }
+
+    function renderOrderAreas() {
+      const selArea = document.getElementById("orderSelectedArea");
+      const bankArea = document.getElementById("orderBankArea");
+
+      selArea.innerHTML = "";
+      if (orderSelected.length === 0) {
+        selArea.innerHTML = `<span class="text-xs text-slate-400">下のブロックをタップして文を組み立ててください</span>`;
+      } else {
+        orderSelected.forEach((word, idx) => {
+          const chip = document.createElement("button");
+          chip.className = "px-3.5 py-2 rounded-xl bg-indigo-600 text-white font-kr font-bold text-sm shadow-2xs";
+          chip.textContent = word;
+          chip.onclick = () => {
+            orderSelected.splice(idx, 1);
+            renderOrderAreas();
+          };
+          selArea.appendChild(chip);
+        });
+      }
+
+      const remaining = [...orderShuffledBank];
+      orderSelected.forEach(s => {
+        const pos = remaining.indexOf(s);
+        if (pos !== -1) remaining.splice(pos, 1);
+      });
+
+      bankArea.innerHTML = "";
+      remaining.forEach(word => {
+        const btn = document.createElement("button");
+        btn.className = "px-4 py-2.5 rounded-xl bg-white hover:bg-indigo-50 border border-slate-200 hover:border-indigo-400 font-kr font-bold text-sm text-slate-800 shadow-2xs transition";
+        btn.textContent = word;
+        btn.onclick = () => {
+          orderSelected.push(word);
+          renderOrderAreas();
+          checkOrderComplete();
+        };
+        bankArea.appendChild(btn);
+      });
+    }
+
+    function checkOrderComplete() {
+      const p = ORDER_PUZZLES[orderIdx % ORDER_PUZZLES.length];
+      if (orderSelected.length !== p.blocks.length) return;
+      const fb = document.getElementById("orderFeedback");
+      fb.classList.remove("hidden");
+      const fullSentence = orderSelected.join(" ");
+      if (orderSelected.join("") === p.blocks.join("")) {
+        fb.className = "p-3 rounded-xl text-xs font-bold text-center bg-emerald-50 text-emerald-700";
+        fb.textContent = `⭕ 完璧です！「${fullSentence}」`;
+        speakKorean(fullSentence);
+      } else {
+        fb.className = "p-3 rounded-xl text-xs font-bold text-center bg-amber-50 text-amber-700";
+        fb.textContent = "語順が少し違います。上のブロックをタップして戻し、入れ替えてみましょう。";
+      }
+    }
+
+    function resetOrderPuzzle() {
+      orderSelected = [];
+      document.getElementById("orderFeedback").classList.add("hidden");
+      renderOrderAreas();
+    }
+
+    function nextOrderPuzzle() {
+      orderIdx = (orderIdx + 1) % ORDER_PUZZLES.length;
+      initOrderPuzzle();
+    }
+
+    function renderConjugationTable() {
+      const tbody = document.getElementById("conjugationTableBody");
+      tbody.innerHTML = "";
+      CONJUGATION_LIST.forEach(row => {
+        const tr = document.createElement("tr");
+        tr.className = "hover:bg-slate-50";
+        tr.innerHTML = `
+          <td class="py-2.5 px-3 font-kr font-black text-slate-900">${escapeHtml(row.base)}</td>
+          <td class="py-2.5 px-3 font-bold text-slate-600">${escapeHtml(row.ja)}</td>
+          <td class="py-2.5 px-3 text-[11px] text-slate-500">${escapeHtml(row.rule)}</td>
+          <td class="py-2.5 px-3 font-kr font-extrabold text-indigo-600">${escapeHtml(row.heyo)}</td>
+          <td class="py-2.5 px-3 text-center">
+            <button onclick="speakKorean('${row.heyo}')" class="w-7 h-7 rounded-lg bg-indigo-50 hover:bg-indigo-100 text-indigo-600 text-xs">
+              <i class="fa-solid fa-volume-high"></i>
+            </button>
+          </td>
+        `;
+        tbody.appendChild(tr);
+      });
+    }
+
+    // =================================================================
+    // 10. TAB 4: NUMBERS & TIME MASTER
+    // =================================================================
+    function switchNumberTab(mode) {
+      document.getElementById("numbers-chart-area").classList.toggle("hidden", mode !== "chart");
+      document.getElementById("numbers-quiz-area").classList.toggle("hidden", mode !== "quiz");
+      document.getElementById("numtab-chart").className = mode === "chart"
+        ? "px-3 py-1.5 rounded-lg bg-white text-indigo-600 shadow-2xs transition"
+        : "px-3 py-1.5 rounded-lg text-slate-500 hover:text-slate-800 transition";
+      document.getElementById("numtab-quiz").className = mode === "quiz"
+        ? "px-3 py-1.5 rounded-lg bg-white text-indigo-600 shadow-2xs transition"
+        : "px-3 py-1.5 rounded-lg text-slate-500 hover:text-slate-800 transition";
+    }
+
+    function renderNumberCharts() {
+      const sinoGrid = document.getElementById("sinoNumberGrid");
+      SINO_NUMBERS.forEach(n => {
+        const cleanSpk = n.ko.split("/")[0].trim();
+        const btn = document.createElement("button");
+        btn.className = "p-2.5 rounded-xl bg-slate-50 hover:bg-sky-50 border border-slate-200/80 hover:border-sky-300 flex items-center justify-between text-left transition";
+        btn.onclick = () => speakKorean(cleanSpk);
+        btn.innerHTML = `
+          <div>
+            <span class="text-xs font-mono-num font-bold text-slate-400 mr-1.5">${escapeHtml(n.num)}</span>
+            <span class="text-sm font-black font-kr text-slate-900">${escapeHtml(n.ko)}</span>
+            <div class="text-[10px] text-slate-500">${escapeHtml(n.kana)}</div>
+          </div>
+          <i class="fa-solid fa-volume-high text-[10px] text-sky-600"></i>
+        `;
+        sinoGrid.appendChild(btn);
+      });
+
+      const nativeGrid = document.getElementById("nativeNumberGrid");
+      NATIVE_NUMBERS.forEach(n => {
+        const cleanSpk = n.ko.split("(")[0].trim();
+        const btn = document.createElement("button");
+        btn.className = "p-2.5 rounded-xl bg-slate-50 hover:bg-amber-50 border border-slate-200/80 hover:border-amber-300 flex items-center justify-between text-left transition";
+        btn.onclick = () => speakKorean(cleanSpk);
+        btn.innerHTML = `
+          <div>
+            <span class="text-xs font-mono-num font-bold text-slate-400 mr-1.5">${escapeHtml(n.num)}</span>
+            <span class="text-sm font-black font-kr text-slate-900">${escapeHtml(n.ko)}</span>
+            <div class="text-[10px] text-slate-500">${escapeHtml(n.kana)}</div>
+          </div>
+          <i class="fa-solid fa-volume-high text-[10px] text-amber-600"></i>
+        `;
+        nativeGrid.appendChild(btn);
+      });
+    }
+
+    function toSino(n) {
+      if (n === 0) return "영";
+      const digits = ["", "일", "이", "삼", "사", "오", "육", "칠", "팔", "구"];
+      let res = "";
+      const man = Math.floor(n / 10000);
+      const cheon = Math.floor((n % 10000) / 1000);
+      const baek = Math.floor((n % 1000) / 100);
+      const sip = Math.floor((n % 100) / 10);
+      const il = n % 10;
+      if (man > 0) res += (man === 1 ? "" : digits[man]) + "만 ";
+      if (cheon > 0) res += (cheon === 1 ? "" : digits[cheon]) + "천 ";
+      if (baek > 0) res += (baek === 1 ? "" : digits[baek]) + "백 ";
+      if (sip > 0) res += (sip === 1 ? "" : digits[sip]) + "십";
+      if (il > 0) res += digits[il];
+      return res.trim();
+    }
+
+    function toNativePrefix(n) {
+      const tens = ["", "열", "스물"];
+      const ones = ["", "한", "두", "세", "네", "다섯", "여섯", "일곱", "여덟", "아홉"];
+      if (n === 20) return "스무";
+      const t = Math.floor(n / 10);
+      const o = n % 10;
+      return (tens[t] || "") + (ones[o] || "");
+    }
+
+    function generateNumberQuiz() {
+      const mode = Math.floor(Math.random() * 4);
+      if (mode === 0) {
+        const h = Math.floor(Math.random() * 12) + 1;
+        const m = (Math.floor(Math.random() * 11) + 1) * 5;
+        const ans = `${toNativePrefix(h)} 시 ${toSino(m)} 분`;
+        const wrong1 = `${toSino(h)} 시 ${toSino(m)} 분`;
+        const wrong2 = `${toNativePrefix(h)} 시 ${toNativePrefix(Math.min(29, m))} 분`;
+        return {
+          ctx: "待ち合わせの時刻（時＝固有数詞 / 分＝漢数詞）",
+          prompt: `${h}時 ${m}分`,
+          options: Array.from(new Set([ans, wrong1, wrong2])),
+          answer: ans,
+          note: `「時（시）」は固有数詞（${toNativePrefix(h)}）、「分（분）」は漢数詞（${toSino(m)}）を使います。`
+        };
+      } else if (mode === 1) {
+        const c = Math.floor(Math.random() * 5) + 1;
+        const ans = `아메리카노 ${toNativePrefix(c)} 잔`;
+        const wrong1 = `아메리카노 ${toSino(c)} 잔`;
+        const fullNative = ["", "하나", "둘", "셋", "넷", "다섯"][c];
+        const wrong2 = `아메리카노 ${fullNative} 잔`;
+        return {
+          ctx: "カフェでの注文（杯＝固有数詞の短縮形）",
+          prompt: `アメリカーノ ${c}杯`,
+          options: Array.from(new Set([ans, wrong1, wrong2])),
+          answer: ans,
+          note: `個数・杯数（잔）には固有数詞の短縮形「${toNativePrefix(c)}」を使います。`
+        };
+      } else if (mode === 2) {
+        const k = Math.floor(Math.random() * 45) + 2;
+        const won = k * 1000;
+        const ans = `${toSino(won)} 원`;
+        const wrong1 = `일만 ${toSino(won % 10000 || 1000)} 원`;
+        const wrong2 = `${toNativePrefix(Math.min(20, k))}천 원`;
+        return {
+          ctx: "お店での会計（金額＝漢数詞）",
+          prompt: `${won.toLocaleString()}ウォン`,
+          options: Array.from(new Set([ans, wrong1, wrong2])),
+          answer: ans,
+          note: `金額はすべて漢数詞を使います（1万は「일만」ではなく「만」）。`
+        };
+      } else {
+        const age = Math.floor(Math.random() * 12) + 18;
+        const ans = `${toNativePrefix(age)} 살이에요`;
+        const wrong1 = `${toSino(age)} 살이에요`;
+        const wrong2 = `${age === 20 ? "스물" : "이십"} 살이에요`;
+        return {
+          ctx: "年齢を伝える時（歳＝固有数詞）",
+          prompt: `${age}歳です`,
+          options: Array.from(new Set([ans, wrong1, wrong2])),
+          answer: ans,
+          note: `年齢（살）は固有数詞を使い、20歳は「스무 살」になります。`
+        };
+      }
+    }
+
+    function initNumberQuiz() {
+      currentNumQ = generateNumberQuiz();
+      document.getElementById("numQuizContext").textContent = currentNumQ.ctx;
+      document.getElementById("numQuizPrompt").textContent = currentNumQ.prompt;
+      document.getElementById("numQuizFeedback").classList.add("hidden");
+
+      const optsDiv = document.getElementById("numQuizOptions");
+      optsDiv.innerHTML = "";
+      [...currentNumQ.options].sort(() => Math.random() - 0.5).forEach(opt => {
+        const btn = document.createElement("button");
+        btn.className = "w-full py-3.5 px-4 rounded-2xl bg-slate-50 hover:bg-indigo-50 border border-slate-200 hover:border-indigo-400 font-kr font-extrabold text-base text-slate-900 transition";
+        btn.textContent = opt;
+        btn.onclick = () => checkNumberQuizAnswer(opt);
+        optsDiv.appendChild(btn);
+      });
+    }
+
+    function checkNumberQuizAnswer(selected) {
+      const isOk = selected === currentNumQ.answer;
+      speakKorean(currentNumQ.answer);
+      const fb = document.getElementById("numQuizFeedback");
+      fb.classList.remove("hidden");
+
+      if (isOk) {
+        numStreak++;
+        fb.className = "p-3.5 rounded-2xl text-xs font-bold text-center bg-emerald-50 text-emerald-700 space-y-2";
+        fb.innerHTML = `<div>⭕ 正解！ ${escapeHtml(currentNumQ.note)}</div><button onclick="initNumberQuiz()" class="px-4 py-1.5 rounded-xl bg-emerald-600 text-white text-xs">次の問題</button>`;
+      } else {
+        numStreak = 0;
+        fb.className = "p-3.5 rounded-2xl text-xs font-bold text-center bg-rose-50 text-rose-700 space-y-2";
+        fb.innerHTML = `<div>❌ 正解は「${escapeHtml(currentNumQ.answer)}」です。${escapeHtml(currentNumQ.note)}</div><button onclick="initNumberQuiz()" class="px-4 py-1.5 rounded-xl bg-slate-800 text-white text-xs">次の問題</button>`;
+      }
+      document.getElementById("numQuizStreak").textContent = `連続正解: ${numStreak}`;
+    }
+
+    // =================================================================
+    // 11. BACKUP / RESTORE
+    // =================================================================
+    function openBackupModal() {
+      document.getElementById("backupModal").classList.remove("hidden");
+    }
+
+    function closeBackupModal() {
+      document.getElementById("backupModal").classList.add("hidden");
+    }
+
+    function exportBackupJSON() {
+      const now = new Date();
+      const pad = n => String(n).padStart(2, "0");
+      const stamp = `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}-${pad(now.getHours())}${pad(now.getMinutes())}`;
+      const filename = `korean-backup-${stamp}.json`;
+
+      const payload = {
+        app: "korean-hub",
+        version: 1,
+        exportedAt: now.toISOString(),
+        learnedIds: Array.from(learnedSet)
+      };
+
+      const blob = new Blob([JSON.stringify(payload, null, 2)], { type: "application/json" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = filename;
+      a.click();
+      URL.revokeObjectURL(url);
+      showToast(`バックアップを保存しました (${filename})`);
+    }
+
+    function importBackupJSON(event) {
+      const file = event.target.files?.[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = e => {
+        try {
+          const data = JSON.parse(e.target.result);
+          const ids = Array.isArray(data.learnedIds) ? data.learnedIds : (Array.isArray(data) ? data : []);
+          learnedSet = new Set(ids.map(Number).filter(n => !isNaN(n)));
+          saveProgress();
+          onVocabFilterChange();
+          closeBackupModal();
+          showToast(`復元完了：${learnedSet.size.toLocaleString()} 語の習得データを読み込みました`);
+        } catch (err) {
+          showToast("JSONファイルの形式が正しくありません");
+        } finally {
+          event.target.value = "";
+        }
+      };
+      reader.readAsText(file);
+    }
+  </script>
+</body>
+</html>

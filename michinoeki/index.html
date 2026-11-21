@@ -1,0 +1,1102 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <title>全国『道の駅』巡りマップ＆スタンプ帳 - selfup</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin="">
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@600;700;800&family=Noto+Sans+JP:wght@400;500;700;900&family=JetBrains+Mono:wght@600;800&display=swap');
+    body { font-family: 'Plus Jakarta Sans', 'Noto Sans JP', sans-serif; min-height: 100dvh; }
+    .font-mono-num { font-family: 'JetBrains Mono', monospace; }
+    #map { height: 460px; width: 100%; z-index: 10; border-radius: 1rem; }
+    @media (min-width: 1024px) { #map { height: 560px; } }
+    .custom-pin {
+      display: flex; align-items: center; justify-content: center;
+      width: 26px; height: 26px; border-radius: 9999px;
+      border: 2px solid #ffffff; box-shadow: 0 2px 5px rgba(15,23,42,0.28);
+      font-size: 10px; font-weight: 800; color: #ffffff; transition: transform 0.15s ease;
+    }
+    .custom-pin:hover { transform: scale(1.25); z-index: 999 !important; }
+    .pin-visited { background-color: #10b981; }
+    .pin-want { background-color: #f59e0b; }
+    .pin-unvisited { background-color: #475569; }
+    .pin-nearest { box-shadow: 0 0 0 4px rgba(14,165,233,0.45), 0 2px 8px rgba(15,23,42,0.35); }
+    @keyframes stampPop {
+      0% { transform: scale(2.2) rotate(-18deg); opacity: 0; }
+      70% { transform: scale(0.92) rotate(4deg); opacity: 1; }
+      100% { transform: scale(1) rotate(-3deg); opacity: 1; }
+    }
+    .animate-stamp { animation: stampPop 0.35s cubic-bezier(0.22, 1, 0.36, 1) forwards; }
+  </style>
+</head>
+<body class="bg-slate-50 text-slate-800 antialiased flex flex-col justify-between selection:bg-emerald-600 selection:text-white">
+
+  <!-- ヘッダー -->
+  <header class="bg-white border-b border-slate-200 sticky top-0 z-30 shadow-xs">
+    <div class="max-w-7xl mx-auto px-4 py-3 flex items-center justify-between gap-2">
+      <a href="../" class="inline-flex items-center gap-1.5 text-xs font-semibold text-slate-500 hover:text-slate-900 transition py-1.5 px-3 rounded-xl bg-slate-100 hover:bg-slate-200 shrink-0">
+        <i class="fa-solid fa-arrow-left text-[10px]"></i>
+        <span>Apps Hub</span>
+      </a>
+      <div class="flex items-center gap-2 min-w-0">
+        <div class="w-8 h-8 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center text-sm shrink-0 border border-emerald-200/70">
+          <i class="fa-solid fa-road"></i>
+        </div>
+        <h1 class="text-sm sm:text-base font-extrabold text-slate-800 tracking-tight truncate">
+          全国『道の駅』巡りマップ＆スタンプ帳
+        </h1>
+      </div>
+      <div class="flex items-center gap-1.5 shrink-0">
+        <button type="button" onclick="exportBackupJSON()" class="inline-flex items-center gap-1.5 text-xs font-bold text-slate-700 hover:text-slate-900 bg-slate-100 hover:bg-slate-200 px-2.5 sm:px-3 py-1.5 rounded-xl transition" title="訪問記録をJSONでバックアップ">
+          <i class="fa-solid fa-download text-emerald-600"></i>
+          <span class="hidden sm:inline">記録保存</span>
+          <span class="sm:hidden">保存</span>
+        </button>
+        <label class="inline-flex items-center gap-1.5 text-xs font-bold text-slate-700 hover:text-slate-900 bg-slate-100 hover:bg-slate-200 px-2.5 sm:px-3 py-1.5 rounded-xl transition cursor-pointer" title="訪問記録JSONを復元">
+          <i class="fa-solid fa-upload text-sky-600"></i>
+          <span class="hidden sm:inline">記録復元</span>
+          <span class="sm:hidden">復元</span>
+          <input type="file" id="importFileInput" accept=".json,application/json" class="hidden" onchange="importBackupJSON(event)">
+        </label>
+      </div>
+    </div>
+  </header>
+
+  <main class="max-w-7xl w-full mx-auto px-4 py-5 space-y-5 flex-1">
+
+    <!-- 1. コンプリート率 & 地方ブロック別ダッシュボード -->
+    <section class="bg-white rounded-3xl p-4 sm:p-5 border border-slate-200/80 shadow-xs space-y-4">
+      <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+        <div>
+          <div class="flex items-center gap-2">
+            <span id="datasetSourceLabel" class="text-xs font-bold text-slate-400">全国厳選 道の駅制覇率（内蔵134駅）</span>
+            <label class="inline-flex items-center gap-1 text-[11px] font-bold text-emerald-700 bg-emerald-50 hover:bg-emerald-100 border border-emerald-200 px-2 py-0.5 rounded-lg cursor-pointer transition" title="全駅データ michinoeki.json を手動選択して読み込む">
+              <i class="fa-solid fa-folder-open text-[10px]"></i>
+              <span>全駅JSON読込</span>
+              <input type="file" accept=".json,application/json" class="hidden" onchange="importMasterDatasetJSON(event)">
+            </label>
+          </div>
+          <div class="flex items-baseline gap-2.5 mt-1">
+            <span id="totalVisitedCount" class="text-2xl sm:text-3xl font-black font-mono-num text-emerald-600">0</span>
+            <span class="text-xs font-bold text-slate-500">/ <span id="totalStationCount" class="font-mono-num">134</span> 駅</span>
+            <span id="totalRateBadge" class="text-xs font-extrabold font-mono-num px-2 py-0.5 rounded-lg bg-emerald-50 text-emerald-700 border border-emerald-200/70">0.0%</span>
+            <span class="text-xs text-slate-400 ml-1">行きたい: <strong id="totalWantCount" class="font-mono-num text-amber-600">0</strong></span>
+          </div>
+        </div>
+        <div class="flex items-center gap-2">
+          <button type="button" onclick="findNearestStations()" class="inline-flex items-center gap-1.5 text-xs font-bold bg-sky-600 hover:bg-sky-700 text-white px-3.5 py-2 rounded-xl shadow-xs transition">
+            <i class="fa-solid fa-location-crosshairs"></i>
+            <span>現在地から最寄り駅を探す</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- 全体プログレスバー -->
+      <div class="w-full h-2.5 bg-slate-100 rounded-full overflow-hidden">
+        <div id="totalProgressBar" class="h-full bg-emerald-500 rounded-full transition-all duration-300" style="width: 0%"></div>
+      </div>
+
+      <!-- 最寄り駅クイック結果枠 -->
+      <div id="nearestBox" class="hidden bg-sky-50/80 border border-sky-200 rounded-2xl p-3 text-xs space-y-2">
+        <div class="flex items-center justify-between">
+          <span class="font-bold text-sky-900"><i class="fa-solid fa-compass mr-1"></i>現在地周辺の最寄り道の駅（上位3駅）</span>
+          <button type="button" onclick="document.getElementById('nearestBox').classList.add('hidden')" class="text-sky-600 hover:text-sky-900 text-[11px] font-bold">閉じる</button>
+        </div>
+        <div id="nearestList" class="grid grid-cols-1 sm:grid-cols-3 gap-2"></div>
+      </div>
+
+      <!-- 地方ブロック別 達成率 -->
+      <div class="space-y-2">
+        <div class="flex items-center justify-between">
+          <h2 class="text-xs font-bold text-slate-600">地方ブロック別 達成率（タップで絞り込み＆地図ズーム）</h2>
+          <button type="button" id="toggleRegionGridBtn" onclick="toggleRegionGrid()" class="text-[11px] font-semibold text-slate-500 hover:text-slate-800 px-2 py-0.5 rounded-lg bg-slate-100">開閉する</button>
+        </div>
+        <div id="regionDashboardGrid" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-2"></div>
+      </div>
+    </section>
+
+    <!-- 2. メイン2カラム：左＝地図ビュー / 右＝検索＆道の駅リスト -->
+    <div class="grid grid-cols-1 lg:grid-cols-12 gap-5 items-start">
+
+      <!-- 左カラム：インタラクティブ地図 -->
+      <section class="lg:col-span-7 bg-white rounded-3xl p-3.5 sm:p-4 border border-slate-200/80 shadow-xs space-y-3">
+        <div class="flex flex-wrap items-center justify-between gap-2">
+          <div class="inline-flex rounded-xl bg-slate-100 p-1 text-xs font-bold">
+            <button type="button" id="tilePaleBtn" onclick="switchTileLayer('pale')" class="px-2.5 py-1 rounded-lg bg-white text-slate-900 shadow-xs transition">淡色地図</button>
+            <button type="button" id="tileStdBtn" onclick="switchTileLayer('std')" class="px-2.5 py-1 rounded-lg text-slate-600 hover:text-slate-900 transition">標準地図</button>
+            <button type="button" id="tileOsmBtn" onclick="switchTileLayer('osm')" class="px-2.5 py-1 rounded-lg text-slate-600 hover:text-slate-900 transition">OSM</button>
+          </div>
+          <div class="flex items-center gap-3 text-[11px] font-bold text-slate-600">
+            <span class="inline-flex items-center gap-1"><span class="w-2.5 h-2.5 rounded-full bg-emerald-500 inline-block"></span>訪問済</span>
+            <span class="inline-flex items-center gap-1"><span class="w-2.5 h-2.5 rounded-full bg-amber-500 inline-block"></span>行きたい</span>
+            <span class="inline-flex items-center gap-1"><span class="w-2.5 h-2.5 rounded-full bg-slate-600 inline-block"></span>未訪問</span>
+          </div>
+        </div>
+
+        <div id="map"></div>
+        <div class="flex items-center justify-between text-[11px] text-slate-400 px-1">
+          <span id="mapRenderInfo">地図表示中: 134 駅</span>
+          <span>※広域表示時は軽量化のため最大250駅まで優先描画（ズームインで全駅表示）</span>
+        </div>
+      </section>
+
+      <!-- 右カラム：検索フィルター＆駅リスト -->
+      <section class="lg:col-span-5 bg-white rounded-3xl p-4 border border-slate-200/80 shadow-xs space-y-3">
+        <div class="relative">
+          <i class="fa-solid fa-magnifying-glass text-slate-400 text-xs absolute left-3.5 top-1/2 -translate-y-1/2"></i>
+          <input type="text" id="searchInput" oninput="syncAllViews(false)" placeholder="駅名・よみ・都道府県・市区町村・特徴で検索..." class="w-full pl-9 pr-8 py-2 text-xs bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:border-emerald-500 focus:bg-white transition">
+          <button type="button" onclick="document.getElementById('searchInput').value=''; syncAllViews(false);" class="text-slate-400 hover:text-slate-600 text-xs absolute right-3 top-1/2 -translate-y-1/2" title="クリア">
+            <i class="fa-solid fa-xmark"></i>
+          </button>
+        </div>
+
+        <div class="flex flex-wrap gap-1.5 text-xs font-bold">
+          <button type="button" data-status="all" onclick="setStatusFilter('all')" class="status-btn px-3 py-1.5 rounded-xl bg-slate-900 text-white transition">すべて</button>
+          <button type="button" data-status="visited" onclick="setStatusFilter('visited')" class="status-btn px-3 py-1.5 rounded-xl bg-slate-100 text-slate-600 hover:bg-slate-200 transition">訪問済み</button>
+          <button type="button" data-status="want" onclick="setStatusFilter('want')" class="status-btn px-3 py-1.5 rounded-xl bg-slate-100 text-slate-600 hover:bg-slate-200 transition">行きたい</button>
+          <button type="button" data-status="unvisited" onclick="setStatusFilter('unvisited')" class="status-btn px-3 py-1.5 rounded-xl bg-slate-100 text-slate-600 hover:bg-slate-200 transition">未訪問</button>
+        </div>
+
+        <div class="grid grid-cols-2 gap-2">
+          <select id="prefSelect" onchange="onPrefChange()" class="text-xs font-semibold bg-slate-50 border border-slate-200 rounded-xl px-2.5 py-2 text-slate-700 focus:outline-none focus:border-emerald-500">
+            <option value="">都道府県：すべて</option>
+          </select>
+          <select id="tagSelect" onchange="syncAllViews(false)" class="text-xs font-semibold bg-slate-50 border border-slate-200 rounded-xl px-2.5 py-2 text-slate-700 focus:outline-none focus:border-emerald-500">
+            <option value="">特徴タグ：すべて</option>
+          </select>
+        </div>
+
+        <div class="flex items-center justify-between text-xs pt-1 border-t border-slate-100">
+          <span class="font-bold text-slate-600">該当件数: <span id="filteredCount" class="font-mono-num text-emerald-600 font-extrabold">134</span> 駅</span>
+          <button type="button" onclick="resetAllFilters()" class="text-[11px] font-bold text-emerald-600 hover:text-emerald-800 transition">条件リセット</button>
+        </div>
+
+        <div id="stationList" class="space-y-2 max-h-[430px] overflow-y-auto pr-1"></div>
+        <div id="listMoreWrap" class="hidden pt-1">
+          <button type="button" onclick="loadMoreListItems()" class="w-full py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-xs font-bold text-slate-700 transition">
+            さらに表示する（残り <span id="listRemainingCount" class="font-mono-num">0</span> 駅）
+          </button>
+        </div>
+      </section>
+    </div>
+
+    <!-- 3. データ保持に関するご注意 -->
+    <section class="bg-amber-50/80 border border-amber-200/80 rounded-2xl p-4 text-xs text-amber-950/90 space-y-1">
+      <div class="font-bold text-amber-900 flex items-center gap-1.5">
+        <i class="fa-solid fa-circle-info text-amber-600"></i>
+        <span>データの保持に関するご注意</span>
+      </div>
+      <p class="text-[11px] leading-relaxed">
+        訪問記録やスタンプはご利用中のブラウザ端末内（localStorage）にのみ保存されます。Safariの7日間未操作による自動消去やキャッシュ削除に備え、「ホーム画面に追加」または上部の「記録保存」ボタンから定期的なバックアップをおすすめします。
+      </p>
+    </section>
+
+    <!-- 4. 収録データ・出典・ライセンス表示枠 -->
+    <section class="bg-white rounded-2xl p-4 border border-slate-200/80 shadow-xs text-[11px] text-slate-500 space-y-1.5">
+      <div class="font-bold text-slate-700">収録データ・地図タイル出典</div>
+      <ul class="list-disc list-inside space-y-0.5">
+        <li>道の駅スポット情報：国土交通省「国土数値情報（道の駅データ / 政府標準利用規約準拠）」および公式案内情報を収録（同階層の <code>michinoeki.json</code> 配置で全駅自動展開）</li>
+        <li>地図タイル：国土地理院（地理院タイル：淡色地図・標準地図） / OpenStreetMap（© OpenStreetMap contributors）</li>
+      </ul>
+    </section>
+  </main>
+
+  <!-- 訪問記録＆スタンプモーダル -->
+  <div id="detailModal" class="fixed inset-0 bg-slate-900/50 backdrop-blur-xs z-50 hidden items-center justify-center p-4">
+    <div class="bg-white rounded-3xl max-w-lg w-full p-5 sm:p-6 shadow-xl border border-slate-200 max-h-[90dvh] overflow-y-auto space-y-4">
+      <div class="flex items-start justify-between gap-3">
+        <div>
+          <div class="flex items-center gap-2 text-xs font-bold text-emerald-700">
+            <span id="modalPref">北海道</span>
+            <span class="text-slate-300">|</span>
+            <span id="modalRoad">国道234号</span>
+          </div>
+          <h3 id="modalName" class="text-lg sm:text-xl font-extrabold text-slate-900 mt-0.5">道の駅 駅名</h3>
+          <p id="modalYomi" class="text-[11px] text-slate-400"></p>
+        </div>
+        <button type="button" onclick="closeModal()" class="w-8 h-8 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-600 flex items-center justify-center transition">
+          <i class="fa-solid fa-xmark"></i>
+        </button>
+      </div>
+
+      <p id="modalDesc" class="text-xs text-slate-600 leading-relaxed bg-slate-50 p-3 rounded-2xl border border-slate-100"></p>
+      <div id="modalTags" class="flex flex-wrap gap-1.5"></div>
+
+      <div class="space-y-1.5">
+        <label class="text-xs font-bold text-slate-700 block">訪問ステータス</label>
+        <div class="grid grid-cols-3 gap-2 text-xs font-bold">
+          <button type="button" id="btnSetUnvisited" onclick="setModalStatus('unvisited')" class="py-2 rounded-xl border border-slate-200 text-slate-600 hover:bg-slate-50 transition">未訪問</button>
+          <button type="button" id="btnSetWant" onclick="setModalStatus('want')" class="py-2 rounded-xl border border-amber-200 text-amber-700 hover:bg-amber-50 transition">⭐ 行きたい</button>
+          <button type="button" id="btnSetVisited" onclick="setModalStatus('visited')" class="py-2 rounded-xl border border-emerald-200 text-emerald-700 hover:bg-emerald-50 transition">✅ 訪問済み</button>
+        </div>
+      </div>
+
+      <div class="space-y-1.5">
+        <label class="text-xs font-bold text-slate-700 block">コレクションスタンプ（タップで押印）</label>
+        <div class="grid grid-cols-2 sm:grid-cols-4 gap-2 text-xs font-bold">
+          <button type="button" data-stamp="stamp" onclick="toggleStamp('stamp')" class="stamp-choice p-2.5 rounded-2xl border border-slate-200 flex flex-col items-center gap-1 transition">
+            <span class="text-xl">💮</span><span>記念スタンプ</span>
+          </button>
+          <button type="button" data-stamp="gourmet" onclick="toggleStamp('gourmet')" class="stamp-choice p-2.5 rounded-2xl border border-slate-200 flex flex-col items-center gap-1 transition">
+            <span class="text-xl">🍜</span><span>ご当地グルメ</span>
+          </button>
+          <button type="button" data-stamp="onsen" onclick="toggleStamp('onsen')" class="stamp-choice p-2.5 rounded-2xl border border-slate-200 flex flex-col items-center gap-1 transition">
+            <span class="text-xl">♨️</span><span>温泉・休憩</span>
+          </button>
+          <button type="button" data-stamp="ticket" onclick="toggleStamp('ticket')" class="stamp-choice p-2.5 rounded-2xl border border-slate-200 flex flex-col items-center gap-1 transition">
+            <span class="text-xl">🛍️</span><span>特産品・切符</span>
+          </button>
+        </div>
+      </div>
+
+      <div class="bg-slate-50 p-3.5 rounded-2xl border border-slate-200/80 space-y-2.5">
+        <div class="text-xs font-bold text-slate-700">訪問ログを追加</div>
+        <div class="grid grid-cols-2 gap-2">
+          <div>
+            <label class="text-[11px] font-semibold text-slate-500 block mb-1">訪問日</label>
+            <input type="date" id="logDateInput" class="w-full text-xs bg-white border border-slate-200 rounded-xl px-2.5 py-1.5">
+          </div>
+          <div>
+            <label class="text-[11px] font-semibold text-slate-500 block mb-1">移動手段</label>
+            <select id="logVehicleInput" class="w-full text-xs bg-white border border-slate-200 rounded-xl px-2.5 py-1.5">
+              <option value="🚗 車">🚗 車</option>
+              <option value="🏍️ バイク">🏍️ バイク</option>
+              <option value="🚲 自転車">🚲 自転車</option>
+              <option value="🚌 公共交通・徒歩">🚌 公共交通・徒歩</option>
+            </select>
+          </div>
+        </div>
+        <div>
+          <input type="text" id="logMemoInput" placeholder="食べたもの・買ったお土産・旅メモ..." class="w-full text-xs bg-white border border-slate-200 rounded-xl px-3 py-1.5">
+        </div>
+        <button type="button" onclick="addVisitLog()" class="w-full py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold transition">
+          <i class="fa-solid fa-stamp mr-1"></i>この内容で訪問記録を保存
+        </button>
+      </div>
+
+      <div id="visitLogsContainer" class="space-y-1.5"></div>
+    </div>
+  </div>
+
+  <!-- フッター（Apps Hub統一規格ミニ免責ワンライナーのみ） -->
+  <footer class="mt-8 py-6 text-center border-t border-slate-200">
+    <div class="max-w-4xl mx-auto px-4">
+      <p class="text-[11px] text-slate-400">
+        ※個人開発プロトタイプにつき無保証・自己責任にてご利用ください（データは端末内完結・サポート対象外）
+      </p>
+    </div>
+  </footer>
+
+  <script>
+    const STORAGE_KEY = 'selfup_michinoeki_v1';
+    const MAX_MAP_MARKERS = 250;
+    const LIST_PAGE_STEP = 80;
+
+    const REGIONS = [
+      { id: 'ALL', name: '全国', center: [37.5, 137.5], zoom: 5 },
+      { id: '北海道', name: '北海道', center: [43.3, 142.8], zoom: 7 },
+      { id: '東北', name: '東北', center: [39.3, 140.8], zoom: 7 },
+      { id: '関東', name: '関東', center: [36.1, 139.8], zoom: 8 },
+      { id: '北陸', name: '北陸', center: [36.8, 137.3], zoom: 8 },
+      { id: '中部', name: '中部', center: [35.6, 137.8], zoom: 8 },
+      { id: '近畿', name: '近畿', center: [34.8, 135.5], zoom: 8 },
+      { id: '中国', name: '中国', center: [34.9, 132.8], zoom: 8 },
+      { id: '四国', name: '四国', center: [33.7, 133.5], zoom: 8 },
+      { id: '九州', name: '九州', center: [32.7, 131.0], zoom: 7 },
+      { id: '沖縄', name: '沖縄', center: [26.5, 127.9], zoom: 9 }
+    ];
+
+    const PREF_TO_REGION = {
+      '北海道': '北海道',
+      '青森県': '東北', '岩手県': '東北', '宮城県': '東北', '秋田県': '東北', '山形県': '東北', '福島県': '東北',
+      '茨城県': '関東', '栃木県': '関東', '群馬県': '関東', '埼玉県': '関東', '千葉県': '関東', '東京都': '関東', '神奈川県': '関東',
+      '新潟県': '北陸', '富山県': '北陸', '石川県': '北陸', '福井県': '北陸',
+      '山梨県': '中部', '長野県': '中部', '岐阜県': '中部', '静岡県': '中部', '愛知県': '中部',
+      '三重県': '近畿', '滋賀県': '近畿', '京都府': '近畿', '大阪府': '近畿', '兵庫県': '近畿', '奈良県': '近畿', '和歌山県': '近畿',
+      '鳥取県': '中国', '島根県': '中国', '岡山県': '中国', '広島県': '中国', '山口県': '中国',
+      '徳島県': '四国', '香川県': '四国', '愛媛県': '四国', '高知県': '四国',
+      '福岡県': '九州', '佐賀県': '九州', '長崎県': '九州', '熊本県': '九州', '大分県': '九州', '宮崎県': '九州', '鹿児島県': '九州',
+      '沖縄県': '沖縄'
+    };
+
+    const BUILTIN_MICHINOEKI_DATA = [
+      { id: 'hk01', name: 'あびら D51ステーション', yomi: 'あびら でごいちすてーしょん', pref: '北海道', region: '北海道', road: '国道234号', lat: 42.8384, lng: 141.8165, tags: ['鉄道・レトロ', 'ご当地グルメ', '産直・特産品'], desc: '蒸気機関車D51 320号機を屋内展示する鉄道ファン必見の道の駅。安平産チーズやもくもくD51ソフトが人気。' },
+      { id: 'hk02', name: 'ニセコビュープラザ', yomi: 'にせこびゅーぷらざ', pref: '北海道', region: '北海道', road: '国道5号', lat: 42.8114, lng: 140.6869, tags: ['絶景', 'ご当地グルメ', '産直・特産品'], desc: '蝦夷富士・羊蹄山の雄大なパノラマを望む絶景ステーション。新鮮な高原野菜の直売所が大賑わい。' },
+      { id: 'hk03', name: '流氷街道網走', yomi: 'りゅうひょうかいどうあばしり', pref: '北海道', region: '北海道', road: '国道244号', lat: 44.0189, lng: 144.2856, tags: ['海沿い', '絶景', 'ご当地グルメ'], desc: 'オホーツク海と網走川河口に面し、冬は流氷砕氷船の発着場にもなる海の道の駅。' },
+      { id: 'hk04', name: '摩周温泉', yomi: 'ましゅうおんせん', pref: '北海道', region: '北海道', road: '国道241号', lat: 43.4892, lng: 144.4556, tags: ['温泉・入浴', 'ご当地グルメ'], desc: '摩周湖・屈斜路湖観光の拠点。源泉かけ流しの足湯やエゾシカバーガーが魅力。' },
+      { id: 'hk05', name: 'びえい「丘のくら」', yomi: 'びえい おかのくら', pref: '北海道', region: '北海道', road: '道道213号', lat: 43.5897, lng: 142.4675, tags: ['絶景', '歴史・文化', '産直・特産品'], desc: '美瑛軟石の石造り倉庫を活用した駅。パッチワークの丘巡りの拠点として人気が高い。' },
+      { id: 'hk06', name: 'なないろ・ななえ', yomi: 'なないろ ななえ', pref: '北海道', region: '北海道', road: '国道5号', lat: 41.9118, lng: 140.6924, tags: ['ご当地グルメ', '産直・特産品'], desc: '西洋りんご発祥の地・七飯町にある函館近郊の人気駅。りんごスイーツやガラナソフトが名物。' },
+      { id: 'ao01', name: '浅虫温泉「ゆ〜さ浅虫」', yomi: 'あさむしおんせん ゆーさあさむし', pref: '青森県', region: '東北', road: '国道4号', lat: 40.8927, lng: 140.8603, tags: ['温泉・入浴', '海沿い', '絶景'], desc: '陸奥湾に沈む夕日を眺めながら入浴できる展望浴場「はだか湯」を完備した海辺の道の駅。' },
+      { id: 'ao02', name: '奥入瀬「奥入瀬ろまんパーク」', yomi: 'おいらせ ろまんぱーく', pref: '青森県', region: '東北', road: '国道102号', lat: 40.5844, lng: 141.0764, tags: ['ファミリー・公園', 'ご当地グルメ'], desc: '十和田湖・奥入瀬渓流への入口。奥入瀬ビール醸造所やアップルパイ工房、芝生広場が揃う。' },
+      { id: 'ao03', name: 'ふかうら「かそせいかやき村」', yomi: 'ふかうら かそせいかやきむら', pref: '青森県', region: '東北', road: '国道101号', lat: 40.7336, lng: 139.9839, tags: ['海沿い', 'ご当地グルメ', '鉄道・レトロ'], desc: '日本海沿い五能線ドライブの名所。名物のイカ焼きと新鮮な日本海の幸が味わえる。' },
+      { id: 'iw01', name: '雫石あねっこ', yomi: 'しずくいしあねっこ', pref: '岩手県', region: '東北', road: '国道46号', lat: 39.6714, lng: 140.8936, tags: ['温泉・入浴', 'ご当地グルメ', '産直・特産品'], desc: '秋田県境に近い日帰り温泉併設の道の駅。雫石牛やひとめぼれソフトが評判。' },
+      { id: 'iw02', name: 'みやこ「シートピアなあど」', yomi: 'みやこ しーとぴあなあど', pref: '岩手県', region: '東北', road: '国道45号', lat: 39.6433, lng: 141.9688, tags: ['海沿い', '絶景', 'ご当地グルメ'], desc: '浄土ヶ浜に隣接する三陸海岸の拠点。三陸の旬の魚介や瓶ドン、海を望むレストランが人気。' },
+      { id: 'iw03', name: '平泉', yomi: 'ひらいずみ', pref: '岩手県', region: '東北', road: '国道4号', lat: 38.9936, lng: 141.1235, tags: ['歴史・文化', 'ご当地グルメ'], desc: '世界遺産・中尊寺や毛越寺にほど近い歴史ロマンあふれる道の駅。奥州いわいどりやもち料理が楽しめる。' },
+      { id: 'mg01', name: 'あ・ら・伊達な道の駅', yomi: 'あらだてなみちのえき', pref: '宮城県', region: '東北', road: '国道47号', lat: 38.6552, lng: 140.8617, tags: ['ご当地グルメ', '産直・特産品'], desc: '全国道の駅ランキング常連の超人気駅。姉妹都市当別町のロイズ常設店や焼きたてパンが大好評。' },
+      { id: 'mg02', name: '女川「おながわ」', yomi: 'おながわ', pref: '宮城県', region: '東北', road: '国道398号', lat: 38.4455, lng: 141.4456, tags: ['海沿い', '温泉・入浴', '鉄道・レトロ'], desc: 'JR女川駅と一体化し、海へと続くレンガみち周辺に商業施設や温泉「ゆぽっぽ」が集結する復興の象徴。' },
+      { id: 'mg03', name: '上品の郷', yomi: 'じょうぼんのさと', pref: '宮城県', region: '東北', road: '国道45号', lat: 38.4819, lng: 141.2981, tags: ['温泉・入浴', '産直・特産品'], desc: '三陸道・河北ICすぐの天然温泉「ふたごの湯」併設駅。含鉄塩化物泉の茶褐色の名湯が人気。' },
+      { id: 'ak01', name: '象潟「ねむの丘」', yomi: 'きさかた ねむのおか', pref: '秋田県', region: '東北', road: '国道7号', lat: 39.2153, lng: 139.9006, tags: ['温泉・入浴', '海沿い', '絶景'], desc: '東北最大級の規模を誇り、4階の展望温泉「眺海の湯」から日本海と九十九島を一望できる。' },
+      { id: 'ak02', name: '十和田湖', yomi: 'とわだこ', pref: '秋田県', region: '東北', road: '国道103号', lat: 40.4227, lng: 140.8924, tags: ['絶景', 'ご当地グルメ'], desc: '十和田湖西岸・発荷峠の麓に位置し、比内地鶏グルメや秋田名物きりたんぽが味わえる。' },
+      { id: 'ak03', name: 'あきた港「セリオン」', yomi: 'あきたこう せりおん', pref: '秋田県', region: '東北', road: '国道7号', lat: 39.7547, lng: 140.0619, tags: ['絶景', '海沿い', '鉄道・レトロ'], desc: '全高143mの展望タワー「セリオン」がランドマーク。レトロなうどん・そば自販機も有名。' },
+      { id: 'ym01', name: '寒河江「チェリーランド」', yomi: 'さがえ ちぇりーらんど', pref: '山形県', region: '東北', road: '国道112号', lat: 38.3879, lng: 140.2547, tags: ['ご当地グルメ', '産直・特産品', 'ファミリー・公園'], desc: 'さくらんぼの里・寒河江の大型ステーション。手作りジェラートや季節の果物が豊富。' },
+      { id: 'ym02', name: 'あつみ「しゃりん」', yomi: 'あつみ しゃりん', pref: '山形県', region: '東北', road: '国道7号', lat: 38.6186, lng: 139.5892, tags: ['海沿い', '絶景', 'ご当地グルメ'], desc: '日本海の荒波と夕日の絶景が広がる海辺の駅。磯遊びできる遊歩道と新鮮な魚介が魅力。' },
+      { id: 'ym03', name: '米沢', yomi: 'よねざわ', pref: '山形県', region: '東北', road: '国道13号', lat: 37.9168, lng: 140.1436, tags: ['ご当地グルメ', '産直・特産品'], desc: '東北中央道・米沢中央IC直結。本場の米沢牛ステーキ・牛丼や米沢ラーメンを堪能できる。' },
+      { id: 'fs01', name: '猪苗代', yomi: 'いなわしろ', pref: '福島県', region: '東北', road: '国道115号', lat: 37.5419, lng: 140.1066, tags: ['絶景', 'ご当地グルメ', '産直・特産品'], desc: '磐梯山と猪苗代湖を望む好立地。磐梯山ジオパークの拠点で会津ソースカツ丼や地酒が充実。' },
+      { id: 'fs02', name: '裏磐梯', yomi: 'うらばんだい', pref: '福島県', region: '東北', road: '国道459号', lat: 37.6744, lng: 140.0725, tags: ['絶景', 'ご当地グルメ'], desc: '桧原湖畔の高原リゾートにある駅。山塩ラーメンや会津山塩ソフトクリームが名物。' },
+      { id: 'fs03', name: 'なみえ', yomi: 'なみえ', pref: '福島県', region: '東北', road: '国道6号', lat: 37.4922, lng: 140.9922, tags: ['ご当地グルメ', '産直・特産品'], desc: '浜通り復興のシンボル。ご当地グルメのなみえ焼そばや請戸漁港の鮮魚、日本酒工房を併設。' },
+      { id: 'ib01', name: '日立おさかなセンター', yomi: 'ひたちおさかなせんたー', pref: '茨城県', region: '関東', road: '国道245号', lat: 36.5067, lng: 140.6203, tags: ['海沿い', 'ご当地グルメ'], desc: '好きなネタを選んでオリジナル海鮮丼を作れる「味勝手丼」が大人気の港町ステーション。' },
+      { id: 'ib02', name: '常総', yomi: 'じょうそう', pref: '茨城県', region: '関東', road: '国道294号', lat: 36.0494, lng: 139.9922, tags: ['ご当地グルメ', '産直・特産品'], desc: '圏央道常総ICすぐの食のテーマパーク型道の駅。極細けんぴやメロンパンに行列ができる。' },
+      { id: 'ib03', name: 'グランテラス筑西', yomi: 'ぐらんてらすちくせい', pref: '茨城県', region: '関東', road: '国道50号', lat: 36.3106, lng: 139.9986, tags: ['ファミリー・公園', '産直・特産品', 'ご当地グルメ'], desc: '北関東最大級の複合型道の駅。広大な芝生広場やBBQ、ドッグランを備え一日中楽しめる。' },
+      { id: 'tc01', name: 'うつのみや ろまんちっく村', yomi: 'うつのみや ろまんちっくむら', pref: '栃木県', region: '関東', road: '国道293号', lat: 36.6317, lng: 139.8322, tags: ['温泉・入浴', 'ファミリー・公園', 'ご当地グルメ'], desc: '東京ドーム10個分の敷地に天然温泉・プール・農園・地ビール工房を備えた滞在型道の駅。' },
+      { id: 'tc02', name: 'もてぎ', yomi: 'もてぎ', pref: '栃木県', region: '関東', road: '国道123号', lat: 36.5333, lng: 140.1819, tags: ['鉄道・レトロ', 'ご当地グルメ', 'ファミリー・公園'], desc: '真岡鐵道のSLがすぐ横を走る鉄道ファン人気の駅。おとめミルクアイスとゆず塩ら〜めんが名物。' },
+      { id: 'tc03', name: '日光「日光街道ニコニコ本陣」', yomi: 'にっこう にっこうかいどうにこにこほんじん', pref: '栃木県', region: '関東', road: '国道119号', lat: 36.7236, lng: 139.6878, tags: ['歴史・文化', '産直・特産品'], desc: '日光杉並木街道の宿場町・今市にある駅。ゆばや日光天然氷のかき氷、船村徹記念館を併設。' },
+      { id: 'gm01', name: '川場田園プラザ', yomi: 'かわばでんえんぷらざ', pref: '群馬県', region: '関東', road: '県道64号', lat: 36.6836, lng: 139.1158, tags: ['ファミリー・公園', 'ご当地グルメ', '産直・特産品'], desc: '全国道の駅グランプリ常連の超人気スポット。武尊山の麓にパン工房・ビール工房・アスレチックが点在。' },
+      { id: 'gm02', name: '八ッ場ふるさと館', yomi: 'やんばふるさとかん', pref: '群馬県', region: '関東', road: '国道145号', lat: 36.5489, lng: 138.6856, tags: ['温泉・入浴', '絶景', 'ご当地グルメ'], desc: '八ッ場ダム湖（八ッ場あがつま湖）を望む駅。無料足湯やダムカレー、焼きたてパンが人気。' },
+      { id: 'gm03', name: '草津運動茶屋公園', yomi: 'くさつうんどうちゃやこうえん', pref: '群馬県', region: '関東', road: '国道292号', lat: 36.6147, lng: 138.5986, tags: ['温泉・入浴', '歴史・文化'], desc: '草津温泉の玄関口に位置し、ベルツ記念館やロマンチック街道資料館、特産品ショップが揃う。' },
+      { id: 'st01', name: 'ちちぶ', yomi: 'ちちぶ', pref: '埼玉県', region: '関東', road: '国道140号', lat: 35.9986, lng: 139.0861, tags: ['ご当地グルメ', '産直・特産品', '歴史・文化'], desc: '秩父観光の中心地。わらじかつ丼やみそポテト、秩父そばなど地元グルメが一堂に会する。' },
+      { id: 'st02', name: 'いちごの里 よしみ', yomi: 'いちごのさと よしみ', pref: '埼玉県', region: '関東', road: '県道27号', lat: 36.0406, lng: 139.4614, tags: ['ご当地グルメ', 'ファミリー・公園', '産直・特産品'], desc: 'いちごの産地・吉見町にある駅。生いちごソフトやいちご大福、大型遊具がファミリーに好評。' },
+      { id: 'cb01', name: '保田小学校', yomi: 'ほたしょうがっこう', pref: '千葉県', region: '関東', road: '県道34号', lat: 35.1408, lng: 139.8442, tags: ['鉄道・レトロ', '温泉・入浴', 'ご当地グルメ'], desc: '廃校になった小学校をリノベーションしたユニークな駅。教室に泊まれる宿泊施設や給食グルメが話題。' },
+      { id: 'cb02', name: '木更津 うまくたの里', yomi: 'きさらづ うまくたのさと', pref: '千葉県', region: '関東', road: '国道410号', lat: 35.3678, lng: 140.0258, tags: ['ご当地グルメ', '産直・特産品'], desc: '圏央道木更津東ICすぐの体験型食のテーマパーク。ピーナッツペーストや地元野菜が圧巻の品揃え。' },
+      { id: 'cb03', name: 'ちくら・潮風王国', yomi: 'ちくら しおかぜおうこく', pref: '千葉県', region: '関東', road: '国道410号', lat: 34.9567, lng: 139.9564, tags: ['海沿い', '絶景', 'ファミリー・公園'], desc: '南房総・千倉の太平洋岸に面し、実物大の漁船レプリカと広大な芝生公園、海鮮料理が楽しめる。' },
+      { id: 'tk01', name: '八王子滝山', yomi: 'はちおうじたきやま', pref: '東京都', region: '関東', road: '国道16号', lat: 35.6889, lng: 139.3278, tags: ['産直・特産品', 'ご当地グルメ'], desc: '東京都唯一の道の駅。朝採れの江戸東京野菜や八王子ラーメン、金子ミルクのジェラートが人気。' },
+      { id: 'kn01', name: '箱根峠', yomi: 'はこねとうげ', pref: '神奈川県', region: '関東', road: '国道1号', lat: 35.1886, lng: 139.0233, tags: ['絶景', '歴史・文化'], desc: '芦ノ湖と富士山を一望する標高846mの絶景スポット。箱根旧街道やツーリングの休憩基地。' },
+      { id: 'kn02', name: '清川', yomi: 'きよかわ', pref: '神奈川県', region: '関東', road: '県道64号', lat: 35.4836, lng: 139.2819, tags: ['ご当地グルメ', '産直・特産品'], desc: '宮ヶ瀬湖にほど近い緑豊かな清川村の駅。ブランド豚「恵水ポーク」の丼ぶりが名物。' },
+      { id: 'kn03', name: '足柄・金太郎のふるさと', yomi: 'あしがら きんたろうのふるさと', pref: '神奈川県', region: '関東', road: '県道78号', lat: 35.3319, lng: 139.1128, tags: ['ご当地グルメ', '産直・特産品'], desc: '南足柄市の豊かな自然の恵みが集まる駅。相州牛や足柄茶を使ったオリジナルスイーツが評判。' },
+      { id: 'ni01', name: 'マリンドリーム能生', yomi: 'まりんどりーむのう', pref: '新潟県', region: '北陸', road: '国道8号', lat: 37.1061, lng: 137.9942, tags: ['海沿い', 'ご当地グルメ', '絶景'], desc: '日本海最大級のベニズワイガニ直売所「かにや横丁」を併設し、その場でカニを味わえる。' },
+      { id: 'ni02', name: '越後出雲崎 天領の里', yomi: 'えちごいずもざき てんりょうのさと', pref: '新潟県', region: '北陸', road: '国道352号', lat: 37.5347, lng: 138.6989, tags: ['海沿い', '歴史・文化', '絶景'], desc: '佐渡島を望む夕日の名所・出雲崎にある駅。海に突き出た夕凪の橋と天領出雲崎時代館を併設。' },
+      { id: 'ni03', name: '新潟ふるさと村', yomi: 'にいがたふるさとむら', pref: '新潟県', region: '北陸', road: '国道8号', lat: 37.8825, lng: 139.0069, tags: ['歴史・文化', '産直・特産品', 'ご当地グルメ'], desc: '新潟の物産・グルメ・歴史体験施設が集結した大型拠点。県内の日本酒や米菓の品揃えが圧巻。' },
+      { id: 'ty01', name: '雨晴', yomi: 'あまはらし', pref: '富山県', region: '北陸', road: '国道415号', lat: 36.8147, lng: 137.0378, tags: ['海沿い', '絶景', '鉄道・レトロ'], desc: '富山湾越しに3,000m級の立山連峰とJR氷見線の列車を同時に望む屈指の絶景ステーション。' },
+      { id: 'ty02', name: '氷見「ひみ番屋街」', yomi: 'ひみ ひみばんやがい', pref: '富山県', region: '北陸', road: '国道415号', lat: 36.8617, lng: 136.9889, tags: ['海沿い', '温泉・入浴', 'ご当地グルメ'], desc: '氷見漁港直送の鮮魚や氷見うどん、天然温泉「総湯」が集まる北陸屈指のグルメ観光拠点。' },
+      { id: 'ty03', name: 'ウェーブパークなめりかわ', yomi: 'うぇーぶぱーくなめりかわ', pref: '富山県', region: '北陸', road: '県道1号', lat: 36.7686, lng: 137.3369, tags: ['海沿い', 'ファミリー・公園'], desc: '世界で唯一の「ほたるいかミュージアム」を併設し、春にはホタルイカの発光ショーが見られる。' },
+      { id: 'is01', name: 'のと千里浜', yomi: 'のとちりはま', pref: '石川県', region: '北陸', road: '県道232号', lat: 36.8858, lng: 136.7647, tags: ['海沿い', '温泉・入浴', 'ご当地グルメ'], desc: '車で走れる砂浜「千里浜なぎさドライブウェイ」の入口に位置し、タイヤシャワーや足湯を完備。' },
+      { id: 'is02', name: '輪島「ふらっと訪夢」', yomi: 'わじま ふらっとほうむ', pref: '石川県', region: '北陸', road: '国道249号', lat: 37.3911, lng: 136.9056, tags: ['鉄道・レトロ', '歴史・文化'], desc: '旧のと鉄道輪島駅跡地に整備された駅。ホームや線路のモニュメントが残り能登観光の玄関口。' },
+      { id: 'is03', name: 'こまつ木場潟', yomi: 'こまつきばがた', pref: '石川県', region: '北陸', road: '国道8号', lat: 36.3775, lng: 136.4628, tags: ['絶景', 'ご当地グルメ', '産直・特産品'], desc: '霊峰白山と木場潟を望む駅。地元産トマトを使ったカレーや加賀丸いもグルメが好評。' },
+      { id: 'fi01', name: '恐竜渓谷かつやま', yomi: 'きょうりゅうけいこくかつやま', pref: '福井県', region: '北陸', road: '県道17号', lat: 36.0772, lng: 136.4944, tags: ['ファミリー・公園', 'ご当地グルメ', '産直・特産品'], desc: '福井県立恐竜博物館のすぐ近く。恐竜モチーフのグルメやグッズ、九頭竜川の清流が楽しめる。' },
+      { id: 'fi02', name: '越前', yomi: 'えちぜん', pref: '福井県', region: '北陸', road: '国道305号', lat: 35.9286, lng: 135.9756, tags: ['海沿い', '温泉・入浴', 'ご当地グルメ'], desc: '越前がにの本場・越前海岸に面し、日本海一望の露天風呂「漁火」と越前がにミュージアムを併設。' },
+      { id: 'yn01', name: '富士吉田', yomi: 'ふじよしだ', pref: '山梨県', region: '中部', road: '国道138号', lat: 35.4622, lng: 138.8056, tags: ['絶景', 'ご当地グルメ', '産直・特産品'], desc: '富士山の湧水汲み場や富士山レーダードーム館を併設。名物の吉田のうどんが手軽に味わえる。' },
+      { id: 'yn02', name: 'なるさわ', yomi: 'なるさわ', pref: '山梨県', region: '中部', road: '国道139号', lat: 35.4753, lng: 138.6725, tags: ['絶景', '温泉・入浴'], desc: '富士五湖の中心・鳴沢村にあり、正面に富士山を仰ぎ見る。富士眺望の湯ゆらりが隣接。' },
+      { id: 'yn03', name: '南きよさと', yomi: 'みなみきよさと', pref: '山梨県', region: '中部', road: '国道141号', lat: 35.8758, lng: 138.4239, tags: ['絶景', 'ファミリー・公園', '産直・特産品'], desc: '八ヶ岳南麓の高原ステーション。ケーブルカーで登る花の森公園や信玄餅ソフトが人気。' },
+      { id: 'ng01', name: 'ビーナスライン蓼科湖', yomi: 'びーなすらいんたてしなこ', pref: '長野県', region: '中部', road: '県道192号', lat: 36.0669, lng: 138.2528, tags: ['絶景', 'ご当地グルメ'], desc: '人気ドライブルート・ビーナスライン沿いの蓼科湖畔に立地。白樺林と湖の美しい景観が魅力。' },
+      { id: 'ng02', name: '白馬', yomi: 'はくば', pref: '長野県', region: '中部', road: '国道148号', lat: 36.6639, lng: 137.8489, tags: ['絶景', 'ご当地グルメ', '産直・特産品'], desc: '北アルプス白馬三山の麓に位置する山岳拠点。白馬豚や信州そば、アウトドア用品が充実。' },
+      { id: 'ng03', name: '小布施「ハイウェイオアシスおぶせ」', yomi: 'おぶせ はいうぇいおあしすおぶせ', pref: '長野県', region: '中部', road: '県道343号', lat: 36.6989, lng: 138.3086, tags: ['ファミリー・公園', 'ご当地グルメ', '産直・特産品'], desc: '上信越道小布施PA直結。栗の町・小布施の栗スイーツや広大な公園、美術館巡りの拠点。' },
+      { id: 'gf01', name: '白川郷', yomi: 'しらかわごう', pref: '岐阜県', region: '中部', road: '国道156号', lat: 36.2719, lng: 136.8986, tags: ['歴史・文化', '産直・特産品'], desc: '世界遺産・白川郷合掌造り集落のすぐ北側。本物の合掌造り家屋を移築展示したミュージアム併設。' },
+      { id: 'gf02', name: '明宝', yomi: 'めいほう', pref: '岐阜県', region: '中部', road: '国道472号', lat: 35.8764, lng: 136.9936, tags: ['ご当地グルメ', '産直・特産品'], desc: 'せせらぎ街道ドライブの定番休憩地。名物「明宝ハム」や鶏ちゃん焼き、あまごの塩焼きが人気。' },
+      { id: 'gf03', name: '古今伝授の里やまと', yomi: 'こきんでんじゅのさとやまと', pref: '岐阜県', region: '中部', road: '県道52号', lat: 35.8153, lng: 136.8906, tags: ['温泉・入浴', '歴史・文化', 'ご当地グルメ'], desc: '和歌の文化が息づく郡上大和の駅。日帰り温泉「やまと温泉やすらぎ館」と無料足湯を備える。' },
+      { id: 'sz01', name: '伊東マリンタウン', yomi: 'いとうまりんたうん', pref: '静岡県', region: '中部', road: '国道135号', lat: 34.9858, lng: 139.0961, tags: ['海沿い', '温泉・入浴', 'ご当地グルメ'], desc: 'カラフルな建物が並ぶ伊豆東海岸最大級の海の駅。海望む日帰り温泉や遊覧船、海鮮丼が揃う。' },
+      { id: 'sz02', name: '朝霧高原', yomi: 'あさぎりこうげん', pref: '静岡県', region: '中部', road: '国道139号', lat: 35.4119, lng: 138.5878, tags: ['絶景', 'ご当地グルメ', '産直・特産品'], desc: '目の前に雄大な富士山が迫る高原ステーション。濃厚な朝霧牛乳ソフトや乳製品が大人気。' },
+      { id: 'sz03', name: '伊豆ゲートウェイ函南', yomi: 'いずげーとうぇいかんなみ', pref: '静岡県', region: '中部', road: '国道136号', lat: 35.0911, lng: 138.9436, tags: ['ご当地グルメ', '産直・特産品'], desc: '伊豆半島への玄関口に位置し、わさびミュージアム隣接。丹那牛乳スイーツや伊豆の特産品が集結。' },
+      { id: 'ai01', name: '田原めっくんはうす', yomi: 'たはらめっくんはうす', pref: '愛知県', region: '中部', road: '国道259号', lat: 34.6728, lng: 137.2747, tags: ['産直・特産品', 'ご当地グルメ'], desc: '渥美半島ドライブの拠点。全国有数の生産量を誇るマスクメロンや新鮮な農産物が豊富。' },
+      { id: 'ai02', name: 'つぐ高原グリーンパーク', yomi: 'つぐこうげんぐりーんぱーく', pref: '愛知県', region: '中部', road: '県道10号', lat: 35.1889, lng: 137.6253, tags: ['絶景', 'ファミリー・公園'], desc: '標高900mの奥三河高原にあるアウトドア型道の駅。オートキャンプ場や満天の星空観察が人気。' },
+      { id: 'ai03', name: '筆柿の里・幸田', yomi: 'ふでがきのさと こうた', pref: '愛知県', region: '中部', road: '国道23号', lat: 34.8553, lng: 137.1856, tags: ['ご当地グルメ', '産直・特産品'], desc: '全国生産9割以上を占める特産「筆柿」がテーマ。筆柿ソフトや三河産うなぎ・農産物が充実。' },
+      { id: 'me01', name: '伊勢志摩', yomi: 'いせしま', pref: '三重県', region: '近畿', road: '国道167号', lat: 34.3742, lng: 136.8225, tags: ['海沿い', 'ご当地グルメ', '産直・特産品'], desc: '志摩スペイン村すぐ近くの伊勢志摩観光拠点。伊勢海老やあわび、真珠製品など海の幸が勢揃い。' },
+      { id: 'me02', name: '関宿', yomi: 'せきじゅく', pref: '三重県', region: '近畿', road: '国道1号', lat: 34.8511, lng: 136.3958, tags: ['歴史・文化', '鉄道・レトロ'], desc: '東海道五十三次47番目の宿場町「関宿」の入口。歴史ある町並み散策のベースキャンプ。' },
+      { id: 'me03', name: '紀宝町ウミガメ公園', yomi: 'きほうちょううみがめこうえん', pref: '三重県', region: '近畿', road: '国道42号', lat: 33.7433, lng: 136.0261, tags: ['海沿い', 'ファミリー・公園'], desc: '全国で唯一ウミガメ保護施設を併設した道の駅。本物のウミガメが泳ぐ姿を間近で観察できる。' },
+      { id: 'sg01', name: 'びわ湖大橋米プラザ', yomi: 'びわこおおはしこめぷらざ', pref: '滋賀県', region: '近畿', road: '国道477号', lat: 35.1206, lng: 135.9267, tags: ['絶景', '産直・特産品'], desc: '琵琶湖大橋の西詰に位置し、バルコニーから琵琶湖の雄大な景色と大橋を一望できる。' },
+      { id: 'sg02', name: 'あいの土山', yomi: 'あいのつちやま', pref: '滋賀県', region: '近畿', road: '国道1号', lat: 34.9389, lng: 136.2661, tags: ['歴史・文化', 'ご当地グルメ'], desc: '東海道・土山宿にある建築家・隈研吾氏設計の道の駅。特産の近江土山茶ソフトが名物。' },
+      { id: 'ky01', name: '舟屋の里 伊根', yomi: 'ふなやのさと いね', pref: '京都府', region: '近畿', road: '国道178号', lat: 35.6761, lng: 135.2917, tags: ['海沿い', '絶景', '歴史・文化'], desc: '「日本のベネチア」と称される伊根の舟屋群を高台から一望する絶景ステーション。' },
+      { id: 'ky02', name: '丹後王国「食のみやこ」', yomi: 'たんごおうこく しょくのみやこ', pref: '京都府', region: '近畿', road: '府道53号', lat: 35.6611, lng: 135.0936, tags: ['ファミリー・公園', 'ご当地グルメ', '温泉・入浴'], desc: '西日本最大級の敷地を誇る滞在型道の駅。クラフトビールや丹後ソーセージ、イルミネーションが人気。' },
+      { id: 'ky03', name: '美山ふれあい広場', yomi: 'みやまふれあいひろば', pref: '京都府', region: '近畿', road: '国道162号', lat: 35.2981, lng: 135.5886, tags: ['歴史・文化', 'ご当地グルメ'], desc: 'かやぶきの里・美山町にあるツーリング聖地。美山牛乳の濃厚ジェラートが大人気。' },
+      { id: 'os01', name: '愛彩ランド', yomi: 'あいさいらんど', pref: '大阪府', region: '近畿', road: '国道170号', lat: 34.4342, lng: 135.4247, tags: ['産直・特産品', 'ご当地グルメ'], desc: '泉州地域最大級の農産物直売所を誇る駅。水なすや泉州玉ねぎ、地元野菜ビュッフェが人気。' },
+      { id: 'os02', name: 'かなん', yomi: 'かなん', pref: '大阪府', region: '近畿', road: '国道309号', lat: 34.4819, lng: 135.6317, tags: ['産直・特産品'], desc: '金剛山・葛城山の麓にある自然豊かな駅。大阪産（おおさかもん）の朝採れ野菜や果物が充実。' },
+      { id: 'hy01', name: 'あわじ', yomi: 'あわじ', pref: '兵庫県', region: '近畿', road: '県道31号', lat: 34.6094, lng: 135.0189, tags: ['海沿い', '絶景', 'ご当地グルメ'], desc: '明石海峡大橋の真下に位置する圧倒的ロケーション。生しらす丼や淡路牛バーガーが名物。' },
+      { id: 'hy02', name: '但馬のまほろば', yomi: 'たじまのまほろば', pref: '兵庫県', region: '近畿', road: '北近畿豊岡道', lat: 35.3319, lng: 134.8322, tags: ['歴史・文化', 'ご当地グルメ', '産直・特産品'], desc: '天空の城・竹田城跡への観光拠点。但馬牛グルメや地元産の岩津ねぎ商品が充実。' },
+      { id: 'hy03', name: 'うずしお', yomi: 'うずしお', pref: '兵庫県', region: '近畿', road: '県道25号', lat: 34.2347, lng: 134.6639, tags: ['海沿い', '絶景', 'ご当地グルメ'], desc: '大鳴門橋とうずしおに最も近い道の駅。全国ご当地バーガー1位の「あわじ島オニオンビーフバーガー」が有名。' },
+      { id: 'nr01', name: 'レスティ 唐古・鍵', yomi: 'れすてぃ からこ かぎ', pref: '奈良県', region: '近畿', road: '国道24号', lat: 34.5681, lng: 135.7989, tags: ['歴史・文化', '産直・特産品'], desc: '弥生時代の環濠集落「唐古・鍵遺跡」の目の前。楼閣を望む展望室や焼きたてパン工房が人気。' },
+      { id: 'nr02', name: '吉野路 黒滝', yomi: 'よしのじ くろたき', pref: '奈良県', region: '近畿', road: '国道309号', lat: 34.3164, lng: 135.8736, tags: ['ご当地グルメ', '絶景'], desc: '吉野杉と清流の里・黒滝村のオアシス。名物の串こんにゃくやよもぎ餅、あまごの塩焼きが定番。' },
+      { id: 'wk01', name: 'くしもと橋杭岩', yomi: 'くしもとはしぐいいわ', pref: '和歌山県', region: '近畿', road: '国道42号', lat: 33.4897, lng: 135.7953, tags: ['海沿い', '絶景', 'ご当地グルメ'], desc: '国の名勝・天然記念物「橋杭岩」の目の前に建つ本州最南端エリアの絶景ステーション。' },
+      { id: 'wk02', name: '椿はなの湯', yomi: 'つばきはなのゆ', pref: '和歌山県', region: '近畿', road: '国道42号', lat: 33.6067, lng: 135.3944, tags: ['海沿い', '温泉・入浴'], desc: '南紀白浜・椿温泉に併設された道の駅。美肌の湯として知られる天然温泉と足湯で旅の疲れを癒やせる。' },
+      { id: 'tt01', name: '神話の里 白うさぎ', yomi: 'しんわのさと しろうさぎ', pref: '鳥取県', region: '中国', road: '国道9号', lat: 35.5261, lng: 134.1136, tags: ['海沿い', '絶景', '歴史・文化'], desc: '神話「因幡の白うさぎ」の舞台・白兎海岸の目の前。白兎神社に隣接する縁結びスポット。' },
+      { id: 'tt02', name: '大山恵みの里', yomi: 'だいせんめぐみのさと', pref: '鳥取県', region: '中国', road: '国道9号', lat: 35.5056, lng: 133.4936, tags: ['絶景', 'ご当地グルメ', '産直・特産品'], desc: '中国地方最高峰・大山（だいせん）を望む駅。大山豚や抹茶ソフト、地元野菜が充実。' },
+      { id: 'sm01', name: 'キララ多伎', yomi: 'きららたき', pref: '島根県', region: '中国', road: '国道9号', lat: 35.2897, lng: 132.6078, tags: ['海沿い', '絶景', 'ご当地グルメ'], desc: '日本の夕陽百選に選ばれた日本海を望むロマンチックな駅。特産の多伎いちじくスイーツが名物。' },
+      { id: 'sm02', name: 'ごいせ仁摩', yomi: 'ごいせにま', pref: '島根県', region: '中国', road: '国道9号', lat: 35.1489, lng: 132.4044, tags: ['歴史・文化', '産直・特産品'], desc: '世界遺産・石見銀山への玄関口。石見神楽の衣裳展示や大田市の海の幸・山の幸が集まる。' },
+      { id: 'oy01', name: '蒜山高原', yomi: 'ひるぜんこうげん', pref: '岡山県', region: '中国', road: '県道114号', lat: 35.2917, lng: 133.6589, tags: ['絶景', 'ご当地グルメ', 'ファミリー・公園'], desc: 'ジャージー牛が放牧される高原の駅。濃厚なジャージーソフトやひるぜん焼そばが味わえる。' },
+      { id: 'oy02', name: '一本松展望園', yomi: 'いっぽんまつてんぼうえん', pref: '岡山県', region: '中国', road: '岡山ブルーライン', lat: 34.6789, lng: 134.1567, tags: ['海沿い', '絶景', 'ファミリー・公園'], desc: '瀬戸内海の多島美を一望する岡山ブルーライン上の絶景スポット。ミニ鉄道や展望台を完備。' },
+      { id: 'hs01', name: '世羅', yomi: 'せら', pref: '広島県', region: '中国', road: '国道432号', lat: 34.5964, lng: 133.0389, tags: ['産直・特産品', 'ご当地グルメ'], desc: '花とフルーツの町・世羅高原の観光拠点。世羅ワインや季節の果物、地元産ジビエ料理が評判。' },
+      { id: 'hs02', name: 'たけはら', yomi: 'たけはら', pref: '広島県', region: '中国', road: '国道185号', lat: 34.3422, lng: 132.9078, tags: ['歴史・文化', 'ご当地グルメ'], desc: '「安芸の小京都」竹原の町並み保存地区の入口。峠下牛グルメや竹原の地酒が揃う。' },
+      { id: 'hs03', name: '多々羅しまなみ公園', yomi: 'たたらしまなみこうえん', pref: '広島県', region: '中国', road: '国道317号', lat: 34.2539, lng: 133.0536, tags: ['海沿い', '絶景', 'ご当地グルメ'], desc: 'しまなみ海道・多々羅大橋のたもと（大三島側）に位置するサイクリストの聖地碑がある絶景駅。' },
+      { id: 'yc01', name: 'センザキッチン', yomi: 'せんざきっちん', pref: '山口県', region: '中国', road: '国道191号', lat: 34.3836, lng: 131.1989, tags: ['海沿い', 'ご当地グルメ', 'ファミリー・公園'], desc: '長門・仙崎漁港のすぐそばに建つおしゃれな海の駅。買った魚介をその場で炭火BBQできる。' },
+      { id: 'yc02', name: '北浦街道 豊北', yomi: 'きたうらかいどう ほうほく', pref: '山口県', region: '中国', road: '国道191号', lat: 34.3319, lng: 130.9036, tags: ['海沿い', '絶景', 'ご当地グルメ'], desc: 'コバルトブルーの海に架かる角島大橋のすぐ手前。絶景展望テラスと新鮮なイカ・海鮮丼が大人気。' },
+      { id: 'yc03', name: '萩しーまーと', yomi: 'はぎしーまーと', pref: '山口県', region: '中国', road: '県道67号', lat: 34.4322, lng: 131.4119, tags: ['海沿い', 'ご当地グルメ'], desc: '萩漁港に直結した活気あふれる道の駅。水揚げされたばかりの甘鯛やウニ、海鮮料理が絶品。' },
+      { id: 'tk_s01', name: 'くるくる なると', yomi: 'くるくる なると', pref: '徳島県', region: '四国', road: '国道11号', lat: 34.1619, lng: 134.5819, tags: ['ご当地グルメ', 'ファミリー・公園', '産直・特産品'], desc: '鳴門金時や鳴門わかめ、阿波尾鶏など徳島の食の魅力が詰まった体験型食のテーマパーク。' },
+      { id: 'tk_s02', name: '大歩危', yomi: 'おおぼけ', pref: '徳島県', region: '四国', road: '国道32号', lat: 33.8806, lng: 133.7606, tags: ['絶景', '歴史・文化'], desc: '秘境・祖谷渓や大歩危峡の拠点。妖怪屋敷と石の博物館を併設し、吉野川の渓谷美を間近に望む。' },
+      { id: 'kg01', name: '小豆島オリーブ公園', yomi: 'しょうどしまおりーぶこうえん', pref: '香川県', region: '四国', road: '国道436号', lat: 34.4744, lng: 134.2739, tags: ['海沿い', '絶景', 'ファミリー・公園'], desc: '瀬戸内海を見下ろすオリーブ畑とギリシャ風車がシンボル。魔法のほうきでの記念撮影が定番。' },
+      { id: 'kg02', name: '滝宮', yomi: 'たきのみや', pref: '香川県', region: '四国', road: '国道32号', lat: 34.2506, lng: 133.9189, tags: ['ご当地グルメ', '産直・特産品'], desc: '讃岐うどん発祥の地の一つ・綾川町にある駅。本格セルフうどん店やいちごスイーツが人気。' },
+      { id: 'eh01', name: 'よしうみいきいき館', yomi: 'よしうみいきいきかん', pref: '愛媛県', region: '四国', road: '国道317号', lat: 34.1369, lng: 133.0189, tags: ['海沿い', '絶景', 'ご当地グルメ'], desc: '来島海峡大橋のたもと（大島側）にあり、急流観潮船の発着や新鮮魚介の七輪BBQが楽しめる。' },
+      { id: 'eh02', name: '八幡浜みなっと', yomi: 'やわたはまみなっと', pref: '愛媛県', region: '四国', road: '国道378号', lat: 33.4578, lng: 132.4189, tags: ['海沿い', 'ご当地グルメ', '産直・特産品'], desc: '八幡浜港に隣接するみなとオアシス。名物の八幡浜ちゃんぽんや柑橘ジュース、鮮魚市場が充実。' },
+      { id: 'eh03', name: '風早の郷 風和里', yomi: 'かざはやのさと ふわり', pref: '愛媛県', region: '四国', road: '国道196号', lat: 33.9567, lng: 132.7719, tags: ['海沿い', '絶景'], desc: '瀬戸内海・北条の海岸線沿いにあり、夕日の絶景とじゃこ天・柑橘ソフトがライダーに人気。' },
+      { id: 'kc01', name: '四万十とおわ', yomi: 'しまんととおわ', pref: '高知県', region: '四国', road: '国道381号', lat: 33.2419, lng: 132.9436, tags: ['絶景', 'ご当地グルメ', '産直・特産品'], desc: '最後の清流・四万十川を眼下に望む絶景ステーション。天然鮎の塩焼きや四万十栗スイーツが絶品。' },
+      { id: 'kc02', name: 'なぶら土佐佐賀', yomi: 'なぶらとささが', pref: '高知県', region: '四国', road: '国道56号', lat: 33.0764, lng: 133.0956, tags: ['海沿い', 'ご当地グルメ'], desc: '黒潮町の太平洋沿いにあり、職人が目の前で豪快に焼き上げる本場の鰹のわら焼きタタキが味わえる。' },
+      { id: 'kc03', name: 'キラメッセ室戸', yomi: 'きらめっせむろと', pref: '高知県', region: '四国', road: '国道55号', lat: 33.2939, lng: 134.1419, tags: ['海沿い', '絶景', '歴史・文化'], desc: '室戸世界ジオパークの拠点。鯨の資料館や太平洋を一望するレストランで土佐の海の幸を堪能。' },
+      { id: 'fk01', name: '宗像', yomi: 'むなかた', pref: '福岡県', region: '九州', road: '国道495号', lat: 33.8511, lng: 130.5256, tags: ['海沿い', '産直・特産品', 'ご当地グルメ'], desc: '九州トップクラスの売上を誇る大人気道の駅。玄界灘の鮮魚が朝から並び開店前から行列ができる。' },
+      { id: 'fk02', name: 'うきは', yomi: 'うきは', pref: '福岡県', region: '九州', road: '国道210号', lat: 33.3328, lng: 130.7936, tags: ['絶景', '産直・特産品', 'ご当地グルメ'], desc: '筑後平野を見渡す高台に建つ木造の駅。フルーツ王国・うきはの桃やぶどう、柿が一年中豊富。' },
+      { id: 'sg_k01', name: '太良', yomi: 'たら', pref: '佐賀県', region: '九州', road: '国道207号', lat: 32.9819, lng: 130.1856, tags: ['海沿い', '絶景', 'ご当地グルメ'], desc: '有明海と雲仙岳を望む駅。冬は竹崎カキの牡蠣小屋、夏は竹崎カニや有明海苔など海の幸が充実。' },
+      { id: 'sg_k02', name: '吉野ヶ里', yomi: 'よしのがり', pref: '佐賀県', region: '九州', road: '国道385号', lat: 33.3719, lng: 130.3889, tags: ['絶景', '歴史・文化', '産直・特産品'], desc: '脊振山系の中腹に位置し、佐賀平野から雲仙まで見渡すパノラマ展望と天然湧水汲み場が魅力。' },
+      { id: 'ns01', name: '生月大橋', yomi: 'いきつきおおはし', pref: '長崎県', region: '九州', road: '県道42号', lat: 33.3564, lng: 129.4319, tags: ['海沿い', '絶景'], desc: '平戸島と生月島を結ぶ青いトラス橋「生月大橋」のたもと。海風を感じる絶景ドライブルート。' },
+      { id: 'ns02', name: '夕陽が丘そとめ', yomi: 'ゆうひがおかそとめ', pref: '長崎県', region: '九州', road: '国道202号', lat: 32.8489, lng: 129.6989, tags: ['海沿い', '絶景', '歴史・文化'], desc: '角力灘に沈む夕日と遠藤周作文学館に隣接する駅。世界遺産・外海集落巡りの拠点。' },
+      { id: 'km01', name: '阿蘇', yomi: 'あそ', pref: '熊本県', region: '九州', road: '国道57号', lat: 32.9369, lng: 131.0806, tags: ['絶景', '鉄道・レトロ', 'ご当地グルメ'], desc: 'JR阿蘇駅すぐ隣、阿蘇五岳を正面に仰ぐ雄大なロケーション。あか牛丼や阿蘇ミルクが絶品。' },
+      { id: 'km02', name: '大津', yomi: 'おおづ', pref: '熊本県', region: '九州', road: '国道57号', lat: 32.8789, lng: 130.8756, tags: ['ご当地グルメ', '産直・特産品'], desc: '阿蘇への玄関口・大津町にある駅。名物のからいも（さつまいも）スイーツやあか牛料理が人気。' },
+      { id: 'km03', name: '天草市イルカセンター', yomi: 'あまくさしいるかせんたー', pref: '熊本県', region: '九州', road: '国道324号', lat: 32.5489, lng: 130.1456, tags: ['海沿い', 'ファミリー・公園', 'ご当地グルメ'], desc: '野生のミナミハンドウイルカに出会えるイルカウォッチングの拠点。天草の海鮮グルメも充実。' },
+      { id: 'ot01', name: 'ゆふいん', yomi: 'ゆふいん', pref: '大分県', region: '九州', road: '国道210号', lat: 33.2619, lng: 131.3289, tags: ['温泉・入浴', '絶景', '産直・特産品'], desc: '大分道湯布院ICすぐ、由布岳を望む湯布院観光の玄関口。とり天や豊後牛コロッケが人気。' },
+      { id: 'ot02', name: '原尻の滝', yomi: 'はらじりのたき', pref: '大分県', region: '九州', road: '県道7号', lat: 32.9636, lng: 131.4519, tags: ['絶景', 'ご当地グルメ'], desc: '「東洋のナイアガラ」と称される幅120mの原尻の滝が目の前に広がる圧巻のロケーション。' },
+      { id: 'ot03', name: '長湯温泉', yomi: 'ながゆおんせん', pref: '大分県', region: '九州', road: '県道30号', lat: 33.0719, lng: 131.3756, tags: ['温泉・入浴', '歴史・文化'], desc: '日本一の炭酸泉として知られる長湯温泉郷の拠点。川沿いの露天風呂「ガニ湯」や飲泉場が近くにある。' },
+      { id: 'mz01', name: 'フェニックス', yomi: 'ふぇにっくす', pref: '宮崎県', region: '九州', road: '県道377号', lat: 31.7689, lng: 131.4719, tags: ['海沿い', '絶景', 'ご当地グルメ'], desc: '南国ムード満点のフェニックス並木と「鬼の洗濯板」・太平洋を見下ろす宮崎屈指の絶景駅。' },
+      { id: 'mz02', name: '高千穂', yomi: 'たかちほ', pref: '宮崎県', region: '九州', road: '国道218号', lat: 32.7089, lng: 131.3056, tags: ['歴史・文化', '絶景', 'ご当地グルメ'], desc: '神話の里・高千穂峡のすぐ近く。巨大な神楽面のモニュメントが出迎え、高千穂牛やチキン南蛮が味わえる。' },
+      { id: 'ks01', name: 'いぶすき「彩花菜館」', yomi: 'いぶすき さかなかん', pref: '鹿児島県', region: '九州', road: '国道226号', lat: 31.2689, lng: 130.6319, tags: ['海沿い', '絶景', 'ご当地グルメ'], desc: '錦江湾越しに桜島と大隅半島を望む駅。黒豚グルメやかつお節、新鮮な地魚が揃う。' },
+      { id: 'ks02', name: '桜島「火の島めぐみ館」', yomi: 'さくらじま ひのしまめぐみかん', pref: '鹿児島県', region: '九州', road: '国道224号', lat: 31.5919, lng: 130.5989, tags: ['絶景', '温泉・入浴', '産直・特産品'], desc: '桜島フェリー乗り場すぐ近く。世界一小さい桜島小みかんや桜島大根の特産品が並ぶ。' },
+      { id: 'ks03', name: '霧島「霧島神話の里公園」', yomi: 'きりしま しんわのさとこうえん', pref: '鹿児島県', region: '九州', road: '国道223号', lat: 31.8889, lng: 130.8619, tags: ['絶景', 'ファミリー・公園'], desc: '標高670mから霧島連山と錦江湾・桜島を一望。スーパースライダーやリフトで遊べる天空の道の駅。' },
+      { id: 'ks04', name: '垂水「湯っ足り館」', yomi: 'たるみず ゆったりかん', pref: '鹿児島県', region: '九州', road: '国道220号', lat: 31.5419, lng: 130.6989, tags: ['海沿い', '温泉・入浴', '絶景'], desc: '全長60mの日本最大級のかけ流し足湯から錦江湾と桜島を望む大隅半島の人気ステーション。' },
+      { id: 'ok01', name: '許田「やんばる物産センター」', yomi: 'きょだ やんばるぶっさんせんたー', pref: '沖縄県', region: '沖縄', road: '国道58号', lat: 26.5519, lng: 127.9689, tags: ['海沿い', 'ご当地グルメ', '産直・特産品'], desc: '沖縄自動車道許田ICすぐの日本最南端スタート地点の一つ。サーターアンダギーや海ぶどうが大人気。' },
+      { id: 'ok02', name: 'いとまん', yomi: 'いとまん', pref: '沖縄県', region: '沖縄', road: '国道331号', lat: 26.1369, lng: 127.6619, tags: ['海沿い', 'ご当地グルメ', '産直・特産品'], desc: '日本最南端の道の駅。お魚センターでの海鮮食べ歩きやファーマーズマーケットの南国フルーツが圧巻。' },
+      { id: 'ok03', name: 'かでな', yomi: 'かでな', pref: '沖縄県', region: '沖縄', road: '県道74号', lat: 26.3589, lng: 127.7689, tags: ['絶景', '歴史・文化'], desc: '展望デッキから広大な嘉手納飛行場を一望できる社会科見学スポット。学習展示室も充実。' },
+      { id: 'ok04', name: 'ぎのざ', yomi: 'ぎのざ', pref: '沖縄県', region: '沖縄', road: '国道329号', lat: 26.4719, lng: 127.9656, tags: ['海沿い', 'ファミリー・公園', 'ご当地グルメ'], desc: '沖縄本島東海岸の太平洋を望む大型道の駅。大型遊具や水遊び場、特産品ショップがファミリーに好評。' }
+    ];
+
+    let STATIONS = [...BUILTIN_MICHINOEKI_DATA];
+    let userRecords = {};
+    let selectedRegion = 'ALL';
+    let selectedStatus = 'all';
+    let currentModalStationId = null;
+    let nearestIds = new Set();
+    let listVisibleLimit = LIST_PAGE_STEP;
+    let lastFilteredStations = [];
+
+    let map = null;
+    let tileLayers = {};
+    let currentTileKey = 'pale';
+    let markersLayer = null;
+    let userLocationMarker = null;
+
+    async function init() {
+      loadFromStorage();
+      initMap();
+      await tryLoadExternalDataset();
+      rebuildFilterOptions();
+      syncAllViews(false);
+    }
+
+    // 外部 michinoeki.json の自動読み込み（なければ内蔵134駅に自動フォールバック）
+    async function tryLoadExternalDataset() {
+      try {
+        const res = await fetch('./michinoeki.json', { cache: 'no-cache' });
+        if (!res.ok) return;
+        const json = await res.json();
+        const normalized = normalizeMasterList(json);
+        if (normalized.length > 0) {
+          STATIONS = normalized;
+          document.getElementById('datasetSourceLabel').textContent = `全国 道の駅制覇率（外部全駅データ ${STATIONS.length}駅）`;
+        }
+      } catch (e) {
+        // file:/// 直開きや未配置時は内蔵134駅のまま継続
+      }
+    }
+
+    function normalizeMasterList(raw) {
+      const list = Array.isArray(raw) ? raw : (raw && Array.isArray(raw.stations) ? raw.stations : []);
+      return list.map((item, idx) => {
+        const pref = item.pref || item.prefecture || '';
+        const lat = parseFloat(item.lat ?? item.latitude ?? 0);
+        const lng = parseFloat(item.lng ?? item.longitude ?? 0);
+        if (!item.name || !lat || !lng) return null;
+        return {
+          id: String(item.id || `ext_${idx + 1}`),
+          name: String(item.name).replace(/^道の駅\s*/, ''),
+          yomi: item.yomi || '',
+          pref: pref,
+          region: item.region || PREF_TO_REGION[pref] || 'その他',
+          road: item.road || item.city || item.municipality || '',
+          lat: lat,
+          lng: lng,
+          tags: Array.isArray(item.tags) && item.tags.length ? item.tags : ['休憩・情報'],
+          desc: item.desc || `${pref}${item.city || item.road || ''}にある道の駅。`
+        };
+      }).filter(Boolean);
+    }
+
+    function importMasterDatasetJSON(event) {
+      const file = event.target.files && event.target.files[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = e => {
+        try {
+          const parsed = JSON.parse(e.target.result);
+          const normalized = normalizeMasterList(parsed);
+          if (!normalized.length) throw new Error('有効な駅データが見つかりません');
+          STATIONS = normalized;
+          document.getElementById('datasetSourceLabel').textContent = `全国 道の駅制覇率（外部全駅データ ${STATIONS.length}駅）`;
+          rebuildFilterOptions();
+          resetAllFilters();
+          alert(`全国 ${STATIONS.length} 駅のデータを読み込みました。`);
+        } catch (err) {
+          alert('全駅JSONファイルの読み込みに失敗しました。形式をご確認ください。');
+        } finally {
+          event.target.value = '';
+        }
+      };
+      reader.readAsText(file);
+    }
+
+    function loadFromStorage() {
+      try {
+        const raw = localStorage.getItem(STORAGE_KEY);
+        if (!raw) return;
+        const parsed = JSON.parse(raw);
+        if (parsed && typeof parsed === 'object') {
+          const src = parsed.records || parsed;
+          Object.keys(src).forEach(id => {
+            userRecords[id] = normalizeRecord(src[id]);
+          });
+        }
+      } catch (e) {}
+    }
+
+    function normalizeRecord(rec) {
+      const r = rec || {};
+      return {
+        status: ['visited', 'want', 'unvisited'].includes(r.status) ? r.status : 'unvisited',
+        stamps: {
+          stamp: !!(r.stamps && r.stamps.stamp),
+          gourmet: !!(r.stamps && r.stamps.gourmet),
+          onsen: !!(r.stamps && r.stamps.onsen),
+          ticket: !!(r.stamps && r.stamps.ticket)
+        },
+        logs: Array.isArray(r.logs) ? r.logs.map(l => ({
+          date: l.date || '',
+          vehicle: l.vehicle || '🚗 車',
+          memo: l.memo ?? ''
+        })) : []
+      };
+    }
+
+    function getRecord(id) {
+      if (!userRecords[id]) {
+        userRecords[id] = normalizeRecord({});
+      }
+      return userRecords[id];
+    }
+
+    function saveToStorage() {
+      try {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify({ version: 1, records: userRecords }));
+      } catch (e) {}
+    }
+
+    function rebuildFilterOptions() {
+      const prefSelect = document.getElementById('prefSelect');
+      prefSelect.innerHTML = '<option value="">都道府県：すべて</option>';
+      const prefs = [...new Set(STATIONS.map(s => s.pref).filter(Boolean))];
+      prefs.forEach(p => {
+        const opt = document.createElement('option');
+        opt.value = p;
+        opt.textContent = p;
+        prefSelect.appendChild(opt);
+      });
+
+      const tagSelect = document.getElementById('tagSelect');
+      tagSelect.innerHTML = '<option value="">特徴タグ：すべて</option>';
+      const tags = [...new Set(STATIONS.flatMap(s => s.tags))];
+      tags.forEach(t => {
+        const opt = document.createElement('option');
+        opt.value = t;
+        opt.textContent = t;
+        tagSelect.appendChild(opt);
+      });
+
+      document.getElementById('totalStationCount').textContent = STATIONS.length;
+    }
+
+    function initMap() {
+      map = L.map('map', { zoomControl: true }).setView([37.5, 137.5], 5);
+
+      tileLayers.pale = L.tileLayer('https://cyberjapandata.gsi.go.jp/xyz/pale/{z}/{x}/{y}.png', {
+        attribution: '地理院タイル（淡色地図）'
+      });
+      tileLayers.std = L.tileLayer('https://cyberjapandata.gsi.go.jp/xyz/std/{z}/{x}/{y}.png', {
+        attribution: '地理院タイル（標準地図）'
+      });
+      tileLayers.osm = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: '© OpenStreetMap contributors'
+      });
+
+      tileLayers.pale.addTo(map);
+      markersLayer = L.layerGroup().addTo(map);
+
+      // パン・ズーム移動時に表示範囲内の駅マーカーを自動再描画（1,200駅超でも軽量）
+      map.on('moveend', () => {
+        renderMapMarkers(lastFilteredStations);
+      });
+    }
+
+    function switchTileLayer(key) {
+      if (!tileLayers[key] || key === currentTileKey) return;
+      map.removeLayer(tileLayers[currentTileKey]);
+      tileLayers[key].addTo(map);
+      currentTileKey = key;
+
+      ['pale', 'std', 'osm'].forEach(k => {
+        const btn = document.getElementById(`tile${k.charAt(0).toUpperCase() + k.slice(1)}Btn`);
+        btn.className = k === key
+          ? 'px-2.5 py-1 rounded-lg bg-white text-slate-900 shadow-xs transition'
+          : 'px-2.5 py-1 rounded-lg text-slate-600 hover:text-slate-900 transition';
+      });
+    }
+
+    function getFilteredStations() {
+      const keyword = (document.getElementById('searchInput').value || '').trim().toLowerCase();
+      const pref = document.getElementById('prefSelect').value;
+      const tag = document.getElementById('tagSelect').value;
+
+      return STATIONS.filter(st => {
+        const rec = getRecord(st.id);
+        if (selectedRegion !== 'ALL' && st.region !== selectedRegion) return false;
+        if (pref && st.pref !== pref) return false;
+        if (tag && !st.tags.includes(tag)) return false;
+        if (selectedStatus !== 'all' && rec.status !== selectedStatus) return false;
+        if (keyword) {
+          const hay = `${st.name} ${st.yomi} ${st.pref} ${st.region} ${st.road} ${st.tags.join(' ')} ${st.desc}`.toLowerCase();
+          if (!hay.includes(keyword)) return false;
+        }
+        return true;
+      });
+    }
+
+    function syncAllViews(shouldZoom = false) {
+      listVisibleLimit = LIST_PAGE_STEP;
+      updateDashboard();
+      lastFilteredStations = getFilteredStations();
+      document.getElementById('filteredCount').textContent = lastFilteredStations.length;
+      renderStationList(lastFilteredStations);
+
+      if (shouldZoom) {
+        const regObj = REGIONS.find(r => r.id === selectedRegion) || REGIONS[0];
+        map.flyTo(regObj.center, regObj.zoom, { duration: 0.65 });
+      } else {
+        renderMapMarkers(lastFilteredStations);
+      }
+    }
+
+    function updateDashboard() {
+      const total = STATIONS.length;
+      let visited = 0;
+      let want = 0;
+
+      STATIONS.forEach(st => {
+        const r = getRecord(st.id);
+        if (r.status === 'visited') visited++;
+        if (r.status === 'want') want++;
+      });
+
+      const pct = total ? ((visited / total) * 100).toFixed(1) : '0.0';
+      document.getElementById('totalVisitedCount').textContent = visited;
+      document.getElementById('totalWantCount').textContent = want;
+      document.getElementById('totalRateBadge').textContent = `${pct}%`;
+      document.getElementById('totalProgressBar').style.width = `${pct}%`;
+
+      const grid = document.getElementById('regionDashboardGrid');
+      grid.innerHTML = REGIONS.map(reg => {
+        const list = reg.id === 'ALL' ? STATIONS : STATIONS.filter(s => s.region === reg.id);
+        const vCount = list.filter(s => getRecord(s.id).status === 'visited').length;
+        const rPct = list.length ? Math.round((vCount / list.length) * 100) : 0;
+        const isActive = selectedRegion === reg.id;
+
+        return `
+          <button type="button" onclick="selectRegion('${reg.id}')" class="text-left p-2.5 rounded-2xl border transition ${isActive ? 'bg-emerald-50/90 border-emerald-500 ring-1 ring-emerald-500' : 'bg-slate-50/70 border-slate-200/80 hover:border-slate-300'}">
+            <div class="flex items-center justify-between text-[11px] font-bold">
+              <span class="${isActive ? 'text-emerald-800' : 'text-slate-700'}">${reg.name}</span>
+              <span class="font-mono-num ${isActive ? 'text-emerald-700' : 'text-slate-500'}">${vCount}/${list.length}</span>
+            </div>
+            <div class="w-full h-1.5 bg-slate-200/80 rounded-full overflow-hidden mt-1.5">
+              <div class="h-full bg-emerald-500 rounded-full transition-all" style="width: ${rPct}%"></div>
+            </div>
+          </button>
+        `;
+      }).join('');
+    }
+
+    function selectRegion(regionId) {
+      if (selectedRegion === regionId && regionId !== 'ALL') {
+        selectedRegion = 'ALL';
+      } else {
+        selectedRegion = regionId;
+      }
+      document.getElementById('prefSelect').value = '';
+      syncAllViews(true);
+    }
+
+    function onPrefChange() {
+      const pref = document.getElementById('prefSelect').value;
+      if (pref) {
+        const found = STATIONS.find(s => s.pref === pref);
+        if (found) selectedRegion = found.region;
+      }
+      syncAllViews(true);
+    }
+
+    function setStatusFilter(status) {
+      selectedStatus = status;
+      document.querySelectorAll('.status-btn').forEach(btn => {
+        btn.className = btn.dataset.status === status
+          ? 'status-btn px-3 py-1.5 rounded-xl bg-slate-900 text-white transition'
+          : 'status-btn px-3 py-1.5 rounded-xl bg-slate-100 text-slate-600 hover:bg-slate-200 transition';
+      });
+      syncAllViews(false);
+    }
+
+    function resetAllFilters() {
+      selectedRegion = 'ALL';
+      selectedStatus = 'all';
+      document.getElementById('searchInput').value = '';
+      document.getElementById('prefSelect').value = '';
+      document.getElementById('tagSelect').value = '';
+      setStatusFilter('all');
+      syncAllViews(true);
+    }
+
+    function toggleRegionGrid() {
+      document.getElementById('regionDashboardGrid').classList.toggle('hidden');
+    }
+
+    // 表示範囲（Viewport）連動描画＋優先度サンプリング（1,200駅超でも高速）
+    function renderMapMarkers(stations) {
+      if (!map || !markersLayer) return;
+      markersLayer.clearLayers();
+
+      const bounds = map.getBounds().pad(0.15);
+      const inBounds = stations.filter(st => bounds.contains([st.lat, st.lng]));
+
+      // 訪問済み・行きたい・最寄り駅を最優先で残し、未訪問を均等間引き
+      const priority = [];
+      const normal = [];
+      inBounds.forEach(st => {
+        const rec = getRecord(st.id);
+        if (rec.status === 'visited' || rec.status === 'want' || nearestIds.has(st.id)) {
+          priority.push(st);
+        } else {
+          normal.push(st);
+        }
+      });
+
+      let toDraw = [...priority];
+      const remainSlot = Math.max(0, MAX_MAP_MARKERS - toDraw.length);
+      if (normal.length <= remainSlot) {
+        toDraw = toDraw.concat(normal);
+      } else if (remainSlot > 0) {
+        const step = normal.length / remainSlot;
+        for (let i = 0; i < remainSlot; i++) {
+          toDraw.push(normal[Math.floor(i * step)]);
+        }
+      }
+
+      toDraw.forEach(st => {
+        const rec = getRecord(st.id);
+        const cls = rec.status === 'visited' ? 'pin-visited' : (rec.status === 'want' ? 'pin-want' : 'pin-unvisited');
+        const nearCls = nearestIds.has(st.id) ? 'pin-nearest' : '';
+        const icon = L.divIcon({
+          className: '',
+          html: `<div class="custom-pin ${cls} ${nearCls}">道</div>`,
+          iconSize: [26, 26],
+          iconAnchor: [13, 13]
+        });
+
+        const marker = L.marker([st.lat, st.lng], { icon });
+        marker.bindTooltip(`<strong>道の駅 ${st.name}</strong><br><span style="font-size:11px;color:#64748b;">${st.pref} / ${st.road}</span>`, { direction: 'top', offset: [0, -10] });
+        marker.on('click', () => openModal(st.id));
+        markersLayer.addLayer(marker);
+      });
+
+      document.getElementById('mapRenderInfo').textContent = `画面内描画: ${toDraw.length} / ${inBounds.length} 駅`;
+    }
+
+    function renderStationList(stations) {
+      const container = document.getElementById('stationList');
+      const moreWrap = document.getElementById('listMoreWrap');
+
+      if (!stations.length) {
+        container.innerHTML = `<div class="text-center py-10 text-xs text-slate-400">条件に一致する道の駅がありません</div>`;
+        moreWrap.classList.add('hidden');
+        return;
+      }
+
+      const slice = stations.slice(0, listVisibleLimit);
+      container.innerHTML = slice.map(st => {
+        const rec = getRecord(st.id);
+        const badge = rec.status === 'visited'
+          ? '<span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">訪問済み</span>'
+          : rec.status === 'want'
+          ? '<span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-50 text-amber-700 border border-amber-200">行きたい</span>'
+          : '<span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-slate-100 text-slate-500">未訪問</span>';
+
+        const stampIcons = [
+          rec.stamps.stamp ? '💮' : '',
+          rec.stamps.gourmet ? '🍜' : '',
+          rec.stamps.onsen ? '♨️' : '',
+          rec.stamps.ticket ? '🛍️' : ''
+        ].filter(Boolean).join('');
+
+        return `
+          <div onclick="openModal('${st.id}')" class="p-3 rounded-2xl border border-slate-200/80 hover:border-emerald-400 bg-white hover:bg-emerald-50/20 transition cursor-pointer flex items-center justify-between gap-2">
+            <div class="min-w-0 space-y-1">
+              <div class="flex items-center gap-1.5 text-[11px] text-slate-400 font-semibold">
+                <span>${st.pref}</span>
+                <span>|</span>
+                <span>${st.road}</span>
+                ${stampIcons ? `<span class="ml-1 text-xs">${stampIcons}</span>` : ''}
+              </div>
+              <div class="text-sm font-extrabold text-slate-800 truncate">道の駅 ${st.name}</div>
+              <div class="flex flex-wrap gap-1">
+                ${st.tags.map(t => `<span class="text-[10px] px-1.5 py-0.5 rounded-md bg-slate-100 text-slate-600 font-medium">${t}</span>`).join('')}
+              </div>
+            </div>
+            <div class="flex flex-col items-end gap-1.5 shrink-0">
+              ${badge}
+              <button type="button" onclick="focusOnStation('${st.id}', event)" class="text-[11px] font-bold text-emerald-600 hover:text-emerald-800">地図で見る &gt;</button>
+            </div>
+          </div>
+        `;
+      }).join('');
+
+      const remaining = stations.length - slice.length;
+      if (remaining > 0) {
+        document.getElementById('listRemainingCount').textContent = remaining;
+        moreWrap.classList.remove('hidden');
+      } else {
+        moreWrap.classList.add('hidden');
+      }
+    }
+
+    function loadMoreListItems() {
+      listVisibleLimit += LIST_PAGE_STEP;
+      renderStationList(lastFilteredStations);
+    }
+
+    function focusOnStation(id, event) {
+      if (event) event.stopPropagation();
+      const st = STATIONS.find(s => s.id === id);
+      if (!st) return;
+      map.flyTo([st.lat, st.lng], 12, { duration: 0.7 });
+    }
+
+    function findNearestStations() {
+      if (!navigator.geolocation) {
+        alert('お使いのブラウザは位置情報に対応していません。');
+        return;
+      }
+      navigator.geolocation.getCurrentPosition(pos => {
+        const { latitude, longitude } = pos.coords;
+        if (userLocationMarker) map.removeLayer(userLocationMarker);
+        userLocationMarker = L.circleMarker([latitude, longitude], {
+          radius: 8, fillColor: '#0284c7', color: '#ffffff', weight: 3, fillOpacity: 1
+        }).addTo(map).bindTooltip('現在地');
+
+        const withDist = STATIONS.map(st => ({
+          ...st,
+          distKm: calcDistanceKm(latitude, longitude, st.lat, st.lng)
+        })).sort((a, b) => a.distKm - b.distKm);
+
+        const top3 = withDist.slice(0, 3);
+        nearestIds = new Set(top3.map(s => s.id));
+
+        const listEl = document.getElementById('nearestList');
+        listEl.innerHTML = top3.map(st => `
+          <button type="button" onclick="focusOnStation('${st.id}')" class="text-left bg-white p-2.5 rounded-xl border border-sky-200 hover:border-sky-400 transition">
+            <div class="text-[10px] font-bold text-sky-600 font-mono-num">約 ${st.distKm.toFixed(1)} km</div>
+            <div class="text-xs font-extrabold text-slate-800 truncate">道の駅 ${st.name}</div>
+            <div class="text-[10px] text-slate-400">${st.pref} / ${st.road}</div>
+          </button>
+        `).join('');
+
+        document.getElementById('nearestBox').classList.remove('hidden');
+        map.flyTo([top3[0].lat, top3[0].lng], 10, { duration: 0.8 });
+      }, () => {
+        alert('現在地を取得できませんでした。位置情報の許可設定をご確認ください。');
+      }, { enableHighAccuracy: true, timeout: 10000 });
+    }
+
+    function calcDistanceKm(lat1, lon1, lat2, lon2) {
+      const R = 6371;
+      const dLat = (lat2 - lat1) * Math.PI / 180;
+      const dLon = (lon2 - lon1) * Math.PI / 180;
+      const a = Math.sin(dLat / 2) ** 2 +
+                Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
+                Math.sin(dLon / 2) ** 2;
+      return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+    }
+
+    function openModal(id) {
+      const st = STATIONS.find(s => s.id === id);
+      if (!st) return;
+      currentModalStationId = id;
+
+      document.getElementById('modalPref').textContent = st.pref;
+      document.getElementById('modalRoad').textContent = st.road;
+      document.getElementById('modalName').textContent = `道の駅 ${st.name}`;
+      document.getElementById('modalYomi').textContent = st.yomi || '';
+      document.getElementById('modalDesc').textContent = st.desc;
+      document.getElementById('modalTags').innerHTML = st.tags.map(t =>
+        `<span class="text-[11px] font-bold px-2.5 py-0.5 rounded-lg bg-slate-100 text-slate-600">${t}</span>`
+      ).join('');
+
+      document.getElementById('logDateInput').value = new Date().toISOString().split('T')[0];
+      document.getElementById('logMemoInput').value = '';
+
+      refreshModalUI();
+      const modal = document.getElementById('detailModal');
+      modal.classList.remove('hidden');
+      modal.classList.add('flex');
+    }
+
+    function closeModal() {
+      const modal = document.getElementById('detailModal');
+      modal.classList.add('hidden');
+      modal.classList.remove('flex');
+      currentModalStationId = null;
+    }
+
+    function refreshModalUI() {
+      if (!currentModalStationId) return;
+      const rec = getRecord(currentModalStationId);
+
+      document.getElementById('btnSetUnvisited').className = rec.status === 'unvisited'
+        ? 'py-2 rounded-xl bg-slate-800 text-white font-bold transition'
+        : 'py-2 rounded-xl border border-slate-200 text-slate-600 hover:bg-slate-50 transition';
+      document.getElementById('btnSetWant').className = rec.status === 'want'
+        ? 'py-2 rounded-xl bg-amber-500 text-white font-bold transition'
+        : 'py-2 rounded-xl border border-amber-200 text-amber-700 hover:bg-amber-50 transition';
+      document.getElementById('btnSetVisited').className = rec.status === 'visited'
+        ? 'py-2 rounded-xl bg-emerald-600 text-white font-bold transition'
+        : 'py-2 rounded-xl border border-emerald-200 text-emerald-700 hover:bg-emerald-50 transition';
+
+      document.querySelectorAll('.stamp-choice').forEach(btn => {
+        const active = !!rec.stamps[btn.dataset.stamp];
+        btn.className = active
+          ? 'stamp-choice p-2.5 rounded-2xl border-2 border-rose-500 bg-rose-50/80 text-rose-800 flex flex-col items-center gap-1 transition animate-stamp'
+          : 'stamp-choice p-2.5 rounded-2xl border border-slate-200 text-slate-600 hover:bg-slate-50 flex flex-col items-center gap-1 transition';
+      });
+
+      const logsEl = document.getElementById('visitLogsContainer');
+      if (!rec.logs.length) {
+        logsEl.innerHTML = `<p class="text-[11px] text-slate-400 text-center py-2">まだ訪問履歴はありません</p>`;
+      } else {
+        logsEl.innerHTML = `
+          <div class="text-xs font-bold text-slate-700">訪問履歴（${rec.logs.length}回）</div>
+          ${rec.logs.map((l, idx) => `
+            <div class="flex items-center justify-between gap-2 bg-white p-2.5 rounded-xl border border-slate-200 text-xs">
+              <div class="min-w-0">
+                <div class="font-bold text-slate-700 font-mono-num">${l.date || '日付未指定'} <span class="font-sans text-slate-500 ml-1">${l.vehicle}</span></div>
+                ${l.memo ? `<div class="text-[11px] text-slate-600 mt-0.5 break-words">${escapeHtml(l.memo)}</div>` : ''}
+              </div>
+              <button type="button" onclick="deleteVisitLog(${idx})" class="text-slate-400 hover:text-rose-600 px-1.5 py-1" title="削除">
+                <i class="fa-solid fa-trash-can text-xs"></i>
+              </button>
+            </div>
+          `).join('')}
+        `;
+      }
+    }
+
+    function setModalStatus(status) {
+      if (!currentModalStationId) return;
+      getRecord(currentModalStationId).status = status;
+      saveToStorage();
+      refreshModalUI();
+      syncAllViews(false);
+    }
+
+    function toggleStamp(stampKey) {
+      if (!currentModalStationId) return;
+      const rec = getRecord(currentModalStationId);
+      rec.stamps[stampKey] = !rec.stamps[stampKey];
+      if (rec.stamps[stampKey] && rec.status === 'unvisited') {
+        rec.status = 'visited';
+      }
+      saveToStorage();
+      refreshModalUI();
+      syncAllViews(false);
+    }
+
+    function addVisitLog() {
+      if (!currentModalStationId) return;
+      const rec = getRecord(currentModalStationId);
+      const date = document.getElementById('logDateInput').value;
+      const vehicle = document.getElementById('logVehicleInput').value;
+      const memo = document.getElementById('logMemoInput').value.trim();
+
+      rec.logs.unshift({ date, vehicle, memo });
+      rec.status = 'visited';
+      document.getElementById('logMemoInput').value = '';
+      saveToStorage();
+      refreshModalUI();
+      syncAllViews(false);
+    }
+
+    function deleteVisitLog(index) {
+      if (!currentModalStationId) return;
+      getRecord(currentModalStationId).logs.splice(index, 1);
+      saveToStorage();
+      refreshModalUI();
+      syncAllViews(false);
+    }
+
+    function exportBackupJSON() {
+      const now = new Date();
+      const pad = n => String(n).padStart(2, '0');
+      const stamp = `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}-${pad(now.getHours())}${pad(now.getMinutes())}`;
+      const filename = `michinoeki-backup-${stamp}.json`;
+
+      const payload = {
+        app: 'michinoeki',
+        version: 1,
+        exportedAt: now.toISOString(),
+        records: userRecords
+      };
+
+      const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = filename;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    }
+
+    function importBackupJSON(event) {
+      const file = event.target.files && event.target.files[0];
+      if (!file) return;
+
+      const reader = new FileReader();
+      reader.onload = e => {
+        try {
+          const parsed = JSON.parse(e.target.result);
+          const src = (parsed && typeof parsed === 'object') ? (parsed.records || parsed) : null;
+          if (!src || typeof src !== 'object') throw new Error('Invalid format');
+
+          const restored = {};
+          Object.keys(src).forEach(id => {
+            restored[id] = normalizeRecord(src[id]);
+          });
+          userRecords = restored;
+          saveToStorage();
+          syncAllViews(false);
+          alert('バックアップデータを復元しました。');
+        } catch (err) {
+          alert('JSONファイルの読み込みに失敗しました。正しいバックアップファイルかご確認ください。');
+        } finally {
+          event.target.value = '';
+        }
+      };
+      reader.readAsText(file);
+    }
+
+    function escapeHtml(str) {
+      return str.replace(/[&<>"']/g, m => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[m]));
+    }
+
+    window.addEventListener('DOMContentLoaded', init);
+  </script>
+</body>
+</html>
