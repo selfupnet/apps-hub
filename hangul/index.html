@@ -2,16 +2,27 @@
 <html lang="ja">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Hangul Hub - ハングル文字構造＆五十音対照盤</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <title>Hangul Hub | Apps Hub</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700;900&family=Noto+Sans+KR:wght@500;700;900&family=Plus+Jakarta+Sans:wght@600;700;800&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@500;600;700&family=Noto+Sans+JP:wght@400;500;700;900&family=Noto+Sans+KR:wght@500;700;900&family=Plus+Jakarta+Sans:wght@600;700;800&display=swap" rel="stylesheet">
   <style>
-    body { font-family: 'Plus Jakarta Sans', 'Noto Sans JP', sans-serif; }
+    body {
+      font-family: 'Plus Jakarta Sans', 'Noto Sans JP', sans-serif;
+      min-height: 100vh;
+      min-height: 100dvh;
+      padding-top: env(safe-area-inset-top);
+      padding-bottom: env(safe-area-inset-bottom);
+      padding-left: env(safe-area-inset-left);
+      padding-right: env(safe-area-inset-right);
+      -webkit-tap-highlight-color: transparent;
+      -webkit-text-size-adjust: 100%;
+    }
     .font-kr { font-family: 'Noto Sans KR', sans-serif; }
+    .font-mono-code { font-family: 'JetBrains Mono', monospace; }
     .active-nav-tab {
       background-color: #4f46e5;
       color: #ffffff;
@@ -28,18 +39,49 @@
     }
     .scrollbar-thin::-webkit-scrollbar { height: 6px; }
     .scrollbar-thin::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 9999px; }
+
+    /* 筆順SVGアニメーション用スタイル */
+    .hangul-stroke {
+      fill: none;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+      transition: stroke 0.2s ease, opacity 0.2s ease;
+    }
+    .hangul-stroke.upcoming {
+      stroke: #cbd5e1;
+      stroke-width: 9;
+      opacity: 0.55;
+    }
+    .hangul-stroke.completed {
+      stroke: #1e293b;
+      stroke-width: 10;
+      opacity: 1;
+    }
+    .hangul-stroke.active {
+      stroke: #4f46e5;
+      stroke-width: 11;
+      opacity: 1;
+    }
+    .hangul-stroke-num {
+      font-family: 'JetBrains Mono', 'Plus Jakarta Sans', sans-serif;
+      font-size: 12px;
+      font-weight: 700;
+      fill: #e11d48;
+      user-select: none;
+      transition: opacity 0.2s ease;
+    }
   </style>
 </head>
-<body class="bg-slate-50 text-slate-800 min-h-screen flex flex-col antialiased">
+<body class="bg-slate-50 text-slate-800 flex flex-col antialiased">
 
   <!-- ========================================== -->
   <!-- ヘッダー (selfup.net Apps Hub 統一規格)    -->
   <!-- ========================================== -->
-  <header class="bg-white border-b border-slate-200 sticky top-0 z-40 shadow-xs">
+  <header class="bg-white/95 backdrop-blur border-b border-slate-200/80 sticky top-0 z-40 shadow-xs">
     <div class="max-w-5xl mx-auto px-4 h-16 flex items-center justify-between">
       <div class="flex items-center gap-3">
         <a href="../" class="inline-flex items-center gap-1.5 text-xs font-semibold text-slate-500 hover:text-slate-900 transition py-1.5 px-3 rounded-xl bg-slate-100 hover:bg-slate-200">
-          <i class="fa-solid fa-arrow-left text-[11px]"></i>
+          <i class="fa-solid fa-arrow-left text-[10px]"></i>
           <span>Apps Hub</span>
         </a>
         <div class="h-4 w-px bg-slate-200"></div>
@@ -58,7 +100,7 @@
       </button>
     </div>
 
-    <!-- モードナビゲーションバー -->
+    <!-- モードナビゲーションバー (4タブ) -->
     <div class="max-w-5xl mx-auto px-4 py-2.5 flex gap-2 border-t border-slate-100 text-xs font-bold overflow-x-auto scrollbar-none">
       <button onclick="setTab('matrix')" id="tab-matrix" class="px-4 py-2 rounded-xl active-nav-tab transition flex items-center gap-2 whitespace-nowrap">
         <i class="fa-solid fa-table-cells"></i>
@@ -72,6 +114,10 @@
         <i class="fa-solid fa-puzzle-piece"></i>
         <span>③ 6大構造パズル (組み立て)</span>
       </button>
+      <button onclick="setTab('stroke')" id="tab-stroke" class="px-4 py-2 rounded-xl inactive-nav-tab transition flex items-center gap-2 whitespace-nowrap">
+        <i class="fa-solid fa-pen-nib"></i>
+        <span>④ 筆順＆なぞり書き</span>
+      </button>
     </div>
   </header>
 
@@ -82,31 +128,31 @@
 
     <!-- TAB 1: 反切表（ローカル単音MP3再生対応） -->
     <section id="view-matrix" class="space-y-4">
-      <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-xs flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+      <div class="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-xs flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <h2 class="text-base font-extrabold text-slate-900 flex items-center gap-2">
             <span>ハングル基本反切表（반절표）</span>
-            <span class="text-xs font-bold px-2 py-0.5 rounded-full bg-indigo-50 text-indigo-600">Google Cloud WaveNet音源</span>
+            <span class="text-xs font-bold px-2 py-0.5 rounded-full bg-indigo-50 text-indigo-600">WaveNet実音源</span>
           </h2>
           <p class="text-xs text-slate-500 mt-1">
-            縦軸（子音）と横軸（母音）のマトリクス表です。マス目をタップすると拡大表示と正規ネイティブ発音が再生されます。
+            縦軸（子音）と横軸（母音）のマトリクス表です。マス目をタップすると拡大表示とネイティブ発音が再生されます。
           </p>
         </div>
         <!-- プレビューバナー -->
-        <div id="matrix-preview" class="flex items-center gap-4 bg-slate-50 border border-slate-200 px-4 py-2 rounded-xl">
+        <div id="matrix-preview" class="flex items-center gap-4 bg-slate-50 border border-slate-200/80 px-4 py-2 rounded-xl">
           <div id="prev-char" class="text-3xl font-black text-indigo-600 font-kr">가</div>
           <div class="text-xs">
-            <div class="font-bold text-slate-800"><span id="prev-kana">カ / ガ</span> <span id="prev-romaji" class="text-slate-400 font-mono font-semibold ml-1">(ga)</span></div>
+            <div class="font-bold text-slate-800"><span id="prev-kana">カ / ガ</span> <span id="prev-romaji" class="text-slate-400 font-mono-code font-semibold ml-1">(ga)</span></div>
             <div id="prev-desc" class="text-[11px] text-slate-500">子音 ㄱ (g) + 縦型母音 ㅏ (a)</div>
           </div>
-          <button onclick="speakMatrixCurrent()" class="w-8 h-8 rounded-lg bg-indigo-600 text-white flex items-center justify-center hover:bg-indigo-700 transition shadow-xs">
+          <button onclick="speakMatrixCurrent()" class="w-8 h-8 rounded-xl bg-indigo-600 text-white flex items-center justify-center hover:bg-indigo-700 transition shadow-xs" title="もう一度再生">
             <i class="fa-solid fa-volume-high text-xs"></i>
           </button>
         </div>
       </div>
 
       <!-- 反切表テーブル -->
-      <div class="bg-white rounded-2xl border border-slate-200 shadow-xs p-3 overflow-x-auto scrollbar-thin">
+      <div class="bg-white rounded-2xl border border-slate-200/80 shadow-xs p-3 overflow-x-auto scrollbar-thin">
         <table class="w-full text-center border-collapse">
           <thead>
             <tr>
@@ -130,11 +176,11 @@
 
     <!-- TAB 2: 五十音逆引き -->
     <section id="view-gojuon" class="space-y-6 hidden">
-      <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-xs flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+      <div class="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-xs flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <h2 class="text-base font-extrabold text-slate-900 flex items-center gap-2">
             <span>日本語 五十音逆引き対照盤</span>
-            <span class="text-xs font-bold px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700">実音源対応</span>
+            <span class="text-xs font-bold px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700">全音WaveNet対応</span>
           </h2>
           <p class="text-xs text-slate-500 mt-1">
             日本の「あいうえお」「濁音・半濁音」「拗音」「ん（パッチム）」のハングル転写表です。タップで音声再生。
@@ -146,10 +192,10 @@
       </div>
 
       <div class="flex gap-2 border-b border-slate-200 pb-2 overflow-x-auto text-xs font-bold scrollbar-none">
-        <button onclick="setGojuonCategory('seion')" id="gtab-seion" class="px-3.5 py-1.5 rounded-lg bg-indigo-600 text-white transition">清音 (あ〜わ行)</button>
-        <button onclick="setGojuonCategory('dakuon')" id="gtab-dakuon" class="px-3.5 py-1.5 rounded-lg bg-white border border-slate-200 text-slate-600 hover:bg-slate-50 transition">濁音・半濁音 (が行・ぱ行等)</button>
-        <button onclick="setGojuonCategory('youon')" id="gtab-youon" class="px-3.5 py-1.5 rounded-lg bg-white border border-slate-200 text-slate-600 hover:bg-slate-50 transition">拗音 (きゃ・ぎゃ・しゃ等)</button>
-        <button onclick="setGojuonCategory('special')" id="gtab-special" class="px-3.5 py-1.5 rounded-lg bg-white border border-slate-200 text-slate-600 hover:bg-slate-50 transition">特別表記 & ん (パッチム)</button>
+        <button onclick="setGojuonCategory('seion')" id="gtab-seion" class="px-3.5 py-1.5 rounded-xl bg-indigo-600 text-white transition">清音 (あ〜わ行)</button>
+        <button onclick="setGojuonCategory('dakuon')" id="gtab-dakuon" class="px-3.5 py-1.5 rounded-xl bg-white border border-slate-200 text-slate-600 hover:bg-slate-50 transition">濁音・半濁音 (が行・ぱ行等)</button>
+        <button onclick="setGojuonCategory('youon')" id="gtab-youon" class="px-3.5 py-1.5 rounded-xl bg-white border border-slate-200 text-slate-600 hover:bg-slate-50 transition">拗音 (きゃ・ぎゃ・しゃ等)</button>
+        <button onclick="setGojuonCategory('special')" id="gtab-special" class="px-3.5 py-1.5 rounded-xl bg-white border border-slate-200 text-slate-600 hover:bg-slate-50 transition">特別表記 & ん (パッチム)</button>
       </div>
 
       <!-- グループ化レンダリング用コンテナ -->
@@ -162,15 +208,15 @@
         </div>
         <ul class="list-disc list-inside space-y-1 text-slate-700 pl-1">
           <li><strong>「か・た」などの語頭・語中：</strong> ハングルの平音（ㄱ, ㄷ, ㅂ, ㅈ）は語頭で濁らず清音化し、語中で濁音化します。</li>
-          <li><strong>韓国語にない日本語の音：</strong> 「つ」は <code>츠 (cheu)</code>、「ざ・ず・ぜ・ぞ」は <code>자・즈・제・조</code> で代用表記されます。</li>
-          <li><strong>撥音「ん」の3分割：</strong> 続く子音により、パッチムの <code>ㄴ (n)</code>、<code>ㅁ (m)</code>、<code>ㅇ (ng)</code> を使い分けます。</li>
+          <li><strong>韓国語にない日本語の音：</strong> 「つ」は <code class="font-mono-code">츠 (cheu)</code>、「ざ・ず・ぜ・ぞ」は <code class="font-mono-code">자・즈・제・조</code> で代用表記されます。</li>
+          <li><strong>撥音「ん」の3分割：</strong> 続く子音により、パッチムの <code class="font-mono-code">ㄴ (n)</code>、<code class="font-mono-code">ㅁ (m)</code>、<code class="font-mono-code">ㅇ (ng)</code> を使い分けます。</li>
         </ul>
       </div>
     </section>
 
     <!-- TAB 3: 6大構造パズル -->
     <section id="view-puzzle" class="space-y-6 hidden">
-      <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-xs flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+      <div class="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-xs flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <h2 class="text-base font-extrabold text-slate-900 flex items-center gap-2">
             <span>ハングル6大ブロック構造パズル</span>
@@ -190,7 +236,7 @@
         </div>
       </div>
 
-      <div class="bg-white p-6 rounded-3xl border border-slate-200 shadow-sm flex flex-col items-center">
+      <div class="bg-white p-6 rounded-3xl border border-slate-200/80 shadow-xs flex flex-col items-center">
         <div class="text-center mb-5">
           <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-slate-100 text-slate-600 text-xs font-bold mb-2">
             <span>お題:</span>
@@ -221,7 +267,7 @@
         <div class="mt-4 flex items-center gap-3">
           <div id="assembled-char" class="text-4xl font-black text-slate-900 font-kr">?</div>
           <div class="text-left text-xs">
-            <div id="assembled-reading" class="font-bold text-indigo-600 text-sm">—</div>
+            <div id="assembled-reading" class="font-bold text-indigo-600 font-mono-code text-sm">—</div>
             <div id="assembled-type" class="text-slate-400 font-medium text-[11px]">構造: パーツを選んでください</div>
           </div>
           <button id="assembled-speak-btn" onclick="speakAssembled()" disabled class="w-9 h-9 rounded-xl bg-slate-100 text-slate-400 flex items-center justify-center ml-2 cursor-not-allowed transition">
@@ -233,7 +279,7 @@
       </div>
 
       <div class="space-y-4">
-        <div class="bg-white p-4 rounded-2xl border border-slate-200">
+        <div class="bg-white p-4 rounded-2xl border border-slate-200/80 shadow-xs">
           <div class="text-xs font-extrabold text-amber-800 mb-2.5 flex items-center gap-1.5">
             <span class="w-2.5 h-2.5 rounded-full bg-amber-500"></span>
             <span>① 子音パーツを選んでください（初声 / 14種）</span>
@@ -241,7 +287,7 @@
           <div id="cho-palette" class="grid grid-cols-7 sm:grid-cols-14 gap-1.5"></div>
         </div>
 
-        <div class="bg-white p-4 rounded-2xl border border-slate-200">
+        <div class="bg-white p-4 rounded-2xl border border-slate-200/80 shadow-xs">
           <div class="text-xs font-extrabold text-emerald-800 mb-2.5 flex items-center justify-between">
             <div class="flex items-center gap-1.5">
               <span class="w-2.5 h-2.5 rounded-full bg-emerald-500"></span>
@@ -252,7 +298,7 @@
           <div id="jung-palette" class="grid grid-cols-4 sm:grid-cols-8 gap-1.5"></div>
         </div>
 
-        <div class="bg-white p-4 rounded-2xl border border-slate-200">
+        <div class="bg-white p-4 rounded-2xl border border-slate-200/80 shadow-xs">
           <div class="text-xs font-extrabold text-rose-800 mb-2.5 flex items-center justify-between">
             <div class="flex items-center gap-1.5">
               <span class="w-2.5 h-2.5 rounded-full bg-rose-500"></span>
@@ -261,6 +307,156 @@
             <span class="text-[10px] text-slate-400 font-medium">付加すると最下段に敷かれます</span>
           </div>
           <div id="jong-palette" class="flex flex-wrap gap-1.5"></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ========================================== -->
+    <!-- TAB 4: 筆順アニメーション＆なぞり書き練習   -->
+    <!-- ========================================== -->
+    <section id="view-stroke" class="space-y-6 hidden">
+      <div class="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-xs flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div>
+          <h2 class="text-base font-extrabold text-slate-900 flex items-center gap-2">
+            <span>全40字母 筆順＆なぞり書き練習</span>
+            <span class="text-xs font-bold px-2 py-0.5 rounded-full bg-indigo-50 text-indigo-600">全音WaveNet実音源</span>
+          </h2>
+          <p class="text-xs text-slate-500 mt-1">
+            基本原則は「上から下・左から右」。濃音や複合母音も左・上のパーツから順に書いてから右・下を書きます。
+          </p>
+        </div>
+        <div class="flex items-center gap-2">
+          <span class="text-[11px] font-bold text-slate-500 bg-slate-100 px-3 py-1.5 rounded-xl font-mono-code">
+            画数: <span id="strokeCurrentNum" class="text-indigo-600 font-extrabold">1</span> / <span id="strokeTotalNum" class="font-extrabold text-slate-700">1</span> 画
+          </span>
+        </div>
+      </div>
+
+      <!-- メイン練習ステージ（筆順アニメーション ＆ 手書きキャンバス重ね合わせ） -->
+      <div class="grid grid-cols-1 md:grid-cols-12 gap-5 items-start">
+        <!-- 左側: 練習マス＆操作コントロール -->
+        <div class="md:col-span-5 bg-white p-6 rounded-3xl border border-slate-200/80 shadow-xs flex flex-col items-center space-y-4 md:sticky md:top-28">
+          <!-- 選択中字母の情報ヘッダー -->
+          <div class="w-full flex items-center justify-between border-b border-slate-100 pb-3">
+            <div class="flex items-center gap-3">
+              <span id="strokeSelectedBadge" class="w-10 h-10 rounded-2xl bg-indigo-600 text-white font-kr font-black text-2xl flex items-center justify-center shadow-xs">ㄱ</span>
+              <div>
+                <div class="text-sm font-extrabold text-slate-900"><span id="strokeCharName">キヨク (기역)</span></div>
+                <div id="strokeCharTip" class="text-[11px] text-slate-500 leading-snug">1画で横から下へ折れます</div>
+              </div>
+            </div>
+            <button onclick="speakCurrentStrokeChar()" class="px-3 py-1.5 rounded-xl bg-indigo-50 hover:bg-indigo-100 text-indigo-700 font-bold text-xs flex items-center gap-1.5 transition shrink-0">
+              <i class="fa-solid fa-volume-high text-[11px]"></i>
+              <span>代表音</span>
+            </button>
+          </div>
+
+          <!-- 280x280 筆順SVG ＋ 手書きCanvas 重ね合わせステージ -->
+          <div class="relative w-[280px] h-[280px] bg-slate-50 rounded-3xl border-2 border-slate-200 overflow-hidden select-none shadow-inner">
+            <!-- 十字ガイド線 -->
+            <div class="absolute inset-0 pointer-events-none flex items-center justify-center">
+              <div class="w-full h-px border-t border-dashed border-slate-300/80"></div>
+            </div>
+            <div class="absolute inset-0 pointer-events-none flex items-center justify-center">
+              <div class="h-full w-px border-l border-dashed border-slate-300/80"></div>
+            </div>
+
+            <!-- 筆順SVGレイヤー -->
+            <svg id="hangulStrokeSvg" viewBox="0 0 200 200" class="absolute inset-0 w-full h-full pointer-events-none"></svg>
+
+            <!-- 手書きなぞりCanvasレイヤー -->
+            <canvas id="hangulTraceCanvas" width="280" height="280" class="absolute inset-0 w-full h-full cursor-crosshair touch-none"></canvas>
+          </div>
+
+          <!-- 再生・コマ送りボタン群 -->
+          <div class="flex flex-wrap items-center justify-center gap-2 w-full">
+            <button onclick="stepHangulStroke(-1)" class="px-3 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs transition" title="1画戻る">
+              <i class="fa-solid fa-backward-step"></i>
+            </button>
+            <button id="btnPlayHangulStroke" onclick="togglePlayHangulStroke()" class="px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs flex items-center gap-1.5 shadow-xs transition">
+              <i class="fa-solid fa-play"></i>
+              <span>筆順を再生</span>
+            </button>
+            <button onclick="stepHangulStroke(1)" class="px-3 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs transition" title="1画進む">
+              <i class="fa-solid fa-forward-step"></i>
+            </button>
+          </div>
+
+          <!-- お手本表示切替 ＆ 手書き消去 -->
+          <div class="flex items-center justify-center gap-2 w-full pt-1 border-t border-slate-100">
+            <button id="btnToggleGuide" onclick="toggleStrokeGuide()" class="flex-1 py-2 px-3 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 font-bold text-xs flex items-center justify-center gap-1.5 transition">
+              <i id="guideEyeIcon" class="fa-solid fa-eye text-indigo-600"></i>
+              <span id="guideEyeText">お手本 ON</span>
+            </button>
+            <button onclick="clearTraceCanvas()" class="flex-1 py-2 px-3 rounded-xl border border-rose-200 bg-rose-50/70 hover:bg-rose-100 text-rose-700 font-bold text-xs flex items-center justify-center gap-1.5 transition">
+              <i class="fa-solid fa-eraser"></i>
+              <span>手書きを消す</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- 右側: 4グループ選択パレット -->
+        <div class="md:col-span-7 space-y-4">
+          <!-- 1. 基本子音14 -->
+          <div class="bg-white p-4 rounded-2xl border border-slate-200/80 shadow-xs">
+            <div class="text-xs font-extrabold text-amber-800 mb-2.5 flex items-center justify-between">
+              <div class="flex items-center gap-1.5">
+                <span class="w-2.5 h-2.5 rounded-full bg-amber-500"></span>
+                <span>基本子音（14文字）</span>
+              </div>
+              <span class="text-[10px] text-slate-400 font-medium">タップで筆順＋発音再生</span>
+            </div>
+            <div id="strokeConsonantGrid" class="grid grid-cols-5 sm:grid-cols-7 gap-2"></div>
+          </div>
+
+          <!-- 2. 濃音5 -->
+          <div class="bg-white p-4 rounded-2xl border border-slate-200/80 shadow-xs">
+            <div class="text-xs font-extrabold text-rose-800 mb-2.5 flex items-center justify-between">
+              <div class="flex items-center gap-1.5">
+                <span class="w-2.5 h-2.5 rounded-full bg-rose-500"></span>
+                <span>濃音・ダブル子音（5文字）</span>
+              </div>
+              <span class="text-[10px] text-slate-400 font-medium">左のパーツ完成後に右を書く</span>
+            </div>
+            <div id="strokeTenseGrid" class="grid grid-cols-5 gap-2"></div>
+          </div>
+
+          <!-- 3. 基本母音10 -->
+          <div class="bg-white p-4 rounded-2xl border border-slate-200/80 shadow-xs">
+            <div class="text-xs font-extrabold text-emerald-800 mb-2.5 flex items-center justify-between">
+              <div class="flex items-center gap-1.5">
+                <span class="w-2.5 h-2.5 rounded-full bg-emerald-500"></span>
+                <span>基本母音（10文字）</span>
+              </div>
+              <span class="text-[10px] text-slate-400 font-medium">縦棒・横棒の順を確認</span>
+            </div>
+            <div id="strokeVowelGrid" class="grid grid-cols-5 gap-2"></div>
+          </div>
+
+          <!-- 4. 複合母音11 -->
+          <div class="bg-white p-4 rounded-2xl border border-slate-200/80 shadow-xs">
+            <div class="text-xs font-extrabold text-teal-800 mb-2.5 flex items-center justify-between">
+              <div class="flex items-center gap-1.5">
+                <span class="w-2.5 h-2.5 rounded-full bg-teal-500"></span>
+                <span>複合母音（11文字）</span>
+              </div>
+              <span class="text-[10px] text-slate-400 font-medium">左/上の母音から右の縦棒へ</span>
+            </div>
+            <div id="strokeCompoundGrid" class="grid grid-cols-4 sm:grid-cols-6 gap-2"></div>
+          </div>
+
+          <!-- 書き順のコツカード -->
+          <div class="p-4 bg-indigo-50/60 border border-indigo-200/80 rounded-2xl text-xs text-slate-700 space-y-1.5">
+            <div class="font-extrabold text-indigo-900 flex items-center gap-1.5">
+              <i class="fa-solid fa-circle-info text-indigo-600"></i>
+              <span>濃音・複合母音＆基本字母の書き順ルール</span>
+            </div>
+            <ul class="list-disc list-inside space-y-1 text-[11px] leading-relaxed">
+              <li><strong>濃音（ㄲ, ㄸ, ㅃ, ㅆ, ㅉ）：</strong> 必ず<strong>左側のパーツを書き終えてから</strong>、右側のパーツを書きます。</li>
+              <li><strong>複合母音（ㅘ, ㅝ, ㅢ 等）：</strong> 上/左にある母音（<code class="font-mono-code">ㅗ・ㅜ・ㅡ</code>）を完成させてから、右側の縦棒（<code class="font-mono-code">ㅏ・ㅓ・ㅣ</code>）を書きます。</li>
+              <li><strong>ㅁ・ㅂ・ㄹ：</strong> 四角形やジグザグを一筆書きせず、左縦・上横から順に画を分けて書きます。</li>
+            </ul>
+          </div>
         </div>
       </div>
     </section>
@@ -278,17 +474,17 @@
       </h3>
       <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 text-[11px] text-slate-600">
         <div class="bg-slate-50 p-3 rounded-xl border border-slate-100">
-          <p class="font-bold text-slate-800 mb-0.5">ハングル文字構造アルゴリズム</p>
+          <p class="font-bold text-slate-800 mb-0.5">ハングル文字構造・筆順データ</p>
           <p class="text-slate-500 leading-relaxed">
             <span class="font-semibold text-slate-700">Unicode 15.0 Hangul Syllables 規格準拠</span><br>
-            韓国国立国語院（National Institute of Korean Language）告示の反切表体系に基づき、初声・中声・終声の動的合成処理を自前実装（客観的事実データ）。
+            韓国国立国語院（National Institute of Korean Language）告示の反切表体系および標準筆順原則に基づき、初声・中声・終声の合成処理と全40字母のベクター筆順データを自前実装（客観的事実データ）。
           </p>
         </div>
         <div class="bg-slate-50 p-3 rounded-xl border border-slate-100">
-          <p class="font-bold text-slate-800 mb-0.5">発音音声データ（ローカル収録）</p>
+          <p class="font-bold text-slate-800 mb-0.5">発音音声データ（ローカル収録・全171音）</p>
           <p class="text-slate-500 leading-relaxed">
             <span class="font-semibold text-slate-700">Google Cloud Text-to-Speech API</span><br>
-            事前レンダリング音源（モデル: <code>ko-KR-Wavenet-A</code>）をローカルディレクトリ（<code>audio/</code>）に同梱。外部API通信や個人キーの埋め込みを行わない完全静的配信。
+            事前レンダリング音源（モデル: <code class="font-mono-code">ko-KR-Wavenet-A</code> / <code class="font-mono-code">000_가.mp3</code>〜<code class="font-mono-code">170_닌.mp3</code>）をローカルディレクトリ（<code class="font-mono-code">audio/</code>）に同梱。外部API通信や個人キーの埋め込みを行わない完全静的配信。
           </p>
         </div>
       </div>
@@ -298,7 +494,7 @@
   <!-- ======================================================= -->
   <!-- フッター (selfup.net 個別アプリ 正式共通規格: コピーライトなし) -->
   <!-- ======================================================= -->
-  <footer class="py-6 text-center border-t border-slate-200 bg-white">
+  <footer class="mt-8 py-6 text-center border-t border-slate-200 bg-white">
     <div class="max-w-4xl mx-auto px-4">
       <p class="text-[11px] text-slate-400">
         ※個人開発プロトタイプにつき無保証・自己責任にてご利用ください（データは端末内完結・サポート対象外）
@@ -311,7 +507,7 @@
   <!-- ========================================== -->
   <script>
     // --------------------------------------------------------
-    // 1. ローカルMP3音声再生管理
+    // 1. ローカルMP3音声再生管理 (000_가.mp3 〜 170_닌.mp3 完全対応)
     // --------------------------------------------------------
     let isSoundMuted = false;
     let currentPlayingAudio = null;
@@ -358,7 +554,7 @@
       }
     }
 
-    // 予備フォールバック（パッチム合成文字や複合文字用）
+    // 予備フォールバック（パズルでの任意組み合わせ等）
     function speakFallback(text) {
       if (isSoundMuted || !text || text === '?' || !('speechSynthesis' in window)) return;
       window.speechSynthesis.cancel();
@@ -371,7 +567,7 @@
     // --------------------------------------------------------
     // 2. タブナビゲーション
     // --------------------------------------------------------
-    const TABS = ['matrix', 'gojuon', 'puzzle'];
+    const TABS = ['matrix', 'gojuon', 'puzzle', 'stroke'];
     function setTab(tabName) {
       TABS.forEach(t => {
         document.getElementById(`view-${t}`).classList.add('hidden');
@@ -379,6 +575,10 @@
       });
       document.getElementById(`view-${tabName}`).classList.remove('hidden');
       document.getElementById(`tab-${tabName}`).className = 'px-4 py-2 rounded-xl active-nav-tab transition flex items-center gap-2 whitespace-nowrap';
+
+      if (tabName !== 'stroke') {
+        stopHangulStrokeAnim();
+      }
     }
 
     // --------------------------------------------------------
@@ -439,7 +639,7 @@
     }
 
     // --------------------------------------------------------
-    // 4. TAB 1: 反切表（140音）
+    // 4. TAB 1: 反切表（140音: 000〜139）
     // --------------------------------------------------------
     const MATRIX_JUNGS = [
       { uIdx: 0,  r: "a" },
@@ -487,7 +687,7 @@
         th.innerHTML = `
           <div class="text-base font-extrabold text-indigo-700 font-kr leading-none mb-0.5">${cho.char}</div>
           <div class="text-[10px] text-slate-500 font-medium">${cho.name}</div>
-          <div class="text-[9px] text-slate-400 font-mono font-semibold">${cho.r || 'ø'}</div>
+          <div class="text-[9px] text-slate-400 font-mono-code font-semibold">${cho.r || 'ø'}</div>
         `;
         tr.appendChild(th);
 
@@ -495,7 +695,7 @@
           const char = composeHangulDirect(cho.uIdx, jung.uIdx, 0);
           const kana = KANA_READINGS_140[cIdx][jIdx];
           const romaji = `${cho.r}${jung.r}`;
-          const soundIndex = cIdx * 10 + jIdx; // 0 〜 139
+          const soundIndex = cIdx * 10 + jIdx;
 
           const td = document.createElement('td');
           td.className = "p-1.5";
@@ -503,7 +703,7 @@
             <button onclick="selectMatrixChar('${char}', '${kana}', '${romaji}', '${cho.char}', '${JUNG_MAP.find(m => m.uIdx === jung.uIdx).char}', ${soundIndex})" class="w-full py-2 px-1 rounded-xl border border-slate-200/80 hover:border-indigo-500 hover:bg-indigo-50/50 transition flex flex-col items-center justify-center group active:scale-95 bg-white shadow-2xs">
               <span class="text-[10px] text-slate-400 font-medium leading-none mb-0.5 truncate max-w-full">${kana}</span>
               <span class="text-lg font-black text-slate-800 font-kr group-hover:text-indigo-600 leading-snug">${char}</span>
-              <span class="text-[9px] font-mono text-slate-400 font-semibold leading-none">${romaji}</span>
+              <span class="text-[9px] font-mono-code text-slate-400 font-semibold leading-none">${romaji}</span>
             </button>
           `;
           tr.appendChild(td);
@@ -527,50 +727,50 @@
     }
 
     // --------------------------------------------------------
-    // 5. TAB 2: 五十音逆引き（行グループ付き）
+    // 5. TAB 2: 五十音逆引き（全音WaveNet実音源対応）
     // --------------------------------------------------------
     const GOJUON_DATA = [
       // === 清音 (あ〜わ行) ===
       { group: "seion", row: "あ行", kana: "あ", h: "아", r: "a", sIdx: 70, note: "母音あ（ㅇ無音＋ㅏ）" },
       { group: "seion", row: "あ行", kana: "い", h: "이", r: "i", sIdx: 79, note: "母音い（ㅇ無音＋ㅣ）" },
       { group: "seion", row: "あ行", kana: "う", h: "우", r: "u", sIdx: 76, note: "母音う（口をすぼめるㅜ）" },
-      { group: "seion", row: "あ行", kana: "え", h: "에 / 애", r: "e / ae", sIdx: -1, note: "一般的に에を使用" },
+      { group: "seion", row: "あ行", kana: "え", h: "에 / 애", r: "e / ae", sIdx: 147, note: "一般的に에を使用" },
       { group: "seion", row: "あ行", kana: "お", h: "오", r: "o", sIdx: 74, note: "母音お（口を丸めるㅗ）" },
 
       { group: "seion", row: "か行", kana: "か", h: "가 / 카", r: "ga / ka", sIdx: 0, note: "語頭:카、語中:가が多用" },
       { group: "seion", row: "か行", kana: "き", h: "기 / 키", r: "gi / ki", sIdx: 9, note: "語頭:キー、語中:기" },
       { group: "seion", row: "か行", kana: "く", h: "구 / 쿠", r: "gu / ku", sIdx: 6, note: "語頭:ク、語中:구" },
-      { group: "seion", row: "か行", kana: "け", h: "게 / 케", r: "ge / ke", sIdx: -1, note: "語頭:ケ、語中:게" },
+      { group: "seion", row: "か行", kana: "け", h: "게 / 케", r: "ge / ke", sIdx: 156, note: "語頭:ケ、語中:게" },
       { group: "seion", row: "か行", kana: "こ", h: "고 / 코", r: "go / ko", sIdx: 4, note: "語頭:コ、語中:고" },
 
       { group: "seion", row: "さ行", kana: "さ", h: "사", r: "sa", sIdx: 60, note: "子音ㅅ＋ㅏ" },
       { group: "seion", row: "さ行", kana: "し", h: "시", r: "si (shi)", sIdx: 69, note: "韓国語では自然に「シ」の音" },
       { group: "seion", row: "さ行", kana: "す", h: "스", r: "seu", sIdx: 68, note: "母音ㅡ(平口)をあてる" },
-      { group: "seion", row: "さ行", kana: "せ", h: "세", r: "se", sIdx: -1, note: "子音ㅅ＋ㅔ" },
+      { group: "seion", row: "さ行", kana: "せ", h: "세", r: "se", sIdx: 157, note: "子音ㅅ＋ㅔ" },
       { group: "seion", row: "さ行", kana: "そ", h: "소", r: "so", sIdx: 64, note: "子音ㅅ＋ㅗ" },
 
       { group: "seion", row: "た行", kana: "た", h: "다 / 타", r: "da / ta", sIdx: 20, note: "語頭:タ、語中:다" },
       { group: "seion", row: "た行", kana: "ち", h: "치 / 지", r: "chi / ji", sIdx: 99, note: "語頭:チ、語中:지" },
       { group: "seion", row: "た行", kana: "つ", h: "츠", r: "cheu", sIdx: 98, note: "★「つ」がないため츠で代用" },
-      { group: "seion", row: "た行", kana: "て", h: "데 / 테", r: "de / te", sIdx: -1, note: "語頭:テ、語中:데" },
+      { group: "seion", row: "た行", kana: "て", h: "데 / 테", r: "de / te", sIdx: 158, note: "語頭:テ、語中:데" },
       { group: "seion", row: "た行", kana: "と", h: "도 / 토", r: "do / to", sIdx: 24, note: "語頭:ト、語中:도" },
 
       { group: "seion", row: "な行", kana: "な", h: "나", r: "na", sIdx: 10, note: "子音ㄴ＋ㅏ" },
       { group: "seion", row: "な行", kana: "に", h: "니", r: "ni", sIdx: 19, note: "子音ㄴ＋ㅣ" },
       { group: "seion", row: "な行", kana: "ぬ", h: "누", r: "nu", sIdx: 16, note: "子音ㄴ＋ㅜ" },
-      { group: "seion", row: "な行", kana: "ね", h: "네", r: "ne", sIdx: -1, note: "子音ㄴ＋ㅔ" },
+      { group: "seion", row: "な行", kana: "ね", h: "네", r: "ne", sIdx: 159, note: "子音ㄴ＋ㅔ" },
       { group: "seion", row: "な行", kana: "の", h: "노", r: "no", sIdx: 14, note: "子音ㄴ＋ㅗ" },
 
       { group: "seion", row: "は行", kana: "は", h: "하", r: "ha", sIdx: 130, note: "子音ㅎ＋ㅏ" },
       { group: "seion", row: "は行", kana: "ひ", h: "히", r: "hi", sIdx: 139, note: "子音ㅎ＋ㅣ" },
       { group: "seion", row: "は行", kana: "ふ", h: "후", r: "hu (fu)", sIdx: 136, note: "韓国語ではhuに近い" },
-      { group: "seion", row: "は行", kana: "へ", h: "헤", r: "he", sIdx: -1, note: "子音ㅎ＋ㅔ" },
+      { group: "seion", row: "は行", kana: "へ", h: "헤", r: "he", sIdx: 160, note: "子音ㅎ＋ㅔ" },
       { group: "seion", row: "は行", kana: "ほ", h: "호", r: "ho", sIdx: 134, note: "子音ㅎ＋ㅗ" },
 
       { group: "seion", row: "ま行", kana: "ま", h: "마", r: "ma", sIdx: 40, note: "子音ㅁ＋ㅏ" },
       { group: "seion", row: "ま行", kana: "み", h: "미", r: "mi", sIdx: 49, note: "子音ㅁ＋ㅣ" },
       { group: "seion", row: "ま行", kana: "む", h: "무", r: "mu", sIdx: 46, note: "子音ㅁ＋ㅜ" },
-      { group: "seion", row: "ま行", kana: "め", h: "메", r: "me", sIdx: -1, note: "子音ㅁ＋ㅔ" },
+      { group: "seion", row: "ま行", kana: "め", h: "메", r: "me", sIdx: 161, note: "子音ㅁ＋ㅔ" },
       { group: "seion", row: "ま行", kana: "も", h: "모", r: "mo", sIdx: 44, note: "子音ㅁ＋ㅗ" },
 
       { group: "seion", row: "や・ら・わ行", kana: "や", h: "야", r: "ya", sIdx: 71, note: "母音ㅑ" },
@@ -579,40 +779,40 @@
       { group: "seion", row: "や・ら・わ行", kana: "ら", h: "라", r: "ra", sIdx: 30, note: "子音ㄹ＋ㅏ" },
       { group: "seion", row: "や・ら・わ行", kana: "り", h: "리", r: "ri", sIdx: 39, note: "子音ㄹ＋ㅣ" },
       { group: "seion", row: "や・ら・わ行", kana: "る", h: "루", r: "ru", sIdx: 36, note: "子音ㄹ＋ㅜ" },
-      { group: "seion", row: "や・ら・わ行", kana: "れ", h: "레", r: "re", sIdx: -1, note: "子音ㄹ＋ㅔ" },
+      { group: "seion", row: "や・ら・わ行", kana: "れ", h: "레", r: "re", sIdx: 162, note: "子音ㄹ＋ㅔ" },
       { group: "seion", row: "や・ら・わ行", kana: "ろ", h: "로", r: "ro", sIdx: 34, note: "子音ㄹ＋ㅗ" },
-      { group: "seion", row: "や・ら・わ行", kana: "わ", h: "와", r: "wa", sIdx: -1, note: "複合母音ㅘ" },
+      { group: "seion", row: "や・ら・わ行", kana: "わ", h: "와", r: "wa", sIdx: 149, note: "複合母音ㅘ" },
       { group: "seion", row: "や・ら・わ行", kana: "を", h: "오", r: "o", sIdx: 74, note: "発音上は오と同じ" },
 
       // === 濁音・半濁音 ===
       { group: "dakuon", row: "が行 (濁音)", kana: "が", h: "가", r: "ga", sIdx: 0, note: "有声音化（語中・濁音）" },
       { group: "dakuon", row: "が行 (濁音)", kana: "ぎ", h: "기", r: "gi", sIdx: 9, note: "語中・濁音" },
       { group: "dakuon", row: "が行 (濁音)", kana: "ぐ", h: "구", r: "gu", sIdx: 6, note: "語中・濁音" },
-      { group: "dakuon", row: "が行 (濁音)", kana: "げ", h: "게", r: "ge", sIdx: -1, note: "語中・濁音" },
+      { group: "dakuon", row: "が行 (濁音)", kana: "げ", h: "게", r: "ge", sIdx: 156, note: "語中・濁音" },
       { group: "dakuon", row: "が行 (濁音)", kana: "ご", h: "고", r: "go", sIdx: 4, note: "語中・濁音" },
 
       { group: "dakuon", row: "ざ行 (代用表記)", kana: "ざ", h: "자", r: "ja", sIdx: 80, note: "★Z音がないためJ音で代用" },
       { group: "dakuon", row: "ざ行 (代用表記)", kana: "じ", h: "지", r: "ji", sIdx: 89, note: "子音ㅈ＋ㅣ" },
       { group: "dakuon", row: "ざ行 (代用表記)", kana: "ず", h: "즈", r: "jeu", sIdx: 88, note: "★ズは즈で代用" },
-      { group: "dakuon", row: "ざ行 (代用表記)", kana: "ぜ", h: "제", r: "je", sIdx: -1, note: "★ゼは제で代用" },
+      { group: "dakuon", row: "ざ行 (代用表記)", kana: "ぜ", h: "제", r: "je", sIdx: 165, note: "★ゼは제で代用" },
       { group: "dakuon", row: "ざ行 (代用表記)", kana: "ぞ", h: "조", r: "jo", sIdx: 84, note: "★ゾは조で代用" },
 
       { group: "dakuon", row: "だ行 (濁音)", kana: "だ", h: "다", r: "da", sIdx: 20, note: "語中・濁音" },
       { group: "dakuon", row: "だ行 (濁音)", kana: "ぢ", h: "지", r: "ji", sIdx: 89, note: "「じ」と同音表記" },
       { group: "dakuon", row: "だ行 (濁音)", kana: "づ", h: "즈", r: "jeu", sIdx: 88, note: "「ず」と同音表記" },
-      { group: "dakuon", row: "だ行 (濁音)", kana: "で", h: "데", r: "de", sIdx: -1, note: "語中・濁音" },
+      { group: "dakuon", row: "だ行 (濁音)", kana: "で", h: "데", r: "de", sIdx: 158, note: "語中・濁音" },
       { group: "dakuon", row: "だ行 (濁音)", kana: "ど", h: "도", r: "do", sIdx: 24, note: "語中・濁音" },
 
       { group: "dakuon", row: "ば行 (濁音)", kana: "ば", h: "바", r: "ba", sIdx: 50, note: "語中・濁音" },
       { group: "dakuon", row: "ば行 (濁音)", kana: "び", h: "비", r: "bi", sIdx: 59, note: "語中・濁音" },
       { group: "dakuon", row: "ば行 (濁音)", kana: "ぶ", h: "부", r: "bu", sIdx: 56, note: "語中・濁音" },
-      { group: "dakuon", row: "ば行 (濁音)", kana: "べ", h: "베", r: "be", sIdx: -1, note: "語中・濁音" },
+      { group: "dakuon", row: "ば行 (濁音)", kana: "べ", h: "베", r: "be", sIdx: 163, note: "語中・濁音" },
       { group: "dakuon", row: "ば行 (濁音)", kana: "ぼ", h: "보", r: "bo", sIdx: 54, note: "語中・濁音" },
 
       { group: "dakuon", row: "ぱ行 (半濁音)", kana: "ぱ", h: "파 / 빠", r: "pa / ppa", sIdx: 120, note: "激音파または濃音빠" },
       { group: "dakuon", row: "ぱ行 (半濁音)", kana: "ぴ", h: "피 / 삐", r: "pi / ppi", sIdx: 129, note: "激音피または濃音삐" },
       { group: "dakuon", row: "ぱ行 (半濁音)", kana: "ぷ", h: "푸 / 뿌", r: "pu / ppu", sIdx: 126, note: "激音푸または濃音뿌" },
-      { group: "dakuon", row: "ぱ行 (半濁音)", kana: "ぺ", h: "페 / 빼", r: "pe / ppe", sIdx: -1, note: "激音페または濃音빼" },
+      { group: "dakuon", row: "ぱ行 (半濁音)", kana: "ぺ", h: "페 / 빼", r: "pe / ppe", sIdx: 164, note: "激音페または濃音빼" },
       { group: "dakuon", row: "ぱ行 (半濁音)", kana: "ぽ", h: "포 / 뽀", r: "po / ppo", sIdx: 124, note: "激音포または濃音뽀" },
 
       // === 拗音 (3つ1セット) ===
@@ -671,11 +871,10 @@
       });
 
       if (filtered.length === 0) {
-        container.innerHTML = `<div class="py-8 text-center text-xs text-slate-400 bg-white rounded-2xl border border-slate-200">該当する音節がありません</div>`;
+        container.innerHTML = `<div class="py-8 text-center text-xs text-slate-400 bg-white rounded-2xl border border-slate-200/80">該当する音節がありません</div>`;
         return;
       }
 
-      // 検索時はフラットなグリッド表示
       if (q) {
         const searchGrid = document.createElement('div');
         searchGrid.className = "grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-3";
@@ -684,7 +883,6 @@
         return;
       }
 
-      // 通常時：行（row）ごとに見出しをつけてブロック化
       const groups = {};
       filtered.forEach(item => {
         if (!groups[item.row]) groups[item.row] = [];
@@ -694,9 +892,8 @@
       Object.keys(groups).forEach(rowTitle => {
         const rowItems = groups[rowTitle];
         const section = document.createElement('div');
-        section.className = "bg-white p-4 rounded-2xl border border-slate-200 shadow-2xs";
+        section.className = "bg-white p-4 rounded-2xl border border-slate-200/80 shadow-xs";
 
-        // グループヘッダー
         const header = document.createElement('div');
         header.className = "flex items-center gap-2 mb-3 pb-2 border-b border-slate-100";
         header.innerHTML = `
@@ -706,13 +903,10 @@
         `;
         section.appendChild(header);
 
-        // カードグリッド（拗音3音は3列、清音・濁音5音は5列で固定）
         const grid = document.createElement('div');
         const count = rowItems.length;
         if (count === 3) {
           grid.className = "grid grid-cols-3 gap-3";
-        } else if (count === 5) {
-          grid.className = "grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-3";
         } else {
           grid.className = "grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-3";
         }
@@ -735,12 +929,12 @@
         <div>
           <div class="flex items-center justify-between mb-1">
             <span class="text-sm font-black text-slate-900">${item.kana}</span>
-            <span class="text-[9px] font-mono text-slate-400 uppercase font-semibold">${item.r}</span>
+            <span class="text-[9px] font-mono-code text-slate-400 uppercase font-semibold">${item.r}</span>
           </div>
           <div class="text-xl font-black text-indigo-600 font-kr mb-1">${item.h}</div>
           <div class="text-[10px] text-slate-500 leading-snug line-clamp-2">${item.note}</div>
         </div>
-        <button onclick="playLocalAudio(${item.sIdx}, '${speakTarget}')" ${!speakTarget ? 'disabled' : ''} class="mt-2.5 w-full py-1.5 rounded-lg ${speakTarget ? 'bg-white hover:bg-indigo-50 text-indigo-700 border border-slate-200 hover:border-indigo-300 shadow-2xs' : 'bg-slate-100 text-slate-400 cursor-not-allowed border border-transparent'} font-bold text-[11px] flex items-center justify-center gap-1.5 transition">
+        <button onclick="playLocalAudio(${item.sIdx}, '${speakTarget}')" ${!speakTarget ? 'disabled' : ''} class="mt-2.5 w-full py-1.5 rounded-xl ${speakTarget ? 'bg-white hover:bg-indigo-50 text-indigo-700 border border-slate-200 hover:border-indigo-300 shadow-2xs' : 'bg-slate-100 text-slate-400 cursor-not-allowed border border-transparent'} font-bold text-[11px] flex items-center justify-center gap-1.5 transition">
           <i class="fa-solid fa-volume-high text-[10px]"></i>
           <span>再生</span>
         </button>
@@ -753,23 +947,23 @@
       currentGojuonCategory = cat;
       ['seion', 'dakuon', 'youon', 'special'].forEach(c => {
         const btn = document.getElementById(`gtab-${c}`);
-        btn.className = (c === cat) ? 'px-3.5 py-1.5 rounded-lg bg-indigo-600 text-white transition' : 'px-3.5 py-1.5 rounded-lg bg-white border border-slate-200 text-slate-600 hover:bg-slate-50 transition';
+        btn.className = (c === cat) ? 'px-3.5 py-1.5 rounded-xl bg-indigo-600 text-white transition' : 'px-3.5 py-1.5 rounded-xl bg-white border border-slate-200 text-slate-600 hover:bg-slate-50 transition';
       });
       filterGojuon();
     }
 
     // --------------------------------------------------------
-    // 6. TAB 3: 6大構造パズル
+    // 6. TAB 3: 6大構造パズル（全9題WaveNet実音源対応）
     // --------------------------------------------------------
     const PUZZLE_TARGETS = [
       { choUIdx: 0, jungUIdx: 0, jongUIdx: 0, sIdx: 0,   kanaLabel: "カ / ガ (ga)", desc: "① 左右型（子音＋縦型母音）" },
       { choUIdx: 0, jungUIdx: 8, jongUIdx: 0, sIdx: 4,   kanaLabel: "コ / ゴ (go)", desc: "② 上下型（子音＋横型母音）" },
       { choUIdx: 0, jungUIdx: 4, jongUIdx: 0, sIdx: 2,   kanaLabel: "コ / ゴ (geo / 開くオ)", desc: "① 左右型（子音＋縦型母音）" },
-      { choUIdx: 0, jungUIdx: 9, jongUIdx: 0, sIdx: -1,  kanaLabel: "クァ (gwa)", desc: "③ L字型（子音＋複合母音）" },
-      { choUIdx: 0, jungUIdx: 0, jongUIdx: 1, sIdx: -1,  kanaLabel: "カク (gak)", desc: "④ 左右＋下（子音＋縦母音＋パッチム）" },
-      { choUIdx: 0, jungUIdx: 8, jongUIdx: 21, sIdx: -1, kanaLabel: "コン (gong)", desc: "⑤ 3段タワー（子音＋横母音＋パッチム）" },
-      { choUIdx: 0, jungUIdx: 9, jongUIdx: 4, sIdx: -1,  kanaLabel: "クァン (gwan)", desc: "⑥ L字＋下（子音＋複合母音＋パッチム）" },
-      { choUIdx: 1, jungUIdx: 20, jongUIdx: 4, sIdx: -1, kanaLabel: "ニン (nin)", desc: "④ 左右＋下（ㄴ + ㅣ + ㄴ）" },
+      { choUIdx: 0, jungUIdx: 9, jongUIdx: 0, sIdx: 166, kanaLabel: "クァ (gwa)", desc: "③ L字型（子音＋複合母音）" },
+      { choUIdx: 0, jungUIdx: 0, jongUIdx: 1, sIdx: 167, kanaLabel: "カク (gak)", desc: "④ 左右＋下（子音＋縦母音＋パッチム）" },
+      { choUIdx: 0, jungUIdx: 8, jongUIdx: 21, sIdx: 168, kanaLabel: "コン (gong)", desc: "⑤ 3段タワー（子音＋横母音＋パッチム）" },
+      { choUIdx: 0, jungUIdx: 9, jongUIdx: 4, sIdx: 169, kanaLabel: "クァン (gwan)", desc: "⑥ L字＋下（子音＋複合母音＋パッチム）" },
+      { choUIdx: 1, jungUIdx: 20, jongUIdx: 4, sIdx: 170, kanaLabel: "ニン (nin)", desc: "④ 左右＋下（ㄴ + ㅣ + ㄴ）" },
       { choUIdx: 7, jungUIdx: 8, jongUIdx: 0, sIdx: 74,  kanaLabel: "オ (o)", desc: "② 上下型（ㅇ + ㅗ）" }
     ];
 
@@ -792,7 +986,7 @@
         };
         btn.innerHTML = `
           <div class="text-base leading-none mb-0.5">${cho.char}</div>
-          <div class="text-[9px] font-sans ${isActive ? 'text-amber-100' : 'text-amber-700'}">${cho.r || 'ø'}</div>
+          <div class="text-[9px] font-mono-code ${isActive ? 'text-amber-100' : 'text-amber-700'}">${cho.r || 'ø'}</div>
         `;
         choBox.appendChild(btn);
       });
@@ -810,7 +1004,7 @@
         };
         btn.innerHTML = `
           <div class="text-base leading-none mb-0.5">${jung.char}</div>
-          <div class="text-[9px] font-sans ${isActive ? 'text-emerald-100' : 'text-emerald-700'}">${jung.r}</div>
+          <div class="text-[9px] font-mono-code ${isActive ? 'text-emerald-100' : 'text-emerald-700'}">${jung.r}</div>
         `;
         jungBox.appendChild(btn);
       });
@@ -925,8 +1119,9 @@
     function speakAssembled() {
       const char = document.getElementById('assembled-char').innerText;
       const target = PUZZLE_TARGETS[currentTargetIdx];
+      const targetChar = composeHangulDirect(target.choUIdx, target.jungUIdx, target.jongUIdx);
       if (char && char !== '?') {
-        if (target && target.sIdx >= 0) {
+        if (char === targetChar && target.sIdx >= 0) {
           playLocalAudio(target.sIdx, char);
         } else {
           speakFallback(char);
@@ -946,11 +1141,626 @@
       resetPuzzleSelection();
     }
 
+    // --------------------------------------------------------
+    // 7. TAB 4: 筆順アニメーション＆なぞり書き練習 (全40字母・全音WaveNet対応)
+    // --------------------------------------------------------
+    const HANGUL_STROKE_DATA = [
+      // === 1. 基本子音14文字 ===
+      {
+        type: 'consonant', char: 'ㄱ', name: 'キヨク (기역)', tip: '1画：左から右へ引き、そのまま下へ折れます',
+        sampleChar: '가', sIdx: 0,
+        strokes: [
+          { d: 'M 48 56 L 152 56 L 152 152', nx: 36, ny: 50 }
+        ]
+      },
+      {
+        type: 'consonant', char: 'ㄴ', name: 'ニウン (니은)', tip: '1画：上から下へ下ろし、そのまま右へ折れます',
+        sampleChar: '나', sIdx: 10,
+        strokes: [
+          { d: 'M 52 48 L 52 148 L 156 148', nx: 38, ny: 46 }
+        ]
+      },
+      {
+        type: 'consonant', char: 'ㄷ', name: 'ティグッ (디귿)', tip: '2画：①上の横棒 → ②左縦から下横へ折れる',
+        sampleChar: '다', sIdx: 20,
+        strokes: [
+          { d: 'M 50 52 L 150 52', nx: 38, ny: 46 },
+          { d: 'M 54 52 L 54 148 L 154 148', nx: 38, ny: 105 }
+        ]
+      },
+      {
+        type: 'consonant', char: 'ㄹ', name: 'リウル (리을)', tip: '3画：一筆書きせず ①上のㄱ → ②中の横 → ③下のㄴ',
+        sampleChar: '라', sIdx: 30,
+        strokes: [
+          { d: 'M 48 44 L 150 44 L 150 96', nx: 36, ny: 42 },
+          { d: 'M 48 96 L 150 96', nx: 36, ny: 96 },
+          { d: 'M 50 96 L 50 154 L 154 154', nx: 36, ny: 145 }
+        ]
+      },
+      {
+        type: 'consonant', char: 'ㅁ', name: 'ミウム (미음)', tip: '3画：漢字の「口」と同じく ①左縦 → ②上横＋右縦 → ③下横',
+        sampleChar: '마', sIdx: 40,
+        strokes: [
+          { d: 'M 50 48 L 50 152', nx: 36, ny: 52 },
+          { d: 'M 50 50 L 150 50 L 150 152', nx: 100, ny: 38 },
+          { d: 'M 50 150 L 150 150', nx: 100, ny: 170 }
+        ]
+      },
+      {
+        type: 'consonant', char: 'ㅂ', name: 'ピウプ (비읍)', tip: '4画：①左縦 → ②右縦 → ③中の横 → ④下の横',
+        sampleChar: '바', sIdx: 50,
+        strokes: [
+          { d: 'M 54 44 L 54 154', nx: 38, ny: 48 },
+          { d: 'M 146 44 L 146 154', nx: 158, ny: 48 },
+          { d: 'M 54 98 L 146 98', nx: 96, ny: 88 },
+          { d: 'M 54 152 L 146 152', nx: 96, ny: 172 }
+        ]
+      },
+      {
+        type: 'consonant', char: 'ㅅ', name: 'シオッ (시옷)', tip: '2画：①左へ払い下ろす → ②途中から右へ払い下ろす',
+        sampleChar: '사', sIdx: 60,
+        strokes: [
+          { d: 'M 102 46 Q 92 112 44 154', nx: 98, ny: 36 },
+          { d: 'M 98 92 Q 124 124 158 154', nx: 122, ny: 92 }
+        ]
+      },
+      {
+        type: 'consonant', char: 'ㅇ', name: 'イウン (이응)', tip: '1画：上から反時計回り（左回り）に丸く閉じます',
+        sampleChar: '아', sIdx: 70,
+        strokes: [
+          { d: 'M 100 46 A 54 54 0 1 0 100.1 46', nx: 96, ny: 34 }
+        ]
+      },
+      {
+        type: 'consonant', char: 'ㅈ', name: 'チウッ (지읒)', tip: '2画：①上の横棒から左へ払う → ②中心から右へ払う',
+        sampleChar: '자', sIdx: 80,
+        strokes: [
+          { d: 'M 48 52 L 152 52 Q 112 108 46 154', nx: 36, ny: 48 },
+          { d: 'M 102 98 Q 128 126 156 154', nx: 126, ny: 98 }
+        ]
+      },
+      {
+        type: 'consonant', char: 'ㅊ', name: 'チウッ (치읓)', tip: '3画：①上の点(横) → ②横棒から左払い → ③右払い',
+        sampleChar: '차', sIdx: 90,
+        strokes: [
+          { d: 'M 84 36 L 116 36', nx: 72, ny: 36 },
+          { d: 'M 46 64 L 154 64 Q 112 116 46 158', nx: 34, ny: 62 },
+          { d: 'M 102 106 Q 128 132 156 158', nx: 126, ny: 106 }
+        ]
+      },
+      {
+        type: 'consonant', char: 'ㅋ', name: 'キウク (키읔)', tip: '2画：①上のㄱ（横から下へ折れる） → ②真ん中の横棒',
+        sampleChar: '카', sIdx: 100,
+        strokes: [
+          { d: 'M 48 48 L 152 48 L 152 152', nx: 36, ny: 46 },
+          { d: 'M 48 98 L 152 98', nx: 36, ny: 98 }
+        ]
+      },
+      {
+        type: 'consonant', char: 'ㅌ', name: 'ティウト (티읕)', tip: '3画：①上の横 → ②中の横 → ③左縦から下横へ折れる',
+        sampleChar: '타', sIdx: 110,
+        strokes: [
+          { d: 'M 50 48 L 150 48', nx: 36, ny: 46 },
+          { d: 'M 54 98 L 146 98', nx: 36, ny: 98 },
+          { d: 'M 54 48 L 54 150 L 154 150', nx: 36, ny: 145 }
+        ]
+      },
+      {
+        type: 'consonant', char: 'ㅍ', name: 'ピウプ (피읖)', tip: '4画：①上の横 → ②左縦 → ③右縦 → ④下の横',
+        sampleChar: '파', sIdx: 120,
+        strokes: [
+          { d: 'M 44 50 L 156 50', nx: 32, ny: 48 },
+          { d: 'M 74 50 L 74 150', nx: 60, ny: 84 },
+          { d: 'M 126 50 L 126 150', nx: 136, ny: 84 },
+          { d: 'M 44 150 L 156 150', nx: 32, ny: 168 }
+        ]
+      },
+      {
+        type: 'consonant', char: 'ㅎ', name: 'ヒウッ (히읗)', tip: '3画：①上の点 → ②長い横棒 → ③下の丸(反時計回り)',
+        sampleChar: '하', sIdx: 130,
+        strokes: [
+          { d: 'M 86 34 L 114 34', nx: 74, ny: 34 },
+          { d: 'M 42 60 L 158 60', nx: 30, ny: 58 },
+          { d: 'M 100 82 A 38 38 0 1 0 100.1 82', nx: 96, ny: 75 }
+        ]
+      },
+
+      // === 2. 濃音5文字 (140〜144) ===
+      {
+        type: 'tense', char: 'ㄲ', name: 'サンギヨク (쌍기역)', tip: '2画：①左のㄱを書いてから → ②右のㄱを書きます',
+        sampleChar: '까', sIdx: 140,
+        strokes: [
+          { d: 'M 32 56 L 88 56 L 88 152', nx: 20, ny: 52 },
+          { d: 'M 110 56 L 168 56 L 168 152', nx: 100, ny: 52 }
+        ]
+      },
+      {
+        type: 'tense', char: 'ㄸ', name: 'サンディグッ (쌍디귿)', tip: '4画：①〜②左のㄷを完成 → ③〜④右のㄷを書きます',
+        sampleChar: '따', sIdx: 141,
+        strokes: [
+          { d: 'M 32 52 L 88 52', nx: 20, ny: 48 },
+          { d: 'M 34 52 L 34 148 L 90 148', nx: 20, ny: 105 },
+          { d: 'M 110 52 L 166 52', nx: 98, ny: 48 },
+          { d: 'M 112 52 L 112 148 L 168 148', nx: 98, ny: 105 }
+        ]
+      },
+      {
+        type: 'tense', char: 'ㅃ', name: 'サンビウプ (쌍비읍)', tip: '8画：①〜④左のㅂを4画で完成 → ⑤〜⑧右のㅂを書きます',
+        sampleChar: '빠', sIdx: 142,
+        strokes: [
+          { d: 'M 34 46 L 34 152', nx: 20, ny: 50 },
+          { d: 'M 86 46 L 86 152', nx: 88, ny: 44 },
+          { d: 'M 34 98 L 86 98', nx: 56, ny: 88 },
+          { d: 'M 34 150 L 86 150', nx: 56, ny: 168 },
+          { d: 'M 112 46 L 112 152', nx: 100, ny: 50 },
+          { d: 'M 164 46 L 164 152', nx: 168, ny: 44 },
+          { d: 'M 112 98 L 164 98', nx: 134, ny: 88 },
+          { d: 'M 112 150 L 164 150', nx: 134, ny: 168 }
+        ]
+      },
+      {
+        type: 'tense', char: 'ㅆ', name: 'サンシオッ (쌍시옷)', tip: '4画：①〜②左のㅅを書いてから → ③〜④右のㅅを書きます',
+        sampleChar: '싸', sIdx: 143,
+        strokes: [
+          { d: 'M 62 46 Q 56 110 26 152', nx: 56, ny: 36 },
+          { d: 'M 60 94 Q 76 124 94 152', nx: 76, ny: 92 },
+          { d: 'M 138 46 Q 132 110 104 152', nx: 132, ny: 36 },
+          { d: 'M 136 94 Q 152 124 172 152', nx: 154, ny: 92 }
+        ]
+      },
+      {
+        type: 'tense', char: 'ㅉ', name: 'サンジウッ (쌍지읒)', tip: '4画：①〜②左のㅈを書いてから → ③〜④右のㅈを書きます',
+        sampleChar: '짜', sIdx: 144,
+        strokes: [
+          { d: 'M 30 52 L 88 52 Q 66 108 28 152', nx: 18, ny: 48 },
+          { d: 'M 60 98 Q 76 126 92 152', nx: 74, ny: 96 },
+          { d: 'M 110 52 L 168 52 Q 146 108 108 152', nx: 98, ny: 48 },
+          { d: 'M 140 98 Q 156 126 172 152', nx: 154, ny: 96 }
+        ]
+      },
+
+      // === 3. 基本母音10文字 ===
+      {
+        type: 'vowel', char: 'ㅏ', name: 'ア (ㅏ)', tip: '2画：①長い縦棒（上から下） → ②右への短い横棒',
+        sampleChar: '아', sIdx: 70,
+        strokes: [
+          { d: 'M 84 36 L 84 164', nx: 68, ny: 42 },
+          { d: 'M 84 100 L 138 100', nx: 144, ny: 104 }
+        ]
+      },
+      {
+        type: 'vowel', char: 'ㅑ', name: 'ヤ (ㅑ)', tip: '3画：①縦棒 → ②上の短い横棒 → ③下の短い横棒',
+        sampleChar: '야', sIdx: 71,
+        strokes: [
+          { d: 'M 84 36 L 84 164', nx: 68, ny: 42 },
+          { d: 'M 84 80 L 138 80', nx: 144, ny: 84 },
+          { d: 'M 84 120 L 138 120', nx: 144, ny: 124 }
+        ]
+      },
+      {
+        type: 'vowel', char: 'ㅓ', name: 'オ［広］ (ㅓ)', tip: '2画：①左からの短い横棒 → ②長い縦棒（上から下）',
+        sampleChar: '어', sIdx: 72,
+        strokes: [
+          { d: 'M 62 100 L 116 100', nx: 48, ny: 104 },
+          { d: 'M 116 36 L 116 164', nx: 126, ny: 42 }
+        ]
+      },
+      {
+        type: 'vowel', char: 'ㅕ', name: 'ヨ［広］ (ㅕ)', tip: '3画：①上の短い横 → ②下の短い横 → ③長い縦棒',
+        sampleChar: '여', sIdx: 73,
+        strokes: [
+          { d: 'M 62 80 L 116 80', nx: 48, ny: 84 },
+          { d: 'M 62 120 L 116 120', nx: 48, ny: 124 },
+          { d: 'M 116 36 L 116 164', nx: 126, ny: 42 }
+        ]
+      },
+      {
+        type: 'vowel', char: 'ㅗ', name: 'オ［丸］ (ㅗ)', tip: '2画：①上の短い縦棒 → ②下の長い横棒（左から右）',
+        sampleChar: '오', sIdx: 74,
+        strokes: [
+          { d: 'M 100 66 L 100 120', nx: 96, ny: 56 },
+          { d: 'M 36 120 L 164 120', nx: 26, ny: 138 }
+        ]
+      },
+      {
+        type: 'vowel', char: 'ㅛ', name: 'ヨ［丸］ (ㅛ)', tip: '3画：①左の短い縦 → ②右の短い縦 → ③下の長い横棒',
+        sampleChar: '요', sIdx: 75,
+        strokes: [
+          { d: 'M 80 66 L 80 120', nx: 76, ny: 56 },
+          { d: 'M 120 66 L 120 120', nx: 116, ny: 56 },
+          { d: 'M 36 120 L 164 120', nx: 26, ny: 138 }
+        ]
+      },
+      {
+        type: 'vowel', char: 'ㅜ', name: 'ウ［深］ (ㅜ)', tip: '2画：①上の長い横棒（左から右） → ②下の短い縦棒',
+        sampleChar: '우', sIdx: 76,
+        strokes: [
+          { d: 'M 36 80 L 164 80', nx: 26, ny: 74 },
+          { d: 'M 100 80 L 100 136', nx: 96, ny: 154 }
+        ]
+      },
+      {
+        type: 'vowel', char: 'ㅠ', name: 'ユ (ㅠ)', tip: '3画：①上の長い横棒 → ②左の短い縦 → ③右の短い縦',
+        sampleChar: '유', sIdx: 77,
+        strokes: [
+          { d: 'M 36 80 L 164 80', nx: 26, ny: 74 },
+          { d: 'M 80 80 L 80 136', nx: 76, ny: 154 },
+          { d: 'M 120 80 L 120 136', nx: 116, ny: 154 }
+        ]
+      },
+      {
+        type: 'vowel', char: 'ㅡ', name: 'ウ［平］ (ㅡ)', tip: '1画：左から右へ水平にまっすぐ引きます',
+        sampleChar: '으', sIdx: 78,
+        strokes: [
+          { d: 'M 36 100 L 164 100', nx: 26, ny: 94 }
+        ]
+      },
+      {
+        type: 'vowel', char: 'ㅣ', name: 'イ (ㅣ)', tip: '1画：上から下へ垂直にまっすぐ引きます',
+        sampleChar: '이', sIdx: 79,
+        strokes: [
+          { d: 'M 100 36 L 100 164', nx: 84, ny: 42 }
+        ]
+      },
+
+      // === 4. 複合母音11文字 (145〜155) ===
+      {
+        type: 'compound', char: 'ㅐ', name: 'エ［開］ (ㅐ)', tip: '3画：①〜②左のㅏを書いてから → ③右の縦棒ㅣ',
+        sampleChar: '애', sIdx: 145,
+        strokes: [
+          { d: 'M 72 36 L 72 164', nx: 58, ny: 42 },
+          { d: 'M 72 100 L 118 100', nx: 92, ny: 92 },
+          { d: 'M 124 36 L 124 164', nx: 134, ny: 42 }
+        ]
+      },
+      {
+        type: 'compound', char: 'ㅒ', name: 'イェ［開］ (ㅒ)', tip: '4画：①〜③左のㅑを3画で完成 → ④右の縦棒ㅣ',
+        sampleChar: '얘', sIdx: 146,
+        strokes: [
+          { d: 'M 72 36 L 72 164', nx: 58, ny: 42 },
+          { d: 'M 72 80 L 118 80', nx: 92, ny: 72 },
+          { d: 'M 72 120 L 118 120', nx: 92, ny: 138 },
+          { d: 'M 124 36 L 124 164', nx: 134, ny: 42 }
+        ]
+      },
+      {
+        type: 'compound', char: 'ㅔ', name: 'エ［閉］ (ㅔ)', tip: '3画：①〜②左のㅓを書いてから → ③右の縦棒ㅣ',
+        sampleChar: '에', sIdx: 147,
+        strokes: [
+          { d: 'M 54 100 L 96 100', nx: 40, ny: 104 },
+          { d: 'M 96 36 L 96 164', nx: 82, ny: 42 },
+          { d: 'M 134 36 L 134 164', nx: 144, ny: 42 }
+        ]
+      },
+      {
+        type: 'compound', char: 'ㅖ', name: 'イェ［閉］ (ㅖ)', tip: '4画：①〜③左のㅕを3画で完成 → ④右の縦棒ㅣ',
+        sampleChar: '예', sIdx: 148,
+        strokes: [
+          { d: 'M 54 80 L 96 80', nx: 40, ny: 84 },
+          { d: 'M 54 120 L 96 120', nx: 40, ny: 124 },
+          { d: 'M 96 36 L 96 164', nx: 82, ny: 42 },
+          { d: 'M 134 36 L 134 164', nx: 144, ny: 42 }
+        ]
+      },
+      {
+        type: 'compound', char: 'ㅘ', name: 'ワ (ㅘ)', tip: '4画：①〜②左下のㅗを完成 → ③〜④右のㅏを書きます',
+        sampleChar: '와', sIdx: 149,
+        strokes: [
+          { d: 'M 72 84 L 72 132', nx: 68, ny: 72 },
+          { d: 'M 32 132 L 116 132', nx: 22, ny: 150 },
+          { d: 'M 124 36 L 124 164', nx: 112, ny: 42 },
+          { d: 'M 124 96 L 166 96', nx: 170, ny: 100 }
+        ]
+      },
+      {
+        type: 'compound', char: 'ㅙ', name: 'ウェ (ㅙ)', tip: '5画：①〜②左下のㅗ → ③〜⑤右のㅐを順に書きます',
+        sampleChar: '왜', sIdx: 150,
+        strokes: [
+          { d: 'M 64 84 L 64 132', nx: 60, ny: 72 },
+          { d: 'M 28 132 L 102 132', nx: 18, ny: 150 },
+          { d: 'M 110 36 L 110 164', nx: 98, ny: 42 },
+          { d: 'M 110 96 L 146 96', nx: 124, ny: 88 },
+          { d: 'M 152 36 L 152 164', nx: 162, ny: 42 }
+        ]
+      },
+      {
+        type: 'compound', char: 'ㅚ', name: 'ウェ［外］ (ㅚ)', tip: '3画：①〜②左下のㅗを完成 → ③右の縦棒ㅣを書きます',
+        sampleChar: '외', sIdx: 151,
+        strokes: [
+          { d: 'M 76 84 L 76 132', nx: 72, ny: 72 },
+          { d: 'M 34 132 L 120 132', nx: 24, ny: 150 },
+          { d: 'M 134 36 L 134 164', nx: 144, ny: 42 }
+        ]
+      },
+      {
+        type: 'compound', char: 'ㅝ', name: 'ウォ (ㅝ)', tip: '4画：①〜②左上のㅜを完成 → ③〜④右のㅓを書きます',
+        sampleChar: '워', sIdx: 152,
+        strokes: [
+          { d: 'M 32 76 L 116 76', nx: 22, ny: 70 },
+          { d: 'M 72 76 L 72 128', nx: 68, ny: 146 },
+          { d: 'M 98 104 L 136 104', nx: 92, ny: 96 },
+          { d: 'M 136 36 L 136 164', nx: 146, ny: 42 }
+        ]
+      },
+      {
+        type: 'compound', char: 'ㅞ', name: 'ウェ (ㅞ)', tip: '5画：①〜②左上のㅜ → ③〜⑤右のㅔを順に書きます',
+        sampleChar: '웨', sIdx: 153,
+        strokes: [
+          { d: 'M 28 76 L 102 76', nx: 18, ny: 70 },
+          { d: 'M 64 76 L 64 128', nx: 60, ny: 146 },
+          { d: 'M 88 104 L 120 104', nx: 82, ny: 96 },
+          { d: 'M 120 36 L 120 164', nx: 108, ny: 42 },
+          { d: 'M 156 36 L 156 164', nx: 166, ny: 42 }
+        ]
+      },
+      {
+        type: 'compound', char: 'ㅟ', name: 'ウィ (ㅟ)', tip: '3画：①〜②左上のㅜを完成 → ③右の縦棒ㅣを書きます',
+        sampleChar: '위', sIdx: 154,
+        strokes: [
+          { d: 'M 34 76 L 120 76', nx: 24, ny: 70 },
+          { d: 'M 76 76 L 76 128', nx: 72, ny: 146 },
+          { d: 'M 134 36 L 134 164', nx: 144, ny: 42 }
+        ]
+      },
+      {
+        type: 'compound', char: 'ㅢ', name: 'ウイ (ㅢ)', tip: '2画：①左の横棒ㅡを書いてから → ②右の縦棒ㅣを書きます',
+        sampleChar: '의', sIdx: 155,
+        strokes: [
+          { d: 'M 34 118 L 122 118', nx: 24, ny: 112 },
+          { d: 'M 134 36 L 134 164', nx: 144, ny: 42 }
+        ]
+      }
+    ];
+
+    let currentStrokeCharIdx = 0;
+    let currentStrokeStep = 0;
+    let showStrokeGuide = true;
+    let isPlayingStrokeAnim = false;
+    let strokeAnimTimer = null;
+
+    function initStrokePractice() {
+      renderStrokePalettes();
+      selectStrokeChar(0, false);
+      setupTraceCanvas();
+    }
+
+    function renderStrokePalettes() {
+      const conGrid = document.getElementById('strokeConsonantGrid');
+      const tenseGrid = document.getElementById('strokeTenseGrid');
+      const vowGrid = document.getElementById('strokeVowelGrid');
+      const compGrid = document.getElementById('strokeCompoundGrid');
+
+      conGrid.innerHTML = '';
+      tenseGrid.innerHTML = '';
+      vowGrid.innerHTML = '';
+      compGrid.innerHTML = '';
+
+      HANGUL_STROKE_DATA.forEach((item, idx) => {
+        const isSelected = idx === currentStrokeCharIdx;
+        const btn = document.createElement('button');
+        btn.className = `py-2 px-1 rounded-xl font-kr font-black text-lg border transition active:scale-95 flex flex-col items-center justify-center ${
+          isSelected
+            ? 'bg-indigo-600 text-white border-indigo-700 shadow-xs'
+            : 'bg-slate-50 hover:bg-indigo-50/70 text-slate-800 border-slate-200 hover:border-indigo-300'
+        }`;
+        btn.onclick = () => selectStrokeChar(idx, true);
+        btn.innerHTML = `
+          <span class="leading-none">${item.char}</span>
+          <span class="text-[9px] font-mono-code font-bold mt-1 ${isSelected ? 'text-indigo-200' : 'text-slate-400'}">${item.strokes.length}画</span>
+        `;
+
+        if (item.type === 'consonant') {
+          conGrid.appendChild(btn);
+        } else if (item.type === 'tense') {
+          tenseGrid.appendChild(btn);
+        } else if (item.type === 'vowel') {
+          vowGrid.appendChild(btn);
+        } else {
+          compGrid.appendChild(btn);
+        }
+      });
+    }
+
+    function selectStrokeChar(idx, autoPlay) {
+      stopHangulStrokeAnim();
+      currentStrokeCharIdx = idx;
+      const item = HANGUL_STROKE_DATA[idx];
+
+      document.getElementById('strokeSelectedBadge').innerText = item.char;
+      document.getElementById('strokeCharName').innerText = item.name;
+      document.getElementById('strokeCharTip').innerText = item.tip;
+      document.getElementById('strokeTotalNum').innerText = item.strokes.length;
+
+      clearTraceCanvas();
+      renderStrokePalettes();
+
+      if (autoPlay) {
+        playLocalAudio(item.sIdx, item.sampleChar);
+        startHangulStrokeAnim();
+      } else {
+        currentStrokeStep = item.strokes.length - 1;
+        renderHangulStrokeSvg();
+      }
+    }
+
+    function speakCurrentStrokeChar() {
+      const item = HANGUL_STROKE_DATA[currentStrokeCharIdx];
+      if (item) {
+        playLocalAudio(item.sIdx, item.sampleChar);
+      }
+    }
+
+    function renderHangulStrokeSvg() {
+      const svg = document.getElementById('hangulStrokeSvg');
+      const item = HANGUL_STROKE_DATA[currentStrokeCharIdx];
+      svg.innerHTML = '';
+
+      document.getElementById('strokeCurrentNum').innerText = currentStrokeStep + 1;
+
+      item.strokes.forEach((st, idx) => {
+        const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+        path.setAttribute('d', st.d);
+        path.classList.add('hangul-stroke');
+
+        if (idx < currentStrokeStep) {
+          path.classList.add('completed');
+        } else if (idx === currentStrokeStep) {
+          path.classList.add('active');
+        } else {
+          path.classList.add('upcoming');
+          if (!showStrokeGuide) {
+            path.style.opacity = '0';
+          }
+        }
+        svg.appendChild(path);
+
+        // 画数番号ラベル
+        const text = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+        text.setAttribute('x', st.nx);
+        text.setAttribute('y', st.ny);
+        text.classList.add('hangul-stroke-num');
+        text.textContent = idx + 1;
+
+        if (idx <= currentStrokeStep) {
+          text.style.opacity = '1';
+        } else {
+          text.style.opacity = showStrokeGuide ? '0.35' : '0';
+        }
+        svg.appendChild(text);
+      });
+    }
+
+    function stepHangulStroke(dir) {
+      stopHangulStrokeAnim();
+      const total = HANGUL_STROKE_DATA[currentStrokeCharIdx].strokes.length;
+      currentStrokeStep = Math.max(0, Math.min(total - 1, currentStrokeStep + dir));
+      renderHangulStrokeSvg();
+    }
+
+    function togglePlayHangulStroke() {
+      if (isPlayingStrokeAnim) {
+        stopHangulStrokeAnim();
+      } else {
+        startHangulStrokeAnim();
+      }
+    }
+
+    function startHangulStrokeAnim() {
+      stopHangulStrokeAnim();
+      const total = HANGUL_STROKE_DATA[currentStrokeCharIdx].strokes.length;
+      isPlayingStrokeAnim = true;
+      document.getElementById('btnPlayHangulStroke').innerHTML = '<i class="fa-solid fa-pause"></i> <span>一時停止</span>';
+
+      currentStrokeStep = 0;
+      renderHangulStrokeSvg();
+
+      strokeAnimTimer = setInterval(() => {
+        currentStrokeStep++;
+        if (currentStrokeStep >= total) {
+          stopHangulStrokeAnim();
+          currentStrokeStep = total - 1;
+          renderHangulStrokeSvg();
+          return;
+        }
+        renderHangulStrokeSvg();
+      }, 650);
+    }
+
+    function stopHangulStrokeAnim() {
+      isPlayingStrokeAnim = false;
+      if (strokeAnimTimer) {
+        clearInterval(strokeAnimTimer);
+        strokeAnimTimer = null;
+      }
+      const btn = document.getElementById('btnPlayHangulStroke');
+      if (btn) {
+        btn.innerHTML = '<i class="fa-solid fa-play"></i> <span>筆順を再生</span>';
+      }
+    }
+
+    function toggleStrokeGuide() {
+      showStrokeGuide = !showStrokeGuide;
+      const icon = document.getElementById('guideEyeIcon');
+      const text = document.getElementById('guideEyeText');
+      const btn = document.getElementById('btnToggleGuide');
+
+      if (showStrokeGuide) {
+        icon.className = 'fa-solid fa-eye text-indigo-600';
+        text.innerText = 'お手本 ON';
+        btn.className = 'flex-1 py-2 px-3 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 font-bold text-xs flex items-center justify-center gap-1.5 transition';
+      } else {
+        icon.className = 'fa-solid fa-eye-slash text-amber-600';
+        text.innerText = 'お手本 OFF';
+        btn.className = 'flex-1 py-2 px-3 rounded-xl border border-amber-300 bg-amber-50 text-amber-800 font-bold text-xs flex items-center justify-center gap-1.5 transition';
+      }
+      renderHangulStrokeSvg();
+    }
+
+    // --- 手書きCanvas制御 ---
+    let isDrawingTrace = false;
+    let traceCtx = null;
+
+    function setupTraceCanvas() {
+      const canvas = document.getElementById('hangulTraceCanvas');
+      if (!canvas) return;
+      traceCtx = canvas.getContext('2d');
+      traceCtx.lineCap = 'round';
+      traceCtx.lineJoin = 'round';
+      traceCtx.lineWidth = 11;
+      traceCtx.strokeStyle = '#0f172a';
+
+      const getCoords = (e) => {
+        const rect = canvas.getBoundingClientRect();
+        const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+        const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+        return {
+          x: (clientX - rect.left) * (canvas.width / rect.width),
+          y: (clientY - rect.top) * (canvas.height / rect.height)
+        };
+      };
+
+      const startDraw = (e) => {
+        e.preventDefault();
+        isDrawingTrace = true;
+        const pos = getCoords(e);
+        traceCtx.beginPath();
+        traceCtx.moveTo(pos.x, pos.y);
+      };
+
+      const draw = (e) => {
+        if (!isDrawingTrace) return;
+        e.preventDefault();
+        const pos = getCoords(e);
+        traceCtx.lineTo(pos.x, pos.y);
+        traceCtx.stroke();
+      };
+
+      const endDraw = () => {
+        isDrawingTrace = false;
+      };
+
+      canvas.addEventListener('mousedown', startDraw);
+      canvas.addEventListener('mousemove', draw);
+      window.addEventListener('mouseup', endDraw);
+
+      canvas.addEventListener('touchstart', startDraw, { passive: false });
+      canvas.addEventListener('touchmove', draw, { passive: false });
+      window.addEventListener('touchend', endDraw);
+    }
+
+    function clearTraceCanvas() {
+      const canvas = document.getElementById('hangulTraceCanvas');
+      if (canvas && traceCtx) {
+        traceCtx.clearRect(0, 0, canvas.width, canvas.height);
+      }
+    }
+
     // 初期化
     window.addEventListener('DOMContentLoaded', () => {
       renderMatrix();
       setGojuonCategory('seion');
       loadPuzzleTarget();
+      initStrokePractice();
     });
   </script>
 </body>
