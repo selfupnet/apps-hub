@@ -1,0 +1,957 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Hangul Hub - ハングル文字構造＆五十音対照盤</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700;900&family=Noto+Sans+KR:wght@500;700;900&family=Plus+Jakarta+Sans:wght@600;700;800&display=swap" rel="stylesheet">
+  <style>
+    body { font-family: 'Plus Jakarta Sans', 'Noto Sans JP', sans-serif; }
+    .font-kr { font-family: 'Noto Sans KR', sans-serif; }
+    .active-nav-tab {
+      background-color: #4f46e5;
+      color: #ffffff;
+      box-shadow: 0 4px 6px -1px rgba(79, 70, 229, 0.2);
+    }
+    .inactive-nav-tab {
+      background-color: #ffffff;
+      color: #64748b;
+      border: 1px solid #e2e8f0;
+    }
+    .inactive-nav-tab:hover {
+      background-color: #f8fafc;
+      color: #0f172a;
+    }
+    .scrollbar-thin::-webkit-scrollbar { height: 6px; }
+    .scrollbar-thin::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 9999px; }
+  </style>
+</head>
+<body class="bg-slate-50 text-slate-800 min-h-screen flex flex-col antialiased">
+
+  <!-- ========================================== -->
+  <!-- ヘッダー (selfup.net Apps Hub 統一規格)    -->
+  <!-- ========================================== -->
+  <header class="bg-white border-b border-slate-200 sticky top-0 z-40 shadow-xs">
+    <div class="max-w-5xl mx-auto px-4 h-16 flex items-center justify-between">
+      <div class="flex items-center gap-3">
+        <a href="../" class="inline-flex items-center gap-1.5 text-xs font-semibold text-slate-500 hover:text-slate-900 transition py-1.5 px-3 rounded-xl bg-slate-100 hover:bg-slate-200">
+          <i class="fa-solid fa-arrow-left text-[11px]"></i>
+          <span>Apps Hub</span>
+        </a>
+        <div class="h-4 w-px bg-slate-200"></div>
+        <div class="flex items-center gap-2.5">
+          <span class="w-8 h-8 rounded-xl bg-indigo-600 text-white flex items-center justify-center font-bold text-sm shadow-xs font-kr">한</span>
+          <div>
+            <h1 class="font-extrabold text-slate-900 tracking-tight text-sm sm:text-base leading-tight">Hangul Hub</h1>
+            <p class="text-[10px] text-slate-400 font-medium hidden sm:block">ハングル文字構造 ⇄ 日本語五十音対照盤</p>
+          </div>
+        </div>
+      </div>
+
+      <button id="soundToggleBtn" onclick="toggleMute()" class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-slate-200 text-xs font-bold text-slate-600 bg-white hover:bg-slate-50 transition shadow-xs" title="音声再生のON/OFF">
+        <i id="soundIcon" class="fa-solid fa-volume-high text-indigo-600"></i>
+        <span id="soundText">音声ON</span>
+      </button>
+    </div>
+
+    <!-- モードナビゲーションバー -->
+    <div class="max-w-5xl mx-auto px-4 py-2.5 flex gap-2 border-t border-slate-100 text-xs font-bold overflow-x-auto scrollbar-none">
+      <button onclick="setTab('matrix')" id="tab-matrix" class="px-4 py-2 rounded-xl active-nav-tab transition flex items-center gap-2 whitespace-nowrap">
+        <i class="fa-solid fa-table-cells"></i>
+        <span>① 反切表 (体系140音)</span>
+      </button>
+      <button onclick="setTab('gojuon')" id="tab-gojuon" class="px-4 py-2 rounded-xl inactive-nav-tab transition flex items-center gap-2 whitespace-nowrap">
+        <i class="fa-solid fa-language"></i>
+        <span>② 五十音逆引き (あいうえお対照)</span>
+      </button>
+      <button onclick="setTab('puzzle')" id="tab-puzzle" class="px-4 py-2 rounded-xl inactive-nav-tab transition flex items-center gap-2 whitespace-nowrap">
+        <i class="fa-solid fa-puzzle-piece"></i>
+        <span>③ 6大構造パズル (組み立て)</span>
+      </button>
+    </div>
+  </header>
+
+  <!-- ========================================== -->
+  <!-- メインコンテンツ                           -->
+  <!-- ========================================== -->
+  <main class="max-w-5xl mx-auto px-4 py-6 flex-1 w-full space-y-6">
+
+    <!-- TAB 1: 反切表（ローカル単音MP3再生対応） -->
+    <section id="view-matrix" class="space-y-4">
+      <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-xs flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div>
+          <h2 class="text-base font-extrabold text-slate-900 flex items-center gap-2">
+            <span>ハングル基本反切表（반절표）</span>
+            <span class="text-xs font-bold px-2 py-0.5 rounded-full bg-indigo-50 text-indigo-600">Google Cloud WaveNet音源</span>
+          </h2>
+          <p class="text-xs text-slate-500 mt-1">
+            縦軸（子音）と横軸（母音）のマトリクス表です。マス目をタップすると拡大表示と正規ネイティブ発音が再生されます。
+          </p>
+        </div>
+        <!-- プレビューバナー -->
+        <div id="matrix-preview" class="flex items-center gap-4 bg-slate-50 border border-slate-200 px-4 py-2 rounded-xl">
+          <div id="prev-char" class="text-3xl font-black text-indigo-600 font-kr">가</div>
+          <div class="text-xs">
+            <div class="font-bold text-slate-800"><span id="prev-kana">カ / ガ</span> <span id="prev-romaji" class="text-slate-400 font-mono font-semibold ml-1">(ga)</span></div>
+            <div id="prev-desc" class="text-[11px] text-slate-500">子音 ㄱ (g) + 縦型母音 ㅏ (a)</div>
+          </div>
+          <button onclick="speakMatrixCurrent()" class="w-8 h-8 rounded-lg bg-indigo-600 text-white flex items-center justify-center hover:bg-indigo-700 transition shadow-xs">
+            <i class="fa-solid fa-volume-high text-xs"></i>
+          </button>
+        </div>
+      </div>
+
+      <!-- 反切表テーブル -->
+      <div class="bg-white rounded-2xl border border-slate-200 shadow-xs p-3 overflow-x-auto scrollbar-thin">
+        <table class="w-full text-center border-collapse">
+          <thead>
+            <tr>
+              <th class="p-2.5 bg-slate-100 rounded-xl text-xs font-extrabold text-slate-600 min-w-[70px]">子音＼母音</th>
+              <th class="p-2 min-w-[62px]"><span class="text-xs font-bold text-slate-700">ㅏ (a)</span><div class="text-[10px] text-indigo-500 font-semibold">ア [縦]</div></th>
+              <th class="p-2 min-w-[62px]"><span class="text-xs font-bold text-slate-700">ㅑ (ya)</span><div class="text-[10px] text-indigo-500 font-semibold">ヤ [縦]</div></th>
+              <th class="p-2 min-w-[62px]"><span class="text-xs font-bold text-slate-700">ㅓ (eo)</span><div class="text-[10px] text-indigo-500 font-semibold">オ(広) [縦]</div></th>
+              <th class="p-2 min-w-[62px]"><span class="text-xs font-bold text-slate-700">ㅕ (yeo)</span><div class="text-[10px] text-indigo-500 font-semibold">ヨ [縦]</div></th>
+              <th class="p-2 min-w-[62px]"><span class="text-xs font-bold text-slate-700">ㅗ (o)</span><div class="text-[10px] text-emerald-600 font-semibold">オ(丸) [横]</div></th>
+              <th class="p-2 min-w-[62px]"><span class="text-xs font-bold text-slate-700">ㅛ (yo)</span><div class="text-[10px] text-emerald-600 font-semibold">ヨ [横]</div></th>
+              <th class="p-2 min-w-[62px]"><span class="text-xs font-bold text-slate-700">ㅜ (u)</span><div class="text-[10px] text-emerald-600 font-semibold">ウ(深) [横]</div></th>
+              <th class="p-2 min-w-[62px]"><span class="text-xs font-bold text-slate-700">ㅠ (yu)</span><div class="text-[10px] text-emerald-600 font-semibold">ユ [横]</div></th>
+              <th class="p-2 min-w-[62px]"><span class="text-xs font-bold text-slate-700">ㅡ (eu)</span><div class="text-[10px] text-emerald-600 font-semibold">ウ(平) [横]</div></th>
+              <th class="p-2 min-w-[62px]"><span class="text-xs font-bold text-slate-700">ㅣ (i)</span><div class="text-[10px] text-indigo-500 font-semibold">イ [縦]</div></th>
+            </tr>
+          </thead>
+          <tbody id="matrix-tbody" class="divide-y divide-slate-100"></tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- TAB 2: 五十音逆引き -->
+    <section id="view-gojuon" class="space-y-6 hidden">
+      <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-xs flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div>
+          <h2 class="text-base font-extrabold text-slate-900 flex items-center gap-2">
+            <span>日本語 五十音逆引き対照盤</span>
+            <span class="text-xs font-bold px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700">実音源対応</span>
+          </h2>
+          <p class="text-xs text-slate-500 mt-1">
+            日本の「あいうえお」「濁音・半濁音」「拗音」「ん（パッチム）」のハングル転写表です。タップで音声再生。
+          </p>
+        </div>
+        <div class="flex items-center gap-2">
+          <input type="text" id="gojuonSearchInput" oninput="filterGojuon()" placeholder="カナ・音を検索 (例: つ, か, きゃ)..." class="text-xs px-3 py-2 border border-slate-200 rounded-xl bg-slate-50 focus:bg-white focus:outline-indigo-600 font-medium w-full sm:w-56">
+        </div>
+      </div>
+
+      <div class="flex gap-2 border-b border-slate-200 pb-2 overflow-x-auto text-xs font-bold scrollbar-none">
+        <button onclick="setGojuonCategory('seion')" id="gtab-seion" class="px-3.5 py-1.5 rounded-lg bg-indigo-600 text-white transition">清音 (あ〜わ行)</button>
+        <button onclick="setGojuonCategory('dakuon')" id="gtab-dakuon" class="px-3.5 py-1.5 rounded-lg bg-white border border-slate-200 text-slate-600 hover:bg-slate-50 transition">濁音・半濁音 (が行・ぱ行等)</button>
+        <button onclick="setGojuonCategory('youon')" id="gtab-youon" class="px-3.5 py-1.5 rounded-lg bg-white border border-slate-200 text-slate-600 hover:bg-slate-50 transition">拗音 (きゃ・ぎゃ・しゃ等)</button>
+        <button onclick="setGojuonCategory('special')" id="gtab-special" class="px-3.5 py-1.5 rounded-lg bg-white border border-slate-200 text-slate-600 hover:bg-slate-50 transition">特別表記 & ん (パッチム)</button>
+      </div>
+
+      <!-- グループ化レンダリング用コンテナ -->
+      <div id="gojuon-grid" class="space-y-5"></div>
+
+      <div class="p-4 bg-amber-50/70 border border-amber-200/80 rounded-2xl text-xs text-amber-900 space-y-1.5">
+        <div class="font-bold flex items-center gap-1.5">
+          <i class="fa-solid fa-lightbulb text-amber-600"></i>
+          <span>日本人学習者が押さえるべき「音のズレ」と転写ルール</span>
+        </div>
+        <ul class="list-disc list-inside space-y-1 text-slate-700 pl-1">
+          <li><strong>「か・た」などの語頭・語中：</strong> ハングルの平音（ㄱ, ㄷ, ㅂ, ㅈ）は語頭で濁らず清音化し、語中で濁音化します。</li>
+          <li><strong>韓国語にない日本語の音：</strong> 「つ」は <code>츠 (cheu)</code>、「ざ・ず・ぜ・ぞ」は <code>자・즈・제・조</code> で代用表記されます。</li>
+          <li><strong>撥音「ん」の3分割：</strong> 続く子音により、パッチムの <code>ㄴ (n)</code>、<code>ㅁ (m)</code>、<code>ㅇ (ng)</code> を使い分けます。</li>
+        </ul>
+      </div>
+    </section>
+
+    <!-- TAB 3: 6大構造パズル -->
+    <section id="view-puzzle" class="space-y-6 hidden">
+      <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-xs flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div>
+          <h2 class="text-base font-extrabold text-slate-900 flex items-center gap-2">
+            <span>ハングル6大ブロック構造パズル</span>
+            <span class="text-xs font-bold px-2 py-0.5 rounded-full bg-indigo-50 text-indigo-600">骨組みフレーム連動</span>
+          </h2>
+          <p class="text-xs text-slate-500 mt-1">
+            母音の棒の向き（縦・横・複合）とパッチムの有無によって、文字の骨組みフレームが自動変形します。
+          </p>
+        </div>
+        <div class="flex items-center gap-2">
+          <button onclick="resetPuzzleSelection()" class="px-3.5 py-1.5 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 text-slate-600 font-bold text-xs transition flex items-center gap-1.5 shadow-2xs">
+            <i class="fa-solid fa-rotate-left text-[11px]"></i> <span>クリア</span>
+          </button>
+          <button onclick="nextPuzzleTarget()" class="px-3.5 py-1.5 rounded-xl bg-indigo-600 text-white font-bold text-xs hover:bg-indigo-700 transition flex items-center gap-1.5 shadow-xs">
+            <i class="fa-solid fa-shuffle"></i> <span>別のお題へ</span>
+          </button>
+        </div>
+      </div>
+
+      <div class="bg-white p-6 rounded-3xl border border-slate-200 shadow-sm flex flex-col items-center">
+        <div class="text-center mb-5">
+          <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-slate-100 text-slate-600 text-xs font-bold mb-2">
+            <span>お題:</span>
+            <span id="target-kana-badge" class="text-indigo-600 font-extrabold text-sm">カ (ga) [ 가 ]</span>
+          </div>
+          <div class="text-xs text-slate-400 font-medium">下のパレットからパーツを選んで同じ文字・構造を組み立ててください</div>
+        </div>
+
+        <div id="puzzle-frame-container" class="w-48 h-48 bg-slate-50 border-2 border-dashed border-indigo-200 rounded-3xl p-3 flex flex-col justify-center items-center relative transition-all duration-300">
+          <div id="frame-top-area" class="w-full flex-1 flex items-center justify-center gap-2">
+            <div id="slot-cho" class="w-16 h-16 rounded-2xl bg-amber-100/80 border-2 border-amber-300 flex flex-col items-center justify-center font-bold text-amber-800 text-2xl font-kr transition">
+              <span id="slot-cho-text">?</span>
+              <span class="text-[9px] font-sans text-amber-600">初声(子音)</span>
+            </div>
+            <div id="slot-jung" class="w-16 h-16 rounded-2xl bg-emerald-100/80 border-2 border-emerald-300 flex flex-col items-center justify-center font-bold text-emerald-800 text-2xl font-kr transition">
+              <span id="slot-jung-text">?</span>
+              <span class="text-[9px] font-sans text-emerald-600">中声(母音)</span>
+            </div>
+          </div>
+          <div id="slot-jong-container" class="w-full pt-2 flex justify-center hidden">
+            <div id="slot-jong" class="w-36 h-12 rounded-xl bg-rose-100/80 border-2 border-rose-300 flex items-center justify-center gap-2 font-bold text-rose-800 text-xl font-kr transition">
+              <span id="slot-jong-text">パッチムなし</span>
+              <span class="text-[9px] font-sans text-rose-600">終声</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="mt-4 flex items-center gap-3">
+          <div id="assembled-char" class="text-4xl font-black text-slate-900 font-kr">?</div>
+          <div class="text-left text-xs">
+            <div id="assembled-reading" class="font-bold text-indigo-600 text-sm">—</div>
+            <div id="assembled-type" class="text-slate-400 font-medium text-[11px]">構造: パーツを選んでください</div>
+          </div>
+          <button id="assembled-speak-btn" onclick="speakAssembled()" disabled class="w-9 h-9 rounded-xl bg-slate-100 text-slate-400 flex items-center justify-center ml-2 cursor-not-allowed transition">
+            <i class="fa-solid fa-volume-high text-xs"></i>
+          </button>
+        </div>
+
+        <div id="puzzle-feedback" class="mt-3 text-xs font-bold px-4 py-1.5 rounded-full hidden"></div>
+      </div>
+
+      <div class="space-y-4">
+        <div class="bg-white p-4 rounded-2xl border border-slate-200">
+          <div class="text-xs font-extrabold text-amber-800 mb-2.5 flex items-center gap-1.5">
+            <span class="w-2.5 h-2.5 rounded-full bg-amber-500"></span>
+            <span>① 子音パーツを選んでください（初声 / 14種）</span>
+          </div>
+          <div id="cho-palette" class="grid grid-cols-7 sm:grid-cols-14 gap-1.5"></div>
+        </div>
+
+        <div class="bg-white p-4 rounded-2xl border border-slate-200">
+          <div class="text-xs font-extrabold text-emerald-800 mb-2.5 flex items-center justify-between">
+            <div class="flex items-center gap-1.5">
+              <span class="w-2.5 h-2.5 rounded-full bg-emerald-500"></span>
+              <span>② 母音パーツを選んでください（中声 / 形状別）</span>
+            </div>
+            <span class="text-[10px] text-slate-400 font-medium">棒の向きで左右/上下/L字型が決定</span>
+          </div>
+          <div id="jung-palette" class="grid grid-cols-4 sm:grid-cols-8 gap-1.5"></div>
+        </div>
+
+        <div class="bg-white p-4 rounded-2xl border border-slate-200">
+          <div class="text-xs font-extrabold text-rose-800 mb-2.5 flex items-center justify-between">
+            <div class="flex items-center gap-1.5">
+              <span class="w-2.5 h-2.5 rounded-full bg-rose-500"></span>
+              <span>③ パッチム（終声 / 任意）</span>
+            </div>
+            <span class="text-[10px] text-slate-400 font-medium">付加すると最下段に敷かれます</span>
+          </div>
+          <div id="jong-palette" class="flex flex-wrap gap-1.5"></div>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- ======================================================= -->
+  <!-- データ出典・権利関係明記ブロック（独立カード形式）      -->
+  <!-- ======================================================= -->
+  <section class="max-w-5xl mx-auto px-4 mt-8 mb-4 w-full">
+    <div class="bg-white rounded-2xl p-4 sm:p-5 border border-slate-200/80 shadow-xs">
+      <h3 class="text-xs font-bold text-slate-700 flex items-center gap-1.5 mb-2.5">
+        <i class="fa-solid fa-scale-balanced text-indigo-500"></i>
+        <span>収録データ・音声エンジン仕様</span>
+      </h3>
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 text-[11px] text-slate-600">
+        <div class="bg-slate-50 p-3 rounded-xl border border-slate-100">
+          <p class="font-bold text-slate-800 mb-0.5">ハングル文字構造アルゴリズム</p>
+          <p class="text-slate-500 leading-relaxed">
+            <span class="font-semibold text-slate-700">Unicode 15.0 Hangul Syllables 規格準拠</span><br>
+            韓国国立国語院（National Institute of Korean Language）告示の反切表体系に基づき、初声・中声・終声の動的合成処理を自前実装（客観的事実データ）。
+          </p>
+        </div>
+        <div class="bg-slate-50 p-3 rounded-xl border border-slate-100">
+          <p class="font-bold text-slate-800 mb-0.5">発音音声データ（ローカル収録）</p>
+          <p class="text-slate-500 leading-relaxed">
+            <span class="font-semibold text-slate-700">Google Cloud Text-to-Speech API</span><br>
+            事前レンダリング音源（モデル: <code>ko-KR-Wavenet-A</code>）をローカルディレクトリ（<code>audio/</code>）に同梱。外部API通信や個人キーの埋め込みを行わない完全静的配信。
+          </p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ======================================================= -->
+  <!-- フッター (selfup.net 個別アプリ 正式共通規格: コピーライトなし) -->
+  <!-- ======================================================= -->
+  <footer class="py-6 text-center border-t border-slate-200 bg-white">
+    <div class="max-w-4xl mx-auto px-4">
+      <p class="text-[11px] text-slate-400">
+        ※個人開発プロトタイプにつき無保証・自己責任にてご利用ください（データは端末内完結・サポート対象外）
+      </p>
+    </div>
+  </footer>
+
+  <!-- ========================================== -->
+  <!-- JavaScript (audio/フォルダ直読み再生方式)  -->
+  <!-- ========================================== -->
+  <script>
+    // --------------------------------------------------------
+    // 1. ローカルMP3音声再生管理
+    // --------------------------------------------------------
+    let isSoundMuted = false;
+    let currentPlayingAudio = null;
+
+    function toggleMute() {
+      isSoundMuted = !isSoundMuted;
+      const icon = document.getElementById('soundIcon');
+      const text = document.getElementById('soundText');
+      if (isSoundMuted) {
+        icon.className = 'fa-solid fa-volume-xmark text-slate-400';
+        text.innerText = 'ミュート中';
+        if (currentPlayingAudio) {
+          currentPlayingAudio.pause();
+          currentPlayingAudio = null;
+        }
+        if ('speechSynthesis' in window) window.speechSynthesis.cancel();
+      } else {
+        icon.className = 'fa-solid fa-volume-high text-indigo-600';
+        text.innerText = '音声ON';
+      }
+    }
+
+    // audio/000_가.mp3 形式を直接ロードして再生
+    function playLocalAudio(soundIndex, char) {
+      if (isSoundMuted || !char || char === '?') return;
+
+      if (currentPlayingAudio) {
+        currentPlayingAudio.pause();
+        currentPlayingAudio = null;
+      }
+
+      if (soundIndex >= 0) {
+        const paddedIdx = String(soundIndex).padStart(3, '0');
+        const audioPath = `./audio/${paddedIdx}_${char}.mp3`;
+        const audio = new Audio(audioPath);
+        currentPlayingAudio = audio;
+
+        audio.play().catch(err => {
+          console.warn(`ローカルMP3読み込み失敗: ${audioPath}。Web Speech APIで代替します。`, err);
+          speakFallback(char);
+        });
+      } else {
+        speakFallback(char);
+      }
+    }
+
+    // 予備フォールバック（パッチム合成文字や複合文字用）
+    function speakFallback(text) {
+      if (isSoundMuted || !text || text === '?' || !('speechSynthesis' in window)) return;
+      window.speechSynthesis.cancel();
+      const ut = new SpeechSynthesisUtterance(text);
+      ut.lang = 'ko-KR';
+      ut.rate = 0.85;
+      window.speechSynthesis.speak(ut);
+    }
+
+    // --------------------------------------------------------
+    // 2. タブナビゲーション
+    // --------------------------------------------------------
+    const TABS = ['matrix', 'gojuon', 'puzzle'];
+    function setTab(tabName) {
+      TABS.forEach(t => {
+        document.getElementById(`view-${t}`).classList.add('hidden');
+        document.getElementById(`tab-${t}`).className = 'px-4 py-2 rounded-xl inactive-nav-tab transition flex items-center gap-2 whitespace-nowrap';
+      });
+      document.getElementById(`view-${tabName}`).classList.remove('hidden');
+      document.getElementById(`tab-${tabName}`).className = 'px-4 py-2 rounded-xl active-nav-tab transition flex items-center gap-2 whitespace-nowrap';
+    }
+
+    // --------------------------------------------------------
+    // 3. ハングル公式Unicode合成データ
+    // --------------------------------------------------------
+    const CHO_MAP = [
+      { uIdx: 0,  char: "ㄱ", name: "キヨク",   r: "g",  kana: "カ/ガ" },
+      { uIdx: 2,  char: "ㄴ", name: "ニウン",   r: "n",  kana: "ナ" },
+      { uIdx: 3,  char: "ㄷ", name: "ティグッ", r: "d",  kana: "タ/ダ" },
+      { uIdx: 5,  char: "ㄹ", name: "リウル",   r: "r",  kana: "ラ" },
+      { uIdx: 6,  char: "ㅁ", name: "ミウム",   r: "m",  kana: "マ" },
+      { uIdx: 7,  char: "ㅂ", name: "ピウプ",   r: "b",  kana: "パ/バ" },
+      { uIdx: 9,  char: "ㅅ", name: "シオッ",   r: "s",  kana: "サ" },
+      { uIdx: 11, char: "ㅇ", name: "イウン",   r: "",   kana: "母音" },
+      { uIdx: 12, char: "ㅈ", name: "チウッ",   r: "j",  kana: "チャ/ジャ" },
+      { uIdx: 14, char: "ㅊ", name: "チウッ",   r: "ch", kana: "チャ(激)" },
+      { uIdx: 15, char: "ㅋ", name: "キウク",   r: "k",  kana: "カ(激)" },
+      { uIdx: 16, char: "ㅌ", name: "ティウト", r: "t",  kana: "タ(激)" },
+      { uIdx: 17, char: "ㅍ", name: "ピウプ",   r: "p",  kana: "パ(激)" },
+      { uIdx: 18, char: "ㅎ", name: "ヒウッ",   r: "h",  kana: "ハ" }
+    ];
+
+    const JUNG_MAP = [
+      { uIdx: 0, char: "ㅏ", type: "vertical", r: "a", kana: "ア" },
+      { uIdx: 2, char: "ㅑ", type: "vertical", r: "ya", kana: "ヤ" },
+      { uIdx: 4, char: "ㅓ", type: "vertical", r: "eo", kana: "オ(開)" },
+      { uIdx: 6, char: "ㅕ", type: "vertical", r: "yeo", kana: "ヨ" },
+      { uIdx: 8, char: "ㅗ", type: "horizontal", r: "o", kana: "オ(丸)" },
+      { uIdx: 12, char: "ㅛ", type: "horizontal", r: "yo", kana: "ヨ" },
+      { uIdx: 13, char: "ㅜ", type: "horizontal", r: "u", kana: "ウ(深)" },
+      { uIdx: 17, char: "ㅠ", type: "horizontal", r: "yu", kana: "ユ" },
+      { uIdx: 18, char: "ㅡ", type: "horizontal", r: "eu", kana: "ウ(平)" },
+      { uIdx: 20, char: "ㅣ", type: "vertical", r: "i", kana: "イ" },
+      { uIdx: 1, char: "ㅐ", type: "vertical", r: "ae", kana: "エ" },
+      { uIdx: 5, char: "ㅔ", type: "vertical", r: "e", kana: "エ" },
+      { uIdx: 9, char: "ㅘ", type: "compound", r: "wa", kana: "ワ" },
+      { uIdx: 14, char: "ㅝ", type: "compound", r: "wo", kana: "ウォ" },
+      { uIdx: 16, char: "ㅟ", type: "compound", r: "wi", kana: "ウィ" },
+      { uIdx: 19, char: "ㅢ", type: "compound", r: "ui", kana: "ウイ" }
+    ];
+
+    const JONG_OPTIONS = [
+      { uIdx: 0, char: "なし", r: "", sound: "" },
+      { uIdx: 1, char: "ㄱ", r: "k", sound: "ク(詰まり)" },
+      { uIdx: 4, char: "ㄴ", r: "n", sound: "ン(案内)" },
+      { uIdx: 7, char: "ㄷ", r: "t", sound: "ッ(詰まり)" },
+      { uIdx: 8, char: "ㄹ", r: "l", sound: "ル(舌巻き)" },
+      { uIdx: 16, char: "ㅁ", r: "m", sound: "ム(口閉じ)" },
+      { uIdx: 17, char: "ㅂ", r: "p", sound: "プ(口閉じ)" },
+      { uIdx: 19, char: "ㅅ", r: "t", sound: "ッ" },
+      { uIdx: 21, char: "ㅇ", r: "ng", sound: "ング(鼻音)" }
+    ];
+
+    function composeHangulDirect(choUIdx, jungUIdx, jongUIdx = 0) {
+      if (choUIdx < 0 || jungUIdx < 0) return null;
+      const code = 0xAC00 + (choUIdx * 21 + jungUIdx) * 28 + jongUIdx;
+      return String.fromCharCode(code);
+    }
+
+    // --------------------------------------------------------
+    // 4. TAB 1: 反切表（140音）
+    // --------------------------------------------------------
+    const MATRIX_JUNGS = [
+      { uIdx: 0,  r: "a" },
+      { uIdx: 2,  r: "ya" },
+      { uIdx: 4,  r: "eo" },
+      { uIdx: 6,  r: "yeo" },
+      { uIdx: 8,  r: "o" },
+      { uIdx: 12, r: "yo" },
+      { uIdx: 13, r: "u" },
+      { uIdx: 17, r: "yu" },
+      { uIdx: 18, r: "eu" },
+      { uIdx: 20, r: "i" }
+    ];
+
+    const KANA_READINGS_140 = [
+      ["カ/ガ", "キャ/ギャ", "コ/ゴ(開)", "キョ/ギョ", "コ/ゴ(丸)", "キョ/ギョ", "ク/グ", "キュ/ギュ", "ク/グ(平)", "キ/ギ"],
+      ["ナ", "ニャ", "ノ(開)", "ニョ", "ノ(丸)", "ニョ", "ヌ", "ニュ", "ヌ(平)", "ニ"],
+      ["タ/ダ", "ディャ", "ト/ド(開)", "テョ/デョ", "ト/ド(丸)", "テョ/デョ", "トゥ/ドゥ", "テュ/デュ", "トゥ/ドゥ", "ティ/ディ"],
+      ["ラ", "リャ", "ロ(開)", "リョ", "ロ(丸)", "リョ", "ル", "リュ", "ル(平)", "リ"],
+      ["マ", "ミャ", "モ(開)", "ミョ", "モ(丸)", "ミョ", "ム", "ミュ", "ム(平)", "ミ"],
+      ["パ/バ", "ピャ/ビャ", "ポ/ボ(開)", "ピョ/ビョ", "ポ/ボ(丸)", "ピョ/ビョ", "プ/ブ", "ピュ/ビュ", "プ/ブ(平)", "ピ/ビ"],
+      ["サ", "シャ", "ソ(開)", "ショ", "ソ(丸)", "ショ", "ス", "シュ", "ス(平)", "シ"],
+      ["ア", "ヤ", "オ(開)", "ヨ", "オ(丸)", "ヨ", "ウ", "ユ", "ウ(平)", "イ"],
+      ["チャ/ジャ", "チャ/ジャ", "チョ/ジョ(開)", "チョ/ジョ", "チョ/ジョ(丸)", "チョ/ジョ", "チュ/ジュ", "チュ/ジュ", "チュ/ジュ", "チ/ジ"],
+      ["チャ(激)", "チャ(激)", "チョ(激)", "チョ(激)", "チョ(激)", "チョ(激)", "チュ(激)", "チュ(激)", "チュ(激)", "チ(激)"],
+      ["カ(激)", "キャ(激)", "コ(激)", "キョ(激)", "コ(激)", "キョ(激)", "ク(激)", "キュ(激)", "ク(激)", "キ(激)"],
+      ["タ(激)", "ティャ(激)", "ト(激)", "テョ(激)", "ト(激)", "テョ(激)", "トゥ(激)", "テュ(激)", "トゥ(激)", "ティ(激)"],
+      ["パ(激)", "ピャ(激)", "ポ(激)", "ピョ(激)", "ポ(激)", "ピョ(激)", "プ(激)", "ピュ(激)", "プ(激)", "ピ(激)"],
+      ["ハ", "ヒャ", "ホ(開)", "ヒョ", "ホ(丸)", "ヒョ", "フ", "ヒュ", "フ(平)", "ヒ"]
+    ];
+
+    let currentMatrixSyllable = "가";
+    let currentMatrixSoundIdx = 0;
+
+    function renderMatrix() {
+      const tbody = document.getElementById('matrix-tbody');
+      tbody.innerHTML = '';
+
+      CHO_MAP.forEach((cho, cIdx) => {
+        const tr = document.createElement('tr');
+        tr.className = "hover:bg-slate-50 transition border-b border-slate-100";
+
+        const th = document.createElement('td');
+        th.className = "p-2 bg-slate-50 font-bold text-xs text-slate-700 border-r border-slate-200 sticky left-0 z-10";
+        th.innerHTML = `
+          <div class="text-base font-extrabold text-indigo-700 font-kr leading-none mb-0.5">${cho.char}</div>
+          <div class="text-[10px] text-slate-500 font-medium">${cho.name}</div>
+          <div class="text-[9px] text-slate-400 font-mono font-semibold">${cho.r || 'ø'}</div>
+        `;
+        tr.appendChild(th);
+
+        MATRIX_JUNGS.forEach((jung, jIdx) => {
+          const char = composeHangulDirect(cho.uIdx, jung.uIdx, 0);
+          const kana = KANA_READINGS_140[cIdx][jIdx];
+          const romaji = `${cho.r}${jung.r}`;
+          const soundIndex = cIdx * 10 + jIdx; // 0 〜 139
+
+          const td = document.createElement('td');
+          td.className = "p-1.5";
+          td.innerHTML = `
+            <button onclick="selectMatrixChar('${char}', '${kana}', '${romaji}', '${cho.char}', '${JUNG_MAP.find(m => m.uIdx === jung.uIdx).char}', ${soundIndex})" class="w-full py-2 px-1 rounded-xl border border-slate-200/80 hover:border-indigo-500 hover:bg-indigo-50/50 transition flex flex-col items-center justify-center group active:scale-95 bg-white shadow-2xs">
+              <span class="text-[10px] text-slate-400 font-medium leading-none mb-0.5 truncate max-w-full">${kana}</span>
+              <span class="text-lg font-black text-slate-800 font-kr group-hover:text-indigo-600 leading-snug">${char}</span>
+              <span class="text-[9px] font-mono text-slate-400 font-semibold leading-none">${romaji}</span>
+            </button>
+          `;
+          tr.appendChild(td);
+        });
+        tbody.appendChild(tr);
+      });
+    }
+
+    function selectMatrixChar(char, kana, romaji, cho, jung, soundIdx) {
+      currentMatrixSyllable = char;
+      currentMatrixSoundIdx = soundIdx;
+      document.getElementById('prev-char').innerText = char;
+      document.getElementById('prev-kana').innerText = kana;
+      document.getElementById('prev-romaji').innerText = `(${romaji})`;
+      document.getElementById('prev-desc').innerText = `子音 ${cho} + 母音 ${jung}`;
+      playLocalAudio(soundIdx, char);
+    }
+
+    function speakMatrixCurrent() {
+      playLocalAudio(currentMatrixSoundIdx, currentMatrixSyllable);
+    }
+
+    // --------------------------------------------------------
+    // 5. TAB 2: 五十音逆引き（行グループ付き）
+    // --------------------------------------------------------
+    const GOJUON_DATA = [
+      // === 清音 (あ〜わ行) ===
+      { group: "seion", row: "あ行", kana: "あ", h: "아", r: "a", sIdx: 70, note: "母音あ（ㅇ無音＋ㅏ）" },
+      { group: "seion", row: "あ行", kana: "い", h: "이", r: "i", sIdx: 79, note: "母音い（ㅇ無音＋ㅣ）" },
+      { group: "seion", row: "あ行", kana: "う", h: "우", r: "u", sIdx: 76, note: "母音う（口をすぼめるㅜ）" },
+      { group: "seion", row: "あ行", kana: "え", h: "에 / 애", r: "e / ae", sIdx: -1, note: "一般的に에を使用" },
+      { group: "seion", row: "あ行", kana: "お", h: "오", r: "o", sIdx: 74, note: "母音お（口を丸めるㅗ）" },
+
+      { group: "seion", row: "か行", kana: "か", h: "가 / 카", r: "ga / ka", sIdx: 0, note: "語頭:카、語中:가が多用" },
+      { group: "seion", row: "か行", kana: "き", h: "기 / 키", r: "gi / ki", sIdx: 9, note: "語頭:キー、語中:기" },
+      { group: "seion", row: "か行", kana: "く", h: "구 / 쿠", r: "gu / ku", sIdx: 6, note: "語頭:ク、語中:구" },
+      { group: "seion", row: "か行", kana: "け", h: "게 / 케", r: "ge / ke", sIdx: -1, note: "語頭:ケ、語中:게" },
+      { group: "seion", row: "か行", kana: "こ", h: "고 / 코", r: "go / ko", sIdx: 4, note: "語頭:コ、語中:고" },
+
+      { group: "seion", row: "さ行", kana: "さ", h: "사", r: "sa", sIdx: 60, note: "子音ㅅ＋ㅏ" },
+      { group: "seion", row: "さ行", kana: "し", h: "시", r: "si (shi)", sIdx: 69, note: "韓国語では自然に「シ」の音" },
+      { group: "seion", row: "さ行", kana: "す", h: "스", r: "seu", sIdx: 68, note: "母音ㅡ(平口)をあてる" },
+      { group: "seion", row: "さ行", kana: "せ", h: "세", r: "se", sIdx: -1, note: "子音ㅅ＋ㅔ" },
+      { group: "seion", row: "さ行", kana: "そ", h: "소", r: "so", sIdx: 64, note: "子音ㅅ＋ㅗ" },
+
+      { group: "seion", row: "た行", kana: "た", h: "다 / 타", r: "da / ta", sIdx: 20, note: "語頭:タ、語中:다" },
+      { group: "seion", row: "た行", kana: "ち", h: "치 / 지", r: "chi / ji", sIdx: 99, note: "語頭:チ、語中:지" },
+      { group: "seion", row: "た行", kana: "つ", h: "츠", r: "cheu", sIdx: 98, note: "★「つ」がないため츠で代用" },
+      { group: "seion", row: "た行", kana: "て", h: "데 / 테", r: "de / te", sIdx: -1, note: "語頭:テ、語中:데" },
+      { group: "seion", row: "た行", kana: "と", h: "도 / 토", r: "do / to", sIdx: 24, note: "語頭:ト、語中:도" },
+
+      { group: "seion", row: "な行", kana: "な", h: "나", r: "na", sIdx: 10, note: "子音ㄴ＋ㅏ" },
+      { group: "seion", row: "な行", kana: "に", h: "니", r: "ni", sIdx: 19, note: "子音ㄴ＋ㅣ" },
+      { group: "seion", row: "な行", kana: "ぬ", h: "누", r: "nu", sIdx: 16, note: "子音ㄴ＋ㅜ" },
+      { group: "seion", row: "な行", kana: "ね", h: "네", r: "ne", sIdx: -1, note: "子音ㄴ＋ㅔ" },
+      { group: "seion", row: "な行", kana: "の", h: "노", r: "no", sIdx: 14, note: "子音ㄴ＋ㅗ" },
+
+      { group: "seion", row: "は行", kana: "は", h: "하", r: "ha", sIdx: 130, note: "子音ㅎ＋ㅏ" },
+      { group: "seion", row: "は行", kana: "ひ", h: "히", r: "hi", sIdx: 139, note: "子音ㅎ＋ㅣ" },
+      { group: "seion", row: "は行", kana: "ふ", h: "후", r: "hu (fu)", sIdx: 136, note: "韓国語ではhuに近い" },
+      { group: "seion", row: "は行", kana: "へ", h: "헤", r: "he", sIdx: -1, note: "子音ㅎ＋ㅔ" },
+      { group: "seion", row: "は行", kana: "ほ", h: "호", r: "ho", sIdx: 134, note: "子音ㅎ＋ㅗ" },
+
+      { group: "seion", row: "ま行", kana: "ま", h: "마", r: "ma", sIdx: 40, note: "子音ㅁ＋ㅏ" },
+      { group: "seion", row: "ま行", kana: "み", h: "미", r: "mi", sIdx: 49, note: "子音ㅁ＋ㅣ" },
+      { group: "seion", row: "ま行", kana: "む", h: "무", r: "mu", sIdx: 46, note: "子音ㅁ＋ㅜ" },
+      { group: "seion", row: "ま行", kana: "め", h: "메", r: "me", sIdx: -1, note: "子音ㅁ＋ㅔ" },
+      { group: "seion", row: "ま行", kana: "も", h: "모", r: "mo", sIdx: 44, note: "子音ㅁ＋ㅗ" },
+
+      { group: "seion", row: "や・ら・わ行", kana: "や", h: "야", r: "ya", sIdx: 71, note: "母音ㅑ" },
+      { group: "seion", row: "や・ら・わ行", kana: "ゆ", h: "유", r: "yu", sIdx: 77, note: "母音ㅠ" },
+      { group: "seion", row: "や・ら・わ行", kana: "よ", h: "요", r: "yo", sIdx: 75, note: "母音ㅛ" },
+      { group: "seion", row: "や・ら・わ行", kana: "ら", h: "라", r: "ra", sIdx: 30, note: "子音ㄹ＋ㅏ" },
+      { group: "seion", row: "や・ら・わ行", kana: "り", h: "리", r: "ri", sIdx: 39, note: "子音ㄹ＋ㅣ" },
+      { group: "seion", row: "や・ら・わ行", kana: "る", h: "루", r: "ru", sIdx: 36, note: "子音ㄹ＋ㅜ" },
+      { group: "seion", row: "や・ら・わ行", kana: "れ", h: "레", r: "re", sIdx: -1, note: "子音ㄹ＋ㅔ" },
+      { group: "seion", row: "や・ら・わ行", kana: "ろ", h: "로", r: "ro", sIdx: 34, note: "子音ㄹ＋ㅗ" },
+      { group: "seion", row: "や・ら・わ行", kana: "わ", h: "와", r: "wa", sIdx: -1, note: "複合母音ㅘ" },
+      { group: "seion", row: "や・ら・わ行", kana: "を", h: "오", r: "o", sIdx: 74, note: "発音上は오と同じ" },
+
+      // === 濁音・半濁音 ===
+      { group: "dakuon", row: "が行 (濁音)", kana: "が", h: "가", r: "ga", sIdx: 0, note: "有声音化（語中・濁音）" },
+      { group: "dakuon", row: "が行 (濁音)", kana: "ぎ", h: "기", r: "gi", sIdx: 9, note: "語中・濁音" },
+      { group: "dakuon", row: "が行 (濁音)", kana: "ぐ", h: "구", r: "gu", sIdx: 6, note: "語中・濁音" },
+      { group: "dakuon", row: "が行 (濁音)", kana: "げ", h: "게", r: "ge", sIdx: -1, note: "語中・濁音" },
+      { group: "dakuon", row: "が行 (濁音)", kana: "ご", h: "고", r: "go", sIdx: 4, note: "語中・濁音" },
+
+      { group: "dakuon", row: "ざ行 (代用表記)", kana: "ざ", h: "자", r: "ja", sIdx: 80, note: "★Z音がないためJ音で代用" },
+      { group: "dakuon", row: "ざ行 (代用表記)", kana: "じ", h: "지", r: "ji", sIdx: 89, note: "子音ㅈ＋ㅣ" },
+      { group: "dakuon", row: "ざ行 (代用表記)", kana: "ず", h: "즈", r: "jeu", sIdx: 88, note: "★ズは즈で代用" },
+      { group: "dakuon", row: "ざ行 (代用表記)", kana: "ぜ", h: "제", r: "je", sIdx: -1, note: "★ゼは제で代用" },
+      { group: "dakuon", row: "ざ行 (代用表記)", kana: "ぞ", h: "조", r: "jo", sIdx: 84, note: "★ゾは조で代用" },
+
+      { group: "dakuon", row: "だ行 (濁音)", kana: "だ", h: "다", r: "da", sIdx: 20, note: "語中・濁音" },
+      { group: "dakuon", row: "だ行 (濁音)", kana: "ぢ", h: "지", r: "ji", sIdx: 89, note: "「じ」と同音表記" },
+      { group: "dakuon", row: "だ行 (濁音)", kana: "づ", h: "즈", r: "jeu", sIdx: 88, note: "「ず」と同音表記" },
+      { group: "dakuon", row: "だ行 (濁音)", kana: "で", h: "데", r: "de", sIdx: -1, note: "語中・濁音" },
+      { group: "dakuon", row: "だ行 (濁音)", kana: "ど", h: "도", r: "do", sIdx: 24, note: "語中・濁音" },
+
+      { group: "dakuon", row: "ば行 (濁音)", kana: "ば", h: "바", r: "ba", sIdx: 50, note: "語中・濁音" },
+      { group: "dakuon", row: "ば行 (濁音)", kana: "び", h: "비", r: "bi", sIdx: 59, note: "語中・濁音" },
+      { group: "dakuon", row: "ば行 (濁音)", kana: "ぶ", h: "부", r: "bu", sIdx: 56, note: "語中・濁音" },
+      { group: "dakuon", row: "ば行 (濁音)", kana: "べ", h: "베", r: "be", sIdx: -1, note: "語中・濁音" },
+      { group: "dakuon", row: "ば行 (濁音)", kana: "ぼ", h: "보", r: "bo", sIdx: 54, note: "語中・濁音" },
+
+      { group: "dakuon", row: "ぱ行 (半濁音)", kana: "ぱ", h: "파 / 빠", r: "pa / ppa", sIdx: 120, note: "激音파または濃音빠" },
+      { group: "dakuon", row: "ぱ行 (半濁音)", kana: "ぴ", h: "피 / 삐", r: "pi / ppi", sIdx: 129, note: "激音피または濃音삐" },
+      { group: "dakuon", row: "ぱ行 (半濁音)", kana: "ぷ", h: "푸 / 뿌", r: "pu / ppu", sIdx: 126, note: "激音푸または濃音뿌" },
+      { group: "dakuon", row: "ぱ行 (半濁音)", kana: "ぺ", h: "페 / 빼", r: "pe / ppe", sIdx: -1, note: "激音페または濃音빼" },
+      { group: "dakuon", row: "ぱ行 (半濁音)", kana: "ぽ", h: "포 / 뽀", r: "po / ppo", sIdx: 124, note: "激音포または濃音뽀" },
+
+      // === 拗音 (3つ1セット) ===
+      { group: "youon", row: "きゃ行", kana: "きゃ", h: "캬 / 갸", r: "kya / gya", sIdx: 101, note: "激音/平音＋ㅑ" },
+      { group: "youon", row: "きゃ行", kana: "きゅ", h: "큐 / 규", r: "kyu / gyu", sIdx: 107, note: "激音/平音＋ㅠ" },
+      { group: "youon", row: "きゃ行", kana: "きょ", h: "쿄 / 교", r: "kyo / gyo", sIdx: 105, note: "激音/平音＋ㅛ" },
+
+      { group: "youon", row: "しゃ行", kana: "しゃ", h: "샤", r: "sha", sIdx: 61, note: "ㅅ＋ㅑ" },
+      { group: "youon", row: "しゃ行", kana: "しゅ", h: "슈", r: "shu", sIdx: 67, note: "ㅅ＋ㅠ" },
+      { group: "youon", row: "しゃ行", kana: "しょ", h: "쇼", r: "sho", sIdx: 65, note: "ㅅ＋ㅛ" },
+
+      { group: "youon", row: "ちゃ行", kana: "ちゃ", h: "차 / 자", r: "cha / ja", sIdx: 90, note: "ㅊ/ㅈ＋ㅏ" },
+      { group: "youon", row: "ちゃ行", kana: "ちゅ", h: "추 / 주", r: "chu / ju", sIdx: 96, note: "ㅊ/ㅈ＋ㅜ" },
+      { group: "youon", row: "ちゃ行", kana: "ちょ", h: "초 / 조", r: "cho / jo", sIdx: 94, note: "ㅊ/ㅈ＋ㅗ" },
+
+      { group: "youon", row: "にゃ行", kana: "にゃ", h: "냐", r: "nya", sIdx: 11, note: "ㄴ＋ㅑ" },
+      { group: "youon", row: "にゃ行", kana: "にゅ", h: "뉴", r: "nyu", sIdx: 17, note: "ㄴ＋ㅠ" },
+      { group: "youon", row: "にゃ行", kana: "にょ", h: "뇨", r: "nyo", sIdx: 15, note: "ㄴ＋ㅛ" },
+
+      { group: "youon", row: "ひゃ行", kana: "ひゃ", h: "햐", r: "hya", sIdx: 131, note: "ㅎ＋ㅑ" },
+      { group: "youon", row: "ひゃ行", kana: "ひゅ", h: "휴", r: "hyu", sIdx: 137, note: "ㅎ＋ㅠ" },
+      { group: "youon", row: "ひゃ行", kana: "ひょ", h: "효", r: "hyo", sIdx: 135, note: "ㅎ＋ㅛ" },
+
+      { group: "youon", row: "みゃ行", kana: "みゃ", h: "먀", r: "mya", sIdx: 41, note: "ㅁ＋ㅑ" },
+      { group: "youon", row: "みゃ行", kana: "みゅ", h: "뮤", r: "myu", sIdx: 47, note: "ㅁ＋ㅠ" },
+      { group: "youon", row: "みゃ行", kana: "みょ", h: "묘", r: "myo", sIdx: 45, note: "ㅁ＋ㅛ" },
+
+      { group: "youon", row: "りゃ行", kana: "りゃ", h: "랴", r: "rya", sIdx: 31, note: "ㄹ＋ㅑ" },
+      { group: "youon", row: "りゃ行", kana: "りゅ", h: "류", r: "ryu", sIdx: 37, note: "ㄹ＋ㅠ" },
+      { group: "youon", row: "りゃ行", kana: "りょ", h: "료", r: "ryo", sIdx: 35, note: "ㄹ＋ㅛ" },
+
+      { group: "youon", row: "ぎゃ行", kana: "ぎゃ", h: "갸", r: "gya", sIdx: 1, note: "ㄱ＋ㅑ (濁音)" },
+      { group: "youon", row: "ぎゃ行", kana: "ぎゅ", h: "규", r: "gyu", sIdx: 7, note: "ㄱ＋ㅠ (濁音)" },
+      { group: "youon", row: "ぎゃ行", kana: "ぎょ", h: "교", r: "gyo", sIdx: 5, note: "ㄱ＋ㅛ (濁音)" },
+
+      { group: "youon", row: "じゃ行", kana: "じゃ", h: "쟈", r: "ja", sIdx: 81, note: "ㅈ＋ㅑ" },
+      { group: "youon", row: "じゃ行", kana: "じゅ", h: "쥬", r: "ju", sIdx: 87, note: "ㅈ＋ㅠ" },
+      { group: "youon", row: "じゃ行", kana: "じょ", h: "죠", r: "jo", sIdx: 85, note: "ㅈ＋ㅛ" },
+
+      // === 特殊 & パッチム ===
+      { group: "special", row: "撥音（ん）の3変化", kana: "ん (N音)", h: "ㄴ (パッチム)", r: "-n", sIdx: -1, note: "さ・た・な・ら行の前（例: 案内＝안내）" },
+      { group: "special", row: "撥音（ん）の3変化", kana: "ん (M音)", h: "ㅁ (パッチム)", r: "-m", sIdx: -1, note: "ま・ば・ぱ行の前（例: 乾杯＝건배）" },
+      { group: "special", row: "撥音（ん）の3変化", kana: "ん (NG音)", h: "ㅇ (パッチム)", r: "-ng", sIdx: -1, note: "あ・か・が行・語末の前（例: りんご＝링고）" },
+      { group: "special", row: "促音（っ）", kana: "促音「っ」", h: "ㅅ / ㄷ / ㄱ", r: "-t / -k", sIdx: -1, note: "パッチム詰まり音（例: 切符＝킷푸）" }
+    ];
+
+    function filterGojuon() {
+      const q = document.getElementById('gojuonSearchInput').value.trim().toLowerCase();
+      const container = document.getElementById('gojuon-grid');
+      container.className = "space-y-5";
+      container.innerHTML = '';
+
+      const filtered = GOJUON_DATA.filter(item => {
+        if (q) return item.kana.includes(q) || item.h.includes(q) || item.r.toLowerCase().includes(q) || item.note.toLowerCase().includes(q);
+        return item.group === currentGojuonCategory;
+      });
+
+      if (filtered.length === 0) {
+        container.innerHTML = `<div class="py-8 text-center text-xs text-slate-400 bg-white rounded-2xl border border-slate-200">該当する音節がありません</div>`;
+        return;
+      }
+
+      // 検索時はフラットなグリッド表示
+      if (q) {
+        const searchGrid = document.createElement('div');
+        searchGrid.className = "grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-3";
+        filtered.forEach(item => searchGrid.appendChild(createGojuonCard(item)));
+        container.appendChild(searchGrid);
+        return;
+      }
+
+      // 通常時：行（row）ごとに見出しをつけてブロック化
+      const groups = {};
+      filtered.forEach(item => {
+        if (!groups[item.row]) groups[item.row] = [];
+        groups[item.row].push(item);
+      });
+
+      Object.keys(groups).forEach(rowTitle => {
+        const rowItems = groups[rowTitle];
+        const section = document.createElement('div');
+        section.className = "bg-white p-4 rounded-2xl border border-slate-200 shadow-2xs";
+
+        // グループヘッダー
+        const header = document.createElement('div');
+        header.className = "flex items-center gap-2 mb-3 pb-2 border-b border-slate-100";
+        header.innerHTML = `
+          <span class="w-2 h-2 rounded-full bg-indigo-500"></span>
+          <span class="text-xs font-extrabold text-slate-800">${rowTitle}</span>
+          <span class="text-[10px] text-slate-400 font-medium">(${rowItems.length}音)</span>
+        `;
+        section.appendChild(header);
+
+        // カードグリッド（拗音3音は3列、清音・濁音5音は5列で固定）
+        const grid = document.createElement('div');
+        const count = rowItems.length;
+        if (count === 3) {
+          grid.className = "grid grid-cols-3 gap-3";
+        } else if (count === 5) {
+          grid.className = "grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-3";
+        } else {
+          grid.className = "grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-3";
+        }
+
+        rowItems.forEach(item => {
+          grid.appendChild(createGojuonCard(item));
+        });
+
+        section.appendChild(grid);
+        container.appendChild(section);
+      });
+    }
+
+    function createGojuonCard(item) {
+      const card = document.createElement('div');
+      card.className = "bg-slate-50/70 p-3 rounded-xl border border-slate-200/80 hover:border-indigo-400 hover:bg-white transition flex flex-col justify-between";
+      const speakTarget = item.h.split('/')[0].trim().replace(/[^가-힣]/g, '');
+
+      card.innerHTML = `
+        <div>
+          <div class="flex items-center justify-between mb-1">
+            <span class="text-sm font-black text-slate-900">${item.kana}</span>
+            <span class="text-[9px] font-mono text-slate-400 uppercase font-semibold">${item.r}</span>
+          </div>
+          <div class="text-xl font-black text-indigo-600 font-kr mb-1">${item.h}</div>
+          <div class="text-[10px] text-slate-500 leading-snug line-clamp-2">${item.note}</div>
+        </div>
+        <button onclick="playLocalAudio(${item.sIdx}, '${speakTarget}')" ${!speakTarget ? 'disabled' : ''} class="mt-2.5 w-full py-1.5 rounded-lg ${speakTarget ? 'bg-white hover:bg-indigo-50 text-indigo-700 border border-slate-200 hover:border-indigo-300 shadow-2xs' : 'bg-slate-100 text-slate-400 cursor-not-allowed border border-transparent'} font-bold text-[11px] flex items-center justify-center gap-1.5 transition">
+          <i class="fa-solid fa-volume-high text-[10px]"></i>
+          <span>再生</span>
+        </button>
+      `;
+      return card;
+    }
+
+    let currentGojuonCategory = 'seion';
+    function setGojuonCategory(cat) {
+      currentGojuonCategory = cat;
+      ['seion', 'dakuon', 'youon', 'special'].forEach(c => {
+        const btn = document.getElementById(`gtab-${c}`);
+        btn.className = (c === cat) ? 'px-3.5 py-1.5 rounded-lg bg-indigo-600 text-white transition' : 'px-3.5 py-1.5 rounded-lg bg-white border border-slate-200 text-slate-600 hover:bg-slate-50 transition';
+      });
+      filterGojuon();
+    }
+
+    // --------------------------------------------------------
+    // 6. TAB 3: 6大構造パズル
+    // --------------------------------------------------------
+    const PUZZLE_TARGETS = [
+      { choUIdx: 0, jungUIdx: 0, jongUIdx: 0, sIdx: 0,   kanaLabel: "カ / ガ (ga)", desc: "① 左右型（子音＋縦型母音）" },
+      { choUIdx: 0, jungUIdx: 8, jongUIdx: 0, sIdx: 4,   kanaLabel: "コ / ゴ (go)", desc: "② 上下型（子音＋横型母音）" },
+      { choUIdx: 0, jungUIdx: 4, jongUIdx: 0, sIdx: 2,   kanaLabel: "コ / ゴ (geo / 開くオ)", desc: "① 左右型（子音＋縦型母音）" },
+      { choUIdx: 0, jungUIdx: 9, jongUIdx: 0, sIdx: -1,  kanaLabel: "クァ (gwa)", desc: "③ L字型（子音＋複合母音）" },
+      { choUIdx: 0, jungUIdx: 0, jongUIdx: 1, sIdx: -1,  kanaLabel: "カク (gak)", desc: "④ 左右＋下（子音＋縦母音＋パッチム）" },
+      { choUIdx: 0, jungUIdx: 8, jongUIdx: 21, sIdx: -1, kanaLabel: "コン (gong)", desc: "⑤ 3段タワー（子音＋横母音＋パッチム）" },
+      { choUIdx: 0, jungUIdx: 9, jongUIdx: 4, sIdx: -1,  kanaLabel: "クァン (gwan)", desc: "⑥ L字＋下（子音＋複合母音＋パッチム）" },
+      { choUIdx: 1, jungUIdx: 20, jongUIdx: 4, sIdx: -1, kanaLabel: "ニン (nin)", desc: "④ 左右＋下（ㄴ + ㅣ + ㄴ）" },
+      { choUIdx: 7, jungUIdx: 8, jongUIdx: 0, sIdx: 74,  kanaLabel: "オ (o)", desc: "② 上下型（ㅇ + ㅗ）" }
+    ];
+
+    let currentTargetIdx = 0;
+    let selectedChoUIdx = -1;
+    let selectedJungUIdx = -1;
+    let selectedJongUIdx = 0;
+
+    function renderPuzzlePalettes() {
+      const choBox = document.getElementById('cho-palette');
+      choBox.innerHTML = '';
+      CHO_MAP.forEach(cho => {
+        const btn = document.createElement('button');
+        const isActive = cho.uIdx === selectedChoUIdx;
+        btn.className = `p-2 rounded-xl text-center font-kr transition active:scale-95 border ${isActive ? 'bg-amber-500 text-white border-amber-600 font-black shadow-xs' : 'bg-amber-50/50 hover:bg-amber-100/60 border-amber-200 text-amber-900 font-bold'}`;
+        btn.onclick = () => {
+          selectedChoUIdx = cho.uIdx;
+          renderPuzzlePalettes();
+          updatePuzzleDisplay();
+        };
+        btn.innerHTML = `
+          <div class="text-base leading-none mb-0.5">${cho.char}</div>
+          <div class="text-[9px] font-sans ${isActive ? 'text-amber-100' : 'text-amber-700'}">${cho.r || 'ø'}</div>
+        `;
+        choBox.appendChild(btn);
+      });
+
+      const jungBox = document.getElementById('jung-palette');
+      jungBox.innerHTML = '';
+      JUNG_MAP.forEach(jung => {
+        const btn = document.createElement('button');
+        const isActive = jung.uIdx === selectedJungUIdx;
+        btn.className = `p-2 rounded-xl text-center font-kr transition active:scale-95 border ${isActive ? 'bg-emerald-600 text-white border-emerald-700 font-black shadow-xs' : 'bg-emerald-50/50 hover:bg-emerald-100/60 border-emerald-200 text-emerald-900 font-bold'}`;
+        btn.onclick = () => {
+          selectedJungUIdx = jung.uIdx;
+          renderPuzzlePalettes();
+          updatePuzzleDisplay();
+        };
+        btn.innerHTML = `
+          <div class="text-base leading-none mb-0.5">${jung.char}</div>
+          <div class="text-[9px] font-sans ${isActive ? 'text-emerald-100' : 'text-emerald-700'}">${jung.r}</div>
+        `;
+        jungBox.appendChild(btn);
+      });
+
+      const jongBox = document.getElementById('jong-palette');
+      jongBox.innerHTML = '';
+      JONG_OPTIONS.forEach(jong => {
+        const btn = document.createElement('button');
+        const isActive = jong.uIdx === selectedJongUIdx;
+        btn.className = `px-3 py-1.5 rounded-xl text-xs font-kr transition active:scale-95 border ${isActive ? 'bg-rose-500 text-white border-rose-600 font-black shadow-xs' : 'bg-rose-50/50 hover:bg-rose-100/60 border-rose-200 text-rose-900 font-bold'}`;
+        btn.onclick = () => {
+          selectedJongUIdx = jong.uIdx;
+          renderPuzzlePalettes();
+          updatePuzzleDisplay();
+        };
+        btn.innerHTML = `${jong.char} <span class="text-[10px] font-sans ${isActive ? 'text-rose-100' : 'text-rose-500'}">(${jong.sound || 'なし'})</span>`;
+        jongBox.appendChild(btn);
+      });
+    }
+
+    function resetPuzzleSelection() {
+      selectedChoUIdx = -1;
+      selectedJungUIdx = -1;
+      selectedJongUIdx = 0;
+
+      document.getElementById('slot-cho-text').innerText = '?';
+      document.getElementById('slot-jung-text').innerText = '?';
+      document.getElementById('slot-jong-text').innerText = 'パッチムなし';
+      document.getElementById('slot-jong-container').classList.add('hidden');
+      document.getElementById('frame-top-area').className = "w-full flex-1 flex items-center justify-center gap-2";
+
+      document.getElementById('assembled-char').innerText = '?';
+      document.getElementById('assembled-reading').innerText = '—';
+      document.getElementById('assembled-type').innerText = '構造: パーツを選んでください';
+
+      const speakBtn = document.getElementById('assembled-speak-btn');
+      speakBtn.disabled = true;
+      speakBtn.className = 'w-9 h-9 rounded-xl bg-slate-100 text-slate-400 flex items-center justify-center ml-2 cursor-not-allowed transition';
+
+      document.getElementById('puzzle-feedback').classList.add('hidden');
+      renderPuzzlePalettes();
+    }
+
+    function updatePuzzleDisplay() {
+      const cho = CHO_MAP.find(c => c.uIdx === selectedChoUIdx);
+      const jung = JUNG_MAP.find(j => j.uIdx === selectedJungUIdx);
+      const jong = JONG_OPTIONS.find(j => j.uIdx === selectedJongUIdx);
+
+      document.getElementById('slot-cho-text').innerText = cho ? cho.char : '?';
+      document.getElementById('slot-jung-text').innerText = jung ? jung.char : '?';
+      document.getElementById('slot-jong-text').innerText = (!jong || jong.uIdx === 0) ? "パッチムなし" : jong.char;
+
+      const topArea = document.getElementById('frame-top-area');
+      const jongBox = document.getElementById('slot-jong-container');
+
+      if (jung && jung.type === 'horizontal') {
+        topArea.className = "w-full flex-1 flex flex-col items-center justify-center gap-1.5";
+      } else {
+        topArea.className = "w-full flex-1 flex items-center justify-center gap-2";
+      }
+
+      if (jong && jong.uIdx > 0) {
+        jongBox.classList.remove('hidden');
+      } else {
+        jongBox.classList.add('hidden');
+      }
+
+      if (selectedChoUIdx >= 0 && selectedJungUIdx >= 0) {
+        const resultChar = composeHangulDirect(selectedChoUIdx, selectedJungUIdx, selectedJongUIdx);
+        document.getElementById('assembled-char').innerText = resultChar;
+
+        let structName = "";
+        if (!jong || jong.uIdx === 0) {
+          if (jung.type === 'vertical') structName = "① 左右型（子音＋縦母音）";
+          else if (jung.type === 'horizontal') structName = "② 上下型（子音＋横母音）";
+          else structName = "③ L字型（子音＋複合母音）";
+        } else {
+          if (jung.type === 'vertical') structName = "④ 左右＋下（子音＋縦母音＋終声）";
+          else if (jung.type === 'horizontal') structName = "⑤ 3段タワー（子音＋横母音＋終声）";
+          else structName = "⑥ L字＋下（子音＋複合母音＋終声）";
+        }
+        document.getElementById('assembled-type').innerText = `構造: ${structName}`;
+
+        const readingText = `${cho.r}${jung.r}${(jong && jong.r) ? jong.r : ''}`;
+        document.getElementById('assembled-reading').innerText = readingText;
+
+        const speakBtn = document.getElementById('assembled-speak-btn');
+        speakBtn.disabled = false;
+        speakBtn.className = 'w-9 h-9 rounded-xl bg-indigo-600 text-white flex items-center justify-center hover:bg-indigo-700 transition ml-2 cursor-pointer shadow-xs';
+
+        const target = PUZZLE_TARGETS[currentTargetIdx];
+        const fb = document.getElementById('puzzle-feedback');
+        if (selectedChoUIdx === target.choUIdx && selectedJungUIdx === target.jungUIdx && selectedJongUIdx === target.jongUIdx) {
+          fb.className = "mt-3 text-xs font-bold px-4 py-1.5 rounded-full bg-emerald-100 text-emerald-800 flex items-center gap-1.5";
+          fb.innerHTML = `<i class="fa-solid fa-circle-check"></i> <span>正解！ 正しく組み合わさりました（${target.desc}）</span>`;
+          fb.classList.remove('hidden');
+        } else {
+          fb.classList.add('hidden');
+        }
+      } else {
+        document.getElementById('assembled-char').innerText = '?';
+        document.getElementById('assembled-reading').innerText = '—';
+        document.getElementById('assembled-type').innerText = '構造: パーツを選んでください';
+
+        const speakBtn = document.getElementById('assembled-speak-btn');
+        speakBtn.disabled = true;
+        speakBtn.className = 'w-9 h-9 rounded-xl bg-slate-100 text-slate-400 flex items-center justify-center ml-2 cursor-not-allowed transition';
+        document.getElementById('puzzle-feedback').classList.add('hidden');
+      }
+    }
+
+    function speakAssembled() {
+      const char = document.getElementById('assembled-char').innerText;
+      const target = PUZZLE_TARGETS[currentTargetIdx];
+      if (char && char !== '?') {
+        if (target && target.sIdx >= 0) {
+          playLocalAudio(target.sIdx, char);
+        } else {
+          speakFallback(char);
+        }
+      }
+    }
+
+    function nextPuzzleTarget() {
+      currentTargetIdx = (currentTargetIdx + 1) % PUZZLE_TARGETS.length;
+      loadPuzzleTarget();
+    }
+
+    function loadPuzzleTarget() {
+      const target = PUZZLE_TARGETS[currentTargetIdx];
+      const targetChar = composeHangulDirect(target.choUIdx, target.jungUIdx, target.jongUIdx);
+      document.getElementById('target-kana-badge').innerText = `${target.kanaLabel} [ ${targetChar} ]`;
+      resetPuzzleSelection();
+    }
+
+    // 初期化
+    window.addEventListener('DOMContentLoaded', () => {
+      renderMatrix();
+      setGojuonCategory('seion');
+      loadPuzzleTarget();
+    });
+  </script>
+</body>
+</html>
