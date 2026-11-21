@@ -1,0 +1,3292 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <title>宇宙防衛隊 - ASTRA LINE | レトロ・アーケードシューター</title>
+  <meta name="description" content="完全オリジナルデザインのレトロ・アーケードシューティングゲーム『宇宙防衛隊 - ASTRA LINE』。ドット絵グラフィックとチップチューンサウンドをHTML 1ファイルで実現。" />
+  <meta property="og:title" content="宇宙防衛隊 - ASTRA LINE | レトロ・アーケードシューター" />
+  <meta property="og:description" content="完全オリジナルデザインのレトロ・アーケードシューティングゲーム『宇宙防衛隊 - ASTRA LINE』。ドット絵グラフィックとチップチューンサウンドをHTML 1ファイルで実現。" />
+  <meta property="og:type" content="website" />
+  <style>
+    :root {
+      --bg-page: #090d16;
+      --bg-header: rgba(11, 16, 28, 0.96);
+      --bg-screen: #060912;
+      --bg-surface: #0e1422;
+      --bg-button: #0f172a;
+      --bg-button-hover: #1e293b;
+      --border-subtle: rgba(30, 41, 59, 0.9);
+      --border-control: rgba(51, 65, 85, 0.85);
+      --text-primary: #f1f5f9;
+      --text-secondary: #cbd5e1;
+      --text-muted: #94a3b8;
+      --accent-amber: #fbbf24;
+      --accent-amber-soft: #fcd34d;
+      --accent-sky: #38bdf8;
+      --accent-emerald: #34d399;
+      --accent-rose: #f43f5e;
+      --font-arcade: ui-monospace, 'SFMono-Regular', Menlo, Monaco, Consolas, 'Courier New', monospace;
+      --font-sans: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Hiragino Sans', 'Noto Sans JP', sans-serif;
+      --font-mono: ui-monospace, 'SFMono-Regular', Menlo, Monaco, Consolas, monospace;
+    }
+
+    *, *::before, *::after {
+      box-sizing: border-box;
+    }
+
+    html, body {
+      margin: 0;
+      padding: 0;
+      min-height: 100%;
+      background-color: var(--bg-page);
+      color: var(--text-primary);
+      font-family: var(--font-sans);
+      overscroll-behavior: none;
+      -webkit-tap-highlight-color: transparent;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    body {
+      display: flex;
+      flex-direction: column;
+      min-height: 100vh;
+      min-height: 100dvh;
+      padding-bottom: env(safe-area-inset-bottom);
+    }
+
+    button {
+      font-family: inherit;
+      cursor: pointer;
+    }
+
+    button:focus-visible, a:focus-visible {
+      outline: 2px solid var(--accent-amber);
+      outline-offset: 2px;
+    }
+
+    .font-arcade {
+      font-family: var(--font-arcade);
+    }
+
+    .font-mono-num {
+      font-family: var(--font-mono);
+      font-variant-numeric: tabular-nums;
+    }
+
+    .pixel-canvas {
+      image-rendering: pixelated;
+      image-rendering: crisp-edges;
+      display: block;
+    }
+
+    /* Header */
+    .top-header {
+      width: 100%;
+      border-bottom: 1px solid var(--border-subtle);
+      background: var(--bg-header);
+    }
+
+    .header-inner {
+      max-width: 1024px;
+      margin: 0 auto;
+      padding: 10px 16px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    .header-left {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      min-width: 0;
+    }
+
+    .hub-back-link {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 6px 12px;
+      border-radius: 12px;
+      background: rgba(30, 41, 59, 0.85);
+      color: var(--text-secondary);
+      font-size: 12px;
+      font-weight: 600;
+      text-decoration: none;
+      white-space: nowrap;
+      transition: background-color 150ms ease, color 150ms ease;
+    }
+
+    .hub-back-link:hover {
+      background: #334155;
+      color: #ffffff;
+    }
+
+    .brand-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      background: none;
+      border: none;
+      padding: 0;
+      color: var(--text-primary);
+      flex-shrink: 0;
+      transition: opacity 150ms ease;
+    }
+
+    .brand-btn:hover {
+      opacity: 0.88;
+    }
+
+    .brand-title {
+      font-family: var(--font-arcade);
+      font-size: 16px;
+      font-weight: 800;
+      letter-spacing: 0.06em;
+      white-space: nowrap;
+    }
+
+    .hud-desktop {
+      display: none;
+      align-items: center;
+      gap: 14px;
+      font-size: 12px;
+    }
+
+    .hud-group {
+      display: inline-flex;
+      align-items: baseline;
+      gap: 6px;
+    }
+
+    .hud-group-center {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .hud-label {
+      color: var(--text-muted);
+      white-space: nowrap;
+    }
+
+    .hud-score {
+      font-size: 15px;
+      font-weight: 700;
+      color: var(--accent-amber-soft);
+    }
+
+    .hud-hiscore {
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--text-secondary);
+    }
+
+    .hud-wave {
+      font-size: 14px;
+      font-weight: 700;
+      color: #7dd3fc;
+    }
+
+    .hud-divider {
+      width: 1px;
+      height: 14px;
+      background: #1e293b;
+    }
+
+    .hearts-row {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+    }
+
+    .heart-icon {
+      width: 14px;
+      height: 14px;
+      display: block;
+    }
+
+    .heart-active {
+      color: var(--accent-rose);
+      fill: var(--accent-rose);
+    }
+
+    .heart-empty {
+      color: #334155;
+      fill: none;
+    }
+
+    .lives-count {
+      font-size: 12px;
+      color: var(--text-secondary);
+      margin-left: 2px;
+    }
+
+    .header-actions {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      flex-shrink: 0;
+    }
+
+    .icon-btn {
+      width: 34px;
+      height: 34px;
+      border-radius: 8px;
+      border: 1px solid var(--border-control);
+      background: var(--bg-button);
+      color: var(--text-secondary);
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      padding: 0;
+      transition: background-color 150ms ease, border-color 150ms ease, color 150ms ease;
+    }
+
+    .icon-btn:hover:not(:disabled) {
+      background: var(--bg-button-hover);
+      border-color: #475569;
+      color: var(--text-primary);
+    }
+
+    .icon-btn:disabled {
+      opacity: 0.4;
+      cursor: not-allowed;
+    }
+
+    .icon-btn.is-muted {
+      border-color: rgba(244, 63, 94, 0.45);
+      background: rgba(136, 19, 55, 0.25);
+      color: #fb7185;
+    }
+
+    .icon-btn.is-crt-on {
+      border-color: rgba(56, 189, 248, 0.5);
+      background: rgba(12, 74, 110, 0.35);
+      color: #7dd3fc;
+    }
+
+    .stage-btn {
+      height: 34px;
+      padding: 0 10px;
+      border-radius: 8px;
+      border: 1px solid var(--border-control);
+      background: var(--bg-button);
+      color: var(--text-secondary);
+      font-size: 12px;
+      font-weight: 600;
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      white-space: nowrap;
+      transition: background-color 150ms ease, border-color 150ms ease, color 150ms ease;
+    }
+
+    .stage-btn:hover {
+      background: var(--bg-button-hover);
+      border-color: #64748b;
+      color: var(--text-primary);
+    }
+
+    .hud-mobile {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      border-top: 1px solid rgba(30, 41, 59, 0.65);
+      padding: 6px 16px;
+      font-size: 12px;
+    }
+
+    /* Main Workspace */
+    .main-stage {
+      flex: 1;
+      width: 100%;
+      max-width: 1024px;
+      margin: 0 auto;
+      padding: 12px 12px 16px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .status-strip {
+      width: 100%;
+      max-width: 540px;
+      min-height: 24px;
+      margin-bottom: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      font-size: 12px;
+    }
+
+    .status-left {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      min-width: 0;
+      color: var(--text-muted);
+    }
+
+    .wave-title {
+      color: var(--text-secondary);
+      font-weight: 600;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .status-right {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      flex-shrink: 0;
+    }
+
+    .combo-text {
+      color: var(--accent-amber-soft);
+      font-weight: 700;
+    }
+
+    .boost-twin {
+      color: #7dd3fc;
+      font-weight: 600;
+    }
+
+    .boost-rapid {
+      color: var(--accent-amber-soft);
+      font-weight: 600;
+    }
+
+    .boost-barrier {
+      color: #6ee7b7;
+      font-weight: 600;
+    }
+
+    /* Cabinet Screen Bezel */
+    .cabinet-frame {
+      position: relative;
+      width: 100%;
+      max-width: 540px;
+      aspect-ratio: 540 / 660;
+      max-height: 72vh;
+      border-radius: 16px;
+      overflow: hidden;
+      border: 1px solid #1e293b;
+      background: var(--bg-screen);
+      box-shadow: 0 24px 56px rgba(0, 0, 0, 0.55);
+    }
+
+    #gameCanvas {
+      width: 100%;
+      height: 100%;
+      touch-action: none;
+      user-select: none;
+      -webkit-user-select: none;
+    }
+
+    .crt-overlay {
+      position: absolute;
+      inset: 0;
+      z-index: 10;
+      pointer-events: none;
+      opacity: 0.75;
+      background: linear-gradient(
+        to bottom,
+        rgba(255, 255, 255, 0) 50%,
+        rgba(0, 0, 0, 0.24) 50%
+      );
+      background-size: 100% 4px;
+      box-shadow: inset 0 0 64px rgba(0, 0, 0, 0.55);
+    }
+
+    .crt-overlay.hidden {
+      display: none;
+    }
+
+    /* Screen Overlays */
+    .screen-overlay {
+      position: absolute;
+      inset: 0;
+      z-index: 20;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
+      text-align: center;
+      background: rgba(6, 9, 18, 0.88);
+      backdrop-filter: blur(2px);
+    }
+
+    .screen-overlay.hidden {
+      display: none;
+    }
+
+    .overlay-kicker {
+      font-size: 12px;
+      font-weight: 700;
+      letter-spacing: 0.18em;
+      color: var(--accent-sky);
+      margin: 0 0 4px;
+    }
+
+    .overlay-title {
+      margin: 0;
+      font-family: var(--font-arcade);
+      font-size: clamp(26px, 5vw, 36px);
+      font-weight: 800;
+      letter-spacing: 0.08em;
+      color: #f8fafc;
+      text-wrap: balance;
+    }
+
+    .overlay-title.is-clear {
+      color: var(--accent-emerald);
+      font-size: clamp(22px, 4.2vw, 30px);
+    }
+
+    .overlay-title.is-gameover {
+      color: var(--accent-rose);
+    }
+
+    .overlay-sub {
+      margin: 8px 0 0;
+      max-width: 310px;
+      font-size: 13px;
+      line-height: 1.6;
+      color: var(--text-secondary);
+    }
+
+    .overlay-sub.is-record {
+      color: var(--accent-amber-soft);
+      font-weight: 600;
+    }
+
+    .score-table {
+      width: 100%;
+      max-width: 296px;
+      margin-top: 18px;
+      padding: 14px 0;
+      border-top: 1px solid #1e293b;
+      border-bottom: 1px solid #1e293b;
+      display: flex;
+      flex-direction: column;
+      gap: 9px;
+      font-size: 12px;
+    }
+
+    .score-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+    }
+
+    .score-row-left {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .sprite-slot {
+      width: 38px;
+      display: flex;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+
+    .summary-table {
+      width: 100%;
+      max-width: 256px;
+      margin-top: 20px;
+      padding: 16px 0;
+      border-top: 1px solid #1e293b;
+      border-bottom: 1px solid #1e293b;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      font-size: 12px;
+    }
+
+    .summary-total {
+      padding-top: 6px;
+      font-size: 14px;
+    }
+
+    .btn-row {
+      margin-top: 20px;
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: center;
+      gap: 12px;
+    }
+
+    .btn-primary {
+      border: none;
+      border-radius: 10px;
+      background: var(--accent-amber);
+      color: #090d16;
+      padding: 10px 24px;
+      font-size: 14px;
+      font-weight: 700;
+      white-space: nowrap;
+      transition: background-color 150ms ease, transform 120ms ease;
+    }
+
+    .btn-primary:hover {
+      background: var(--accent-amber-soft);
+    }
+
+    .btn-primary:active {
+      transform: scale(0.98);
+    }
+
+    .btn-primary.is-emerald {
+      background: var(--accent-emerald);
+    }
+
+    .btn-primary.is-emerald:hover {
+      background: #6ee7b7;
+    }
+
+    .btn-secondary {
+      border: 1px solid #334155;
+      border-radius: 10px;
+      background: #0f172a;
+      color: var(--text-secondary);
+      padding: 10px 18px;
+      font-size: 14px;
+      font-weight: 600;
+      white-space: nowrap;
+      transition: background-color 150ms ease, border-color 150ms ease, color 150ms ease;
+    }
+
+    .btn-secondary:hover {
+      background: #1e293b;
+      border-color: #64748b;
+      color: var(--text-primary);
+    }
+
+    /* Controls Footer */
+    .key-guide {
+      display: none;
+      margin: 10px 0 0;
+      font-size: 12px;
+      color: var(--text-muted);
+      text-align: center;
+    }
+
+    .touch-controls {
+      width: 100%;
+      max-width: 540px;
+      margin-top: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+    }
+
+    .touch-move-group {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .touch-btn {
+      height: 48px;
+      width: 64px;
+      border-radius: 10px;
+      border: 1px solid #334155;
+      background: #0f172a;
+      color: var(--text-primary);
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      touch-action: none;
+      user-select: none;
+      -webkit-user-select: none;
+    }
+
+    .touch-btn:active {
+      background: #334155;
+    }
+
+    .touch-fire-btn {
+      flex: 1;
+      height: 48px;
+      border: none;
+      border-radius: 10px;
+      background: var(--accent-amber);
+      color: #090d16;
+      font-size: 14px;
+      font-weight: 700;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      touch-action: none;
+      user-select: none;
+      -webkit-user-select: none;
+    }
+
+    .touch-fire-btn:active {
+      background: var(--accent-amber-soft);
+    }
+
+    /* Stage & Backup Modal */
+    .modal-backdrop {
+      position: fixed;
+      inset: 0;
+      z-index: 50;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 16px;
+      background: rgba(2, 6, 23, 0.8);
+      backdrop-filter: blur(2px);
+    }
+
+    .modal-backdrop.hidden {
+      display: none;
+    }
+
+    .modal-panel {
+      width: 100%;
+      max-width: 448px;
+      border-radius: 16px;
+      border: 1px solid #1e293b;
+      background: var(--bg-surface);
+      padding: 20px;
+      box-shadow: 0 24px 60px rgba(0, 0, 0, 0.65);
+    }
+
+    .modal-head {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 16px;
+      margin-bottom: 14px;
+    }
+
+    .modal-title {
+      margin: 0;
+      font-size: 16px;
+      font-weight: 700;
+      color: var(--text-primary);
+    }
+
+    .modal-desc {
+      margin: 4px 0 0;
+      font-size: 12px;
+      color: var(--text-muted);
+    }
+
+    .modal-close {
+      width: 34px;
+      height: 34px;
+      border: none;
+      border-radius: 8px;
+      background: transparent;
+      color: var(--text-muted);
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      transition: background-color 150ms ease, color 150ms ease;
+    }
+
+    .modal-close:hover {
+      background: #1e293b;
+      color: var(--text-primary);
+    }
+
+    .stage-list {
+      max-height: 46vh;
+      overflow-y: auto;
+      border-top: 1px solid rgba(30, 41, 59, 0.85);
+      border-bottom: 1px solid rgba(30, 41, 59, 0.85);
+    }
+
+    .stage-item {
+      width: 100%;
+      border: none;
+      border-bottom: 1px solid rgba(30, 41, 59, 0.8);
+      background: transparent;
+      padding: 11px 10px;
+      text-align: left;
+      color: var(--text-primary);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      transition: background-color 140ms ease;
+    }
+
+    .stage-item:last-child {
+      border-bottom: none;
+    }
+
+    .stage-item:hover {
+      background: rgba(30, 41, 59, 0.6);
+    }
+
+    .stage-item.is-active {
+      background: rgba(251, 191, 36, 0.1);
+      color: #fde68a;
+    }
+
+    .stage-item-body {
+      min-width: 0;
+      flex: 1;
+    }
+
+    .stage-item-top {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 13px;
+      font-weight: 600;
+    }
+
+    .stage-item-num {
+      color: var(--accent-amber-soft);
+    }
+
+    .stage-item-name {
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .stage-item-meta {
+      margin-top: 3px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 11px;
+      color: var(--text-muted);
+    }
+
+    .stage-item-desc {
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .stage-active-label {
+      flex-shrink: 0;
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--accent-amber-soft);
+    }
+
+    .backup-bar {
+      margin-top: 14px;
+      padding-top: 12px;
+      border-top: 1px solid rgba(30, 41, 59, 0.85);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    .backup-btns {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .mini-btn {
+      padding: 6px 10px;
+      border-radius: 8px;
+      border: 1px solid #334155;
+      background: #0f172a;
+      color: var(--text-secondary);
+      font-size: 11px;
+      font-weight: 600;
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      transition: background-color 150ms ease, color 150ms ease;
+    }
+
+    .mini-btn:hover {
+      background: #1e293b;
+      color: #ffffff;
+    }
+
+    .modal-foot {
+      margin-top: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      font-size: 12px;
+      color: var(--text-muted);
+    }
+
+    .reset-btn {
+      border: none;
+      background: transparent;
+      padding: 4px 0;
+      color: var(--text-muted);
+      font-size: 12px;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      transition: color 150ms ease;
+    }
+
+    .reset-btn:hover:not(:disabled) {
+      color: #fb7185;
+    }
+
+    .reset-btn:disabled {
+      opacity: 0.4;
+      cursor: not-allowed;
+    }
+
+    /* Apps Hub Unified Footer */
+    .hub-footer {
+      margin-top: 24px;
+      padding: 20px 16px;
+      text-align: center;
+      border-top: 1px solid var(--border-subtle);
+    }
+
+    .hub-footer-inner {
+      max-width: 896px;
+      margin: 0 auto;
+    }
+
+    .hub-footer-text {
+      margin: 0;
+      font-size: 11px;
+      color: #94a3b8;
+      line-height: 1.6;
+    }
+
+    @media (min-width: 640px) {
+      .header-inner {
+        padding: 10px 24px;
+      }
+
+      .main-stage {
+        padding: 16px 24px 8px;
+      }
+
+      .key-guide {
+        display: block;
+      }
+
+      .touch-controls {
+        display: none;
+      }
+    }
+
+    @media (min-width: 820px) {
+      .hud-desktop {
+        display: flex;
+      }
+
+      .hud-mobile {
+        display: none;
+      }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      * {
+        animation-duration: 0.01ms !important;
+        transition-duration: 0.01ms !important;
+      }
+    }
+  </style>
+</head>
+<body>
+  <!-- Header & HUD -->
+  <header class="top-header">
+    <div class="header-inner">
+      <div class="header-left">
+        <a href="../" class="hub-back-link">
+          <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <line x1="19" y1="12" x2="5" y2="12"></line>
+            <polyline points="12 19 5 12 12 5"></polyline>
+          </svg>
+          <span>Apps Hub</span>
+        </a>
+        <button type="button" id="btn-brand" class="brand-btn" aria-label="タイトル画面へ戻る">
+          <canvas id="brand-sprite" class="pixel-canvas" width="26" height="18" aria-hidden="true"></canvas>
+          <span class="brand-title">ASTRA LINE</span>
+        </button>
+      </div>
+
+      <!-- Desktop Unboxed Tabular HUD -->
+      <div class="hud-desktop" aria-live="polite">
+        <div class="hud-group">
+          <span class="hud-label">スコア</span>
+          <span id="hud-score" class="font-mono-num hud-score">0</span>
+        </div>
+        <span class="hud-divider" aria-hidden="true"></span>
+        <div class="hud-group">
+          <span class="hud-label">ハイスコア</span>
+          <span id="hud-hiscore" class="font-mono-num hud-hiscore">0</span>
+        </div>
+        <span class="hud-divider" aria-hidden="true"></span>
+        <div class="hud-group">
+          <span class="hud-label">ウェーブ</span>
+          <span id="hud-wave" class="font-mono-num hud-wave">1</span>
+        </div>
+        <span class="hud-divider" aria-hidden="true"></span>
+        <div class="hud-group-center">
+          <span class="hud-label">残機</span>
+          <div id="hud-lives-desktop" class="hearts-row"></div>
+          <span id="hud-lives-count" class="font-mono-num lives-count">3/3</span>
+        </div>
+      </div>
+
+      <!-- Functional Controls -->
+      <div class="header-actions">
+        <button type="button" id="btn-mute" class="icon-btn" title="サウンドをミュート (M)" aria-label="サウンドをミュート" aria-pressed="true">
+          <svg id="icon-sound-on" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon>
+            <path d="M15.54 8.46a5 5 0 0 1 0 7.07"></path>
+            <path d="M19.07 4.93a10 10 0 0 1 0 14.14"></path>
+          </svg>
+          <svg id="icon-sound-off" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:none" aria-hidden="true">
+            <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon>
+            <line x1="22" y1="9" x2="16" y2="15"></line>
+            <line x1="16" y1="9" x2="22" y2="15"></line>
+          </svg>
+        </button>
+
+        <button type="button" id="btn-crt" class="icon-btn is-crt-on" title="CRT走査線をオフ" aria-label="CRT走査線をオフ" aria-pressed="true">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <rect width="20" height="14" x="2" y="3" rx="2"></rect>
+            <line x1="8" y1="21" x2="16" y2="21"></line>
+            <line x1="12" y1="17" x2="12" y2="21"></line>
+          </svg>
+        </button>
+
+        <button type="button" id="btn-pause" class="icon-btn" title="一時停止 (P)" aria-label="一時停止" disabled>
+          <svg id="icon-pause" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <rect x="6" y="4" width="4" height="16"></rect>
+            <rect x="14" y="4" width="4" height="16"></rect>
+          </svg>
+          <svg id="icon-play" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:none" aria-hidden="true">
+            <polygon points="6 4 20 12 6 20 6 4"></polygon>
+          </svg>
+        </button>
+
+        <button type="button" id="btn-stages" class="stage-btn">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <polygon points="12 2 2 7 12 12 22 7 12 2"></polygon>
+            <polyline points="2 17 12 22 22 17"></polyline>
+            <polyline points="2 12 12 17 22 12"></polyline>
+          </svg>
+          <span>ステージ・記録</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- Mobile HUD Strip -->
+    <div class="hud-mobile">
+      <div class="hud-group">
+        <span class="hud-label">スコア</span>
+        <span id="hud-score-mobile" class="font-mono-num" style="font-weight:700;color:#fcd34d">0</span>
+      </div>
+      <div class="hud-group">
+        <span class="hud-label">W</span>
+        <span id="hud-wave-mobile" class="font-mono-num" style="font-weight:700;color:#7dd3fc">1</span>
+      </div>
+      <div id="hud-lives-mobile" class="hearts-row"></div>
+    </div>
+  </header>
+
+  <!-- Main Arcade Area -->
+  <main class="main-stage">
+    <div class="status-strip">
+      <div class="status-left">
+        <span id="status-wave-name" class="wave-title">ファースト・コンタクト</span>
+        <span id="status-sep" aria-hidden="true" style="display:none">·</span>
+        <span id="status-remaining" class="font-mono-num" style="display:none">残り 50/50</span>
+      </div>
+      <div id="status-boosts" class="status-right font-mono-num"></div>
+    </div>
+
+    <div class="cabinet-frame">
+      <canvas id="gameCanvas" class="pixel-canvas"></canvas>
+      <div id="crt-overlay" class="crt-overlay" aria-hidden="true"></div>
+
+      <!-- Title Menu Overlay -->
+      <div id="overlay-title" class="screen-overlay">
+        <p class="overlay-kicker">宇宙防衛隊</p>
+        <h1 class="overlay-title">ASTRA LINE</h1>
+        <p class="overlay-sub">
+          迫り来るドローン編隊を撃墜せよ。敵が減るほど加速するビートに乗り切れ。
+        </p>
+
+        <div class="score-table" id="score-advance-table"></div>
+
+        <div class="btn-row">
+          <button type="button" id="btn-start" class="btn-primary">ゲームスタート</button>
+          <button type="button" id="btn-title-stages" class="btn-secondary">ステージ選択</button>
+        </div>
+      </div>
+
+      <!-- Pause Overlay -->
+      <div id="overlay-pause" class="screen-overlay hidden">
+        <h2 class="overlay-title" style="font-size:28px">PAUSED</h2>
+        <p class="overlay-sub">ゲームを一時停止しています</p>
+        <div class="btn-row">
+          <button type="button" id="btn-resume" class="btn-primary">再開する</button>
+          <button type="button" id="btn-restart" class="btn-secondary">やり直す</button>
+        </div>
+      </div>
+
+      <!-- Wave Clear Overlay -->
+      <div id="overlay-clear" class="screen-overlay hidden">
+        <h2 id="clear-heading" class="overlay-title is-clear">WAVE 1 CLEAR</h2>
+        <p id="clear-subtitle" class="overlay-sub">ファースト・コンタクト を突破しました</p>
+
+        <div class="summary-table">
+          <div class="score-row">
+            <span class="hud-label">ウェーブボーナス</span>
+            <span id="clear-wave-bonus" class="font-mono-num" style="font-weight:700;color:#6ee7b7">+200</span>
+          </div>
+          <div class="score-row">
+            <span id="clear-acc-label" class="hud-label">命中率 (100%)</span>
+            <span id="clear-acc-bonus" class="font-mono-num" style="font-weight:700;color:#7dd3fc">+150</span>
+          </div>
+          <div class="score-row summary-total">
+            <span style="font-weight:600;color:#e2e8f0">現在スコア</span>
+            <span id="clear-score" class="font-mono-num" style="font-weight:700;color:#fcd34d">0</span>
+          </div>
+        </div>
+
+        <div class="btn-row">
+          <button type="button" id="btn-next-wave" class="btn-primary is-emerald">次のウェーブへ</button>
+        </div>
+      </div>
+
+      <!-- Game Over Overlay -->
+      <div id="overlay-gameover" class="screen-overlay hidden">
+        <h2 class="overlay-title is-gameover">GAME OVER</h2>
+        <p id="gameover-sub" class="overlay-sub">防衛ラインが突破されました</p>
+
+        <div class="summary-table">
+          <div class="score-row summary-total" style="padding-top:0">
+            <span class="hud-label">最終スコア</span>
+            <span id="gameover-score" class="font-mono-num" style="font-weight:700;color:#fcd34d">0</span>
+          </div>
+          <div class="score-row">
+            <span class="hud-label">到達ウェーブ</span>
+            <span id="gameover-wave" class="font-mono-num" style="font-weight:600;color:#e2e8f0">WAVE 1</span>
+          </div>
+          <div class="score-row">
+            <span class="hud-label">ハイスコア</span>
+            <span id="gameover-hiscore" class="font-mono-num" style="font-weight:600;color:#e2e8f0">0</span>
+          </div>
+        </div>
+
+        <div class="btn-row">
+          <button type="button" id="btn-retry" class="btn-primary">もう一度遊ぶ</button>
+          <button type="button" id="btn-gameover-stages" class="btn-secondary">ステージ選択</button>
+        </div>
+      </div>
+    </div>
+
+    <p class="key-guide">
+      ← / → または A / D で移動 · Space / Z で射撃（連射0.15秒・同時4発） · P で一時停止 · M で消音
+    </p>
+
+    <!-- Mobile Touch Pad -->
+    <div class="touch-controls">
+      <div class="touch-move-group">
+        <button type="button" id="touch-left" class="touch-btn" aria-label="左へ移動">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <polyline points="15 18 9 12 15 6"></polyline>
+          </svg>
+        </button>
+        <button type="button" id="touch-right" class="touch-btn" aria-label="右へ移動">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <polyline points="9 18 15 12 9 6"></polyline>
+          </svg>
+        </button>
+      </div>
+      <button type="button" id="touch-fire" class="touch-fire-btn">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <circle cx="12" cy="12" r="10"></circle>
+          <line x1="22" y1="12" x2="18" y2="12"></line>
+          <line x1="6" y1="12" x2="2" y2="12"></line>
+          <line x1="12" y1="6" x2="12" y2="2"></line>
+          <line x1="12" y1="22" x2="12" y2="18"></line>
+        </svg>
+        <span>射撃</span>
+      </button>
+    </div>
+  </main>
+
+  <!-- Unified Apps Hub Footer -->
+  <footer class="hub-footer">
+    <div class="hub-footer-inner">
+      <p class="hub-footer-text">
+        ※個人開発プロトタイプにつき無保証・自己責任にてご利用ください（データは端末内完結・サポート対象外）
+      </p>
+    </div>
+  </footer>
+
+  <!-- Stage Select & Backup Modal -->
+  <div id="modal-stages" class="modal-backdrop hidden" role="dialog" aria-modal="true" aria-labelledby="stage-modal-title">
+    <div id="modal-panel" class="modal-panel">
+      <div class="modal-head">
+        <div>
+          <h2 id="stage-modal-title" class="modal-title">ステージ選択 &amp; 記録管理</h2>
+          <p class="modal-desc">挑戦するウェーブの選択や、ハイスコアのJSON保存・復元ができます</p>
+        </div>
+        <button type="button" id="btn-close-stages" class="modal-close" aria-label="閉じる">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <line x1="18" y1="6" x2="6" y2="18"></line>
+            <line x1="6" y1="6" x2="18" y2="18"></line>
+          </svg>
+        </button>
+      </div>
+
+      <div id="stage-list" class="stage-list"></div>
+
+      <!-- JSON Backup / Restore -->
+      <div class="backup-bar">
+        <div class="backup-btns">
+          <button type="button" id="btn-export-json" class="mini-btn">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+              <polyline points="7 10 12 15 17 10"></polyline>
+              <line x1="12" y1="15" x2="12" y2="3"></line>
+            </svg>
+            <span>JSON保存</span>
+          </button>
+          <button type="button" id="btn-import-json" class="mini-btn">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+              <polyline points="17 8 12 3 7 8"></polyline>
+              <line x1="12" y1="3" x2="12" y2="15"></line>
+            </svg>
+            <span>JSON復元</span>
+          </button>
+          <input type="file" id="input-import-json" accept=".json,application/json" style="display:none" />
+        </div>
+        <span id="backup-status" style="font-size:11px;color:#34d399;"></span>
+      </div>
+
+      <div class="modal-foot">
+        <button type="button" id="btn-reset-hiscore" class="reset-btn">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"></path>
+            <path d="M3 3v5h5"></path>
+          </svg>
+          <span>ハイスコア初期化</span>
+        </button>
+        <span id="modal-record-text" class="font-mono-num">記録: 0</span>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    (function () {
+      'use strict';
+
+      /* ======================================================================
+         1. ORIGINAL PIXEL-ART SPRITES (100% bespoke geometric-mecha silhouettes)
+         ====================================================================== */
+      const ENEMY_SPRITES = {
+        prism: {
+          frames: [
+            [
+              '....1....',
+              '...121...',
+              '..12221..',
+              '.1121211.',
+              '1.11211.1',
+              '..1.1.1..',
+              '.1.....1.',
+              '1.......1',
+            ],
+            [
+              '....1....',
+              '...121...',
+              '.1122211.',
+              '1.12121.1',
+              '..11211..',
+              '.1..1..1.',
+              '..1...1..',
+              '...1.1...',
+            ],
+          ],
+          primaryColor: '#38bdf8',
+          accentColor: '#e0f2fe',
+          points: 30,
+          hp: 1,
+          label: 'スカウト・プリズム',
+        },
+        striker: {
+          frames: [
+            [
+              '..1.....1..',
+              '.111...111.',
+              '11211111211',
+              '11112221111',
+              '.111111111.',
+              '..1.111.1..',
+              '.1..1.1..1.',
+              '1.........1',
+            ],
+            [
+              '...1...1...',
+              '..111.111..',
+              '.112111211.',
+              '11112221111',
+              '1.1111111.1',
+              '..1.111.1..',
+              '..1..1..1..',
+              '...1...1...',
+            ],
+          ],
+          primaryColor: '#34d399',
+          accentColor: '#d1fae5',
+          points: 20,
+          hp: 1,
+          label: 'ヘックス・ストライカー',
+        },
+        crawler: {
+          frames: [
+            [
+              '....1111....',
+              '..11122111..',
+              '.1121111211.',
+              '111112211111',
+              '111111111111',
+              '..11....11..',
+              '.11..11..11.',
+              '11........11',
+            ],
+            [
+              '....1111....',
+              '..11122111..',
+              '.1121111211.',
+              '111112211111',
+              '111111111111',
+              '...11..11...',
+              '..11....11..',
+              '...11..11...',
+            ],
+          ],
+          primaryColor: '#fbbf24',
+          accentColor: '#fef3c7',
+          points: 10,
+          hp: 1,
+          label: 'イージス・クローラー',
+        },
+        warden: {
+          frames: [
+            [
+              '.11......11.',
+              '121111111121',
+              '111221122111',
+              '111122221111',
+              '121111111121',
+              '.1111221111.',
+              '..11.11.11..',
+              '.1...11...1.',
+              '1..........1',
+            ],
+            [
+              '..11....11..',
+              '121111111121',
+              '111221122111',
+              '111122221111',
+              '121111111121',
+              '.1111221111.',
+              '.11..11..11.',
+              '..1..11..1..',
+              '...1....1...',
+            ],
+          ],
+          primaryColor: '#f43f5e',
+          accentColor: '#ffe4e6',
+          points: 60,
+          hp: 2,
+          label: 'アーマード・ウォーデン',
+        },
+      };
+
+      const CARRIER_SPRITE = [
+        '......1111......',
+        '....11222211....',
+        '..111211112111..',
+        '1121112222111211',
+        '.11111111111111.',
+        '...11..22..11...',
+        '....1......1....',
+      ];
+
+      const PLAYER_SPRITE = [
+        '......2......',
+        '.....212.....',
+        '.....111.....',
+        '....11211....',
+        '..1.11211.1..',
+        '.11111111111.',
+        '1121112111211',
+        '1111111111111',
+        '11..11.11..11',
+      ];
+
+      const BUNKER_TEMPLATE = [
+        [0, 0, 0, 2, 2, 2, 2, 2, 2, 2, 2, 0, 0, 0],
+        [0, 0, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 0, 0],
+        [0, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 0],
+        [2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2],
+        [2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2],
+        [2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2],
+        [2, 2, 2, 2, 2, 0, 0, 0, 0, 2, 2, 2, 2, 2],
+        [2, 2, 2, 2, 0, 0, 0, 0, 0, 0, 2, 2, 2, 2],
+        [2, 2, 2, 0, 0, 0, 0, 0, 0, 0, 0, 2, 2, 2],
+        [2, 2, 2, 0, 0, 0, 0, 0, 0, 0, 0, 2, 2, 2],
+      ];
+
+      function drawSprite(ctx, matrix, x, y, pixelSize, primaryColor, accentColor, glowColor) {
+        const startX = Math.round(x);
+        const startY = Math.round(y);
+        ctx.save();
+        if (glowColor) {
+          ctx.shadowColor = glowColor;
+          ctx.shadowBlur = 8;
+        }
+        for (let r = 0; r < matrix.length; r++) {
+          const line = matrix[r];
+          for (let c = 0; c < line.length; c++) {
+            const ch = line[c];
+            if (ch === '.') continue;
+            ctx.fillStyle = ch === '2' ? accentColor : primaryColor;
+            ctx.fillRect(startX + c * pixelSize, startY + r * pixelSize, pixelSize, pixelSize);
+          }
+        }
+        ctx.restore();
+      }
+
+      /* ======================================================================
+         2. HANDCRAFTED WAVE FORMATIONS + ENDLESS SCALING
+         ====================================================================== */
+      const WAVE_TEMPLATES = [
+        {
+          id: 1,
+          name: 'ファースト・コンタクト',
+          difficulty: '初級',
+          description: '基本の5段編成。リズムに乗って正確な狙撃を掴もう。',
+          baseStepInterval: 0.72,
+          enemyFireRate: 0.95,
+          dropDistance: 16,
+          layout: [
+            'PPPPPPPPPP',
+            'SSSSSSSSSS',
+            'SSSSSSSSSS',
+            'CCCCCCCCCC',
+            'CCCCCCCCCC',
+          ],
+        },
+        {
+          id: 2,
+          name: 'ツイン・ウィング',
+          difficulty: '初級+',
+          description: '左右に展開する双翼編隊。中央の突破口から崩せ。',
+          baseStepInterval: 0.65,
+          enemyFireRate: 1.15,
+          dropDistance: 17,
+          layout: [
+            'PPP....PPP',
+            'PPPP..PPPP',
+            'SSSS..SSSS',
+            'SSSSSSSSSS',
+            '.CCCCCCCC.',
+          ],
+        },
+        {
+          id: 3,
+          name: 'プリズム・フォートレス',
+          difficulty: '中級',
+          description: '2発耐久のウォーデン機が登場。防壁を活用して応戦せよ。',
+          baseStepInterval: 0.6,
+          enemyFireRate: 1.35,
+          dropDistance: 18,
+          layout: [
+            '..WWWWWW..',
+            '.PPPPPPPP.',
+            'SSSSSSSSSS',
+            'SS.CCCC.SS',
+            'CCCCCCCCCC',
+          ],
+        },
+        {
+          id: 4,
+          name: 'チェッカー・ブリッツ',
+          difficulty: '中級+',
+          description: '市松配置の高速編隊。弾幕の隙間を見極めろ。',
+          baseStepInterval: 0.54,
+          enemyFireRate: 1.55,
+          dropDistance: 18,
+          layout: [
+            'W.P.W.P.W.',
+            '.P.W.P.W.P',
+            'S.S.S.S.S.',
+            '.S.S.S.S.S',
+            'C.C.C.C.C.',
+            '.C.C.C.C.C',
+          ],
+        },
+        {
+          id: 5,
+          name: 'コア・インベージョン',
+          difficulty: '上級',
+          description: '重装甲ウォーデン隊が前衛を固める高密度強襲波。',
+          baseStepInterval: 0.49,
+          enemyFireRate: 1.75,
+          dropDistance: 19,
+          layout: [
+            'PPPPPPPPPP',
+            'W.WWWWWW.W',
+            'SSSSSSSSSS',
+            '.S.CCCC.S.',
+            'CCCCCCCCCC',
+          ],
+        },
+        {
+          id: 6,
+          name: 'オービタル・エンドゲーム',
+          difficulty: '達人',
+          description: '最精鋭の親衛隊による総力戦。最大火力で撃破せよ。',
+          baseStepInterval: 0.44,
+          enemyFireRate: 2.0,
+          dropDistance: 20,
+          layout: [
+            'WWWWWWWWWW',
+            'P.PPPPPP.P',
+            'SSSSSSSSSS',
+            'W.SSSSSS.W',
+            'CCCCCCCCCC',
+          ],
+        },
+      ];
+
+      function getWaveTemplate(waveNumber) {
+        const index = (waveNumber - 1) % WAVE_TEMPLATES.length;
+        const loopTier = Math.floor((waveNumber - 1) / WAVE_TEMPLATES.length);
+        const base = WAVE_TEMPLATES[index];
+        if (loopTier === 0) return base;
+        return {
+          id: waveNumber,
+          name: base.name + ' +' + loopTier,
+          difficulty: base.difficulty,
+          description: base.description,
+          baseStepInterval: Math.max(0.24, base.baseStepInterval * Math.pow(0.88, loopTier)),
+          enemyFireRate: Math.min(3.4, base.enemyFireRate + loopTier * 0.35),
+          dropDistance: Math.min(24, base.dropDistance + loopTier * 2),
+          layout: base.layout,
+        };
+      }
+
+      /* ======================================================================
+         3. PURE WEB AUDIO API RETRO CHIPTUNE ENGINE
+         ====================================================================== */
+      const retroAudio = (function () {
+        let ctx = null;
+        let masterGain = null;
+        let noiseBuffer = null;
+        let muted = false;
+        let bassStepIndex = 0;
+        const bassScale = [73.42, 55.0, 65.41, 49.0];
+
+        let beaconOsc = null;
+        let beaconLfo = null;
+        let beaconGain = null;
+
+        function createNoiseBuffer(audioCtx) {
+          const length = Math.floor(audioCtx.sampleRate * 0.5);
+          const buffer = audioCtx.createBuffer(1, length, audioCtx.sampleRate);
+          const data = buffer.getChannelData(0);
+          let held = 0;
+          for (let i = 0; i < length; i++) {
+            if (i % 4 === 0) held = Math.random() * 2 - 1;
+            data[i] = held;
+          }
+          return buffer;
+        }
+
+        function unlock() {
+          if (!ctx) {
+            const AudioCtx = window.AudioContext || window.webkitAudioContext;
+            if (!AudioCtx) return;
+            ctx = new AudioCtx();
+            masterGain = ctx.createGain();
+            masterGain.gain.value = muted ? 0 : 0.32;
+            masterGain.connect(ctx.destination);
+            noiseBuffer = createNoiseBuffer(ctx);
+          }
+          if (ctx.state === 'suspended') {
+            ctx.resume().catch(function () {});
+          }
+        }
+
+        function stopCarrierBeacon() {
+          if (!ctx) return;
+          const now = ctx.currentTime;
+          try {
+            if (beaconGain) {
+              beaconGain.gain.cancelScheduledValues(now);
+              beaconGain.gain.setTargetAtTime(0.0001, now, 0.02);
+            }
+            if (beaconOsc) beaconOsc.stop(now + 0.08);
+            if (beaconLfo) beaconLfo.stop(now + 0.08);
+          } catch (_) {}
+          beaconOsc = null;
+          beaconLfo = null;
+          beaconGain = null;
+        }
+
+        function setMuted(next) {
+          muted = next;
+          if (masterGain && ctx) {
+            masterGain.gain.setTargetAtTime(muted ? 0 : 0.32, ctx.currentTime, 0.015);
+          }
+          if (muted) stopCarrierBeacon();
+        }
+
+        function toggleMute() {
+          unlock();
+          setMuted(!muted);
+          return muted;
+        }
+
+        function playArpeggio(notes, stepSec, type, volume) {
+          if (muted || !ctx || !masterGain) return;
+          const baseTime = ctx.currentTime;
+          for (let i = 0; i < notes.length; i++) {
+            const start = baseTime + i * stepSec;
+            const osc = ctx.createOscillator();
+            const gain = ctx.createGain();
+            osc.type = type;
+            osc.frequency.setValueAtTime(notes[i], start);
+            gain.gain.setValueAtTime(0.001, start);
+            gain.gain.linearRampToValueAtTime(volume, start + 0.008);
+            gain.gain.exponentialRampToValueAtTime(0.001, start + stepSec * 1.45);
+            osc.connect(gain);
+            gain.connect(masterGain);
+            osc.start(start);
+            osc.stop(start + stepSec * 1.5);
+          }
+        }
+
+        function playMarchPulse(tension) {
+          if (muted || !ctx || !masterGain) return;
+          const now = ctx.currentTime;
+          const freq = bassScale[bassStepIndex % bassScale.length];
+          bassStepIndex++;
+
+          const osc = ctx.createOscillator();
+          const filter = ctx.createBiquadFilter();
+          const gain = ctx.createGain();
+
+          osc.type = 'sawtooth';
+          osc.frequency.setValueAtTime(freq * (1 + tension * 0.14), now);
+          osc.frequency.exponentialRampToValueAtTime(freq * 0.88, now + 0.09);
+
+          filter.type = 'lowpass';
+          filter.frequency.setValueAtTime(280 + tension * 520, now);
+          filter.Q.value = 3.5;
+
+          gain.gain.setValueAtTime(0.001, now);
+          gain.gain.linearRampToValueAtTime(0.32, now + 0.008);
+          gain.gain.exponentialRampToValueAtTime(0.001, now + 0.11);
+
+          osc.connect(filter);
+          filter.connect(gain);
+          gain.connect(masterGain);
+          osc.start(now);
+          osc.stop(now + 0.12);
+
+          if (bassStepIndex % 2 === 1) {
+            const tickOsc = ctx.createOscillator();
+            const tickGain = ctx.createGain();
+            tickOsc.type = 'square';
+            tickOsc.frequency.setValueAtTime(freq * 4, now);
+            tickGain.gain.setValueAtTime(0.055, now);
+            tickGain.gain.exponentialRampToValueAtTime(0.001, now + 0.035);
+            tickOsc.connect(tickGain);
+            tickGain.connect(masterGain);
+            tickOsc.start(now);
+            tickOsc.stop(now + 0.04);
+          }
+        }
+
+        function playPlayerShot(isTwin) {
+          if (muted || !ctx || !masterGain) return;
+          const now = ctx.currentTime;
+          const osc = ctx.createOscillator();
+          const gain = ctx.createGain();
+          osc.type = isTwin ? 'sawtooth' : 'square';
+          osc.frequency.setValueAtTime(isTwin ? 1280 : 1040, now);
+          osc.frequency.exponentialRampToValueAtTime(240, now + 0.095);
+          gain.gain.setValueAtTime(0.18, now);
+          gain.gain.exponentialRampToValueAtTime(0.001, now + 0.1);
+          osc.connect(gain);
+          gain.connect(masterGain);
+          osc.start(now);
+          osc.stop(now + 0.105);
+        }
+
+        function playEnemyHit(combo, destroyed) {
+          if (muted || !ctx || !masterGain) return;
+          const now = ctx.currentTime;
+
+          if (!destroyed) {
+            const osc = ctx.createOscillator();
+            const gain = ctx.createGain();
+            osc.type = 'triangle';
+            osc.frequency.setValueAtTime(620, now);
+            osc.frequency.exponentialRampToValueAtTime(980, now + 0.045);
+            gain.gain.setValueAtTime(0.22, now);
+            gain.gain.exponentialRampToValueAtTime(0.001, now + 0.06);
+            osc.connect(gain);
+            gain.connect(masterGain);
+            osc.start(now);
+            osc.stop(now + 0.065);
+            return;
+          }
+
+          const pitchBoost = Math.min(combo, 12) * 32;
+          const osc = ctx.createOscillator();
+          const oscGain = ctx.createGain();
+          osc.type = 'square';
+          osc.frequency.setValueAtTime(420 + pitchBoost, now);
+          osc.frequency.exponentialRampToValueAtTime(110, now + 0.12);
+          oscGain.gain.setValueAtTime(0.22, now);
+          oscGain.gain.exponentialRampToValueAtTime(0.001, now + 0.13);
+          osc.connect(oscGain);
+          oscGain.connect(masterGain);
+          osc.start(now);
+          osc.stop(now + 0.135);
+
+          if (noiseBuffer) {
+            const noise = ctx.createBufferSource();
+            noise.buffer = noiseBuffer;
+            const filter = ctx.createBiquadFilter();
+            filter.type = 'bandpass';
+            filter.frequency.setValueAtTime(1100 + pitchBoost, now);
+            filter.Q.value = 1.2;
+            const nGain = ctx.createGain();
+            nGain.gain.setValueAtTime(0.24, now);
+            nGain.gain.exponentialRampToValueAtTime(0.001, now + 0.11);
+            noise.connect(filter);
+            filter.connect(nGain);
+            nGain.connect(masterGain);
+            noise.start(now);
+            noise.stop(now + 0.12);
+          }
+
+          if (combo > 0 && combo % 5 === 0) {
+            playArpeggio([587.33, 880, 1174.66], 0.045, 'triangle', 0.16);
+          }
+        }
+
+        function playBunkerChip() {
+          if (muted || !ctx || !masterGain) return;
+          const now = ctx.currentTime;
+          const osc = ctx.createOscillator();
+          const gain = ctx.createGain();
+          osc.type = 'triangle';
+          osc.frequency.setValueAtTime(190, now);
+          osc.frequency.exponentialRampToValueAtTime(75, now + 0.045);
+          gain.gain.setValueAtTime(0.14, now);
+          gain.gain.exponentialRampToValueAtTime(0.001, now + 0.05);
+          osc.connect(gain);
+          gain.connect(masterGain);
+          osc.start(now);
+          osc.stop(now + 0.055);
+        }
+
+        function startCarrierBeacon() {
+          if (muted || !ctx || !masterGain || beaconOsc) return;
+          const now = ctx.currentTime;
+          const osc = ctx.createOscillator();
+          const lfo = ctx.createOscillator();
+          const lfoGain = ctx.createGain();
+          const gain = ctx.createGain();
+
+          osc.type = 'triangle';
+          osc.frequency.setValueAtTime(520, now);
+          lfo.type = 'sine';
+          lfo.frequency.setValueAtTime(6.5, now);
+          lfoGain.gain.setValueAtTime(95, now);
+
+          gain.gain.setValueAtTime(0.001, now);
+          gain.gain.linearRampToValueAtTime(0.11, now + 0.12);
+
+          lfo.connect(lfoGain);
+          lfoGain.connect(osc.frequency);
+          osc.connect(gain);
+          gain.connect(masterGain);
+
+          osc.start(now);
+          lfo.start(now);
+
+          beaconOsc = osc;
+          beaconLfo = lfo;
+          beaconGain = gain;
+        }
+
+        function playCarrierDestroyed() {
+          stopCarrierBeacon();
+          playArpeggio([523.25, 659.25, 783.99, 1046.5, 1318.5], 0.055, 'square', 0.22);
+        }
+
+        function playPowerUp() {
+          playArpeggio([440, 554.37, 659.25, 880], 0.055, 'triangle', 0.24);
+        }
+
+        function playBarrierDeflect() {
+          playArpeggio([783.99, 1046.5], 0.05, 'sine', 0.22);
+        }
+
+        function playPlayerExplosion() {
+          if (muted || !ctx || !masterGain) return;
+          const now = ctx.currentTime;
+          const osc = ctx.createOscillator();
+          const gain = ctx.createGain();
+          osc.type = 'sawtooth';
+          osc.frequency.setValueAtTime(180, now);
+          osc.frequency.exponentialRampToValueAtTime(34, now + 0.42);
+          gain.gain.setValueAtTime(0.32, now);
+          gain.gain.exponentialRampToValueAtTime(0.001, now + 0.45);
+          osc.connect(gain);
+          gain.connect(masterGain);
+          osc.start(now);
+          osc.stop(now + 0.46);
+
+          if (noiseBuffer) {
+            const noise = ctx.createBufferSource();
+            noise.buffer = noiseBuffer;
+            const filter = ctx.createBiquadFilter();
+            filter.type = 'lowpass';
+            filter.frequency.setValueAtTime(900, now);
+            filter.frequency.exponentialRampToValueAtTime(120, now + 0.42);
+            const nGain = ctx.createGain();
+            nGain.gain.setValueAtTime(0.34, now);
+            nGain.gain.exponentialRampToValueAtTime(0.001, now + 0.44);
+            noise.connect(filter);
+            filter.connect(nGain);
+            nGain.connect(masterGain);
+            noise.start(now);
+            noise.stop(now + 0.45);
+          }
+        }
+
+        function playWaveClear() {
+          stopCarrierBeacon();
+          playArpeggio([392.0, 493.88, 587.33, 783.99, 987.77, 1174.66], 0.075, 'square', 0.2);
+        }
+
+        function playGameOver() {
+          stopCarrierBeacon();
+          playArpeggio([392.0, 349.23, 311.13, 261.63], 0.14, 'sawtooth', 0.22);
+        }
+
+        return {
+          unlock,
+          toggleMute,
+          playMarchPulse,
+          playPlayerShot,
+          playEnemyHit,
+          playBunkerChip,
+          startCarrierBeacon,
+          stopCarrierBeacon,
+          playCarrierDestroyed,
+          playPowerUp,
+          playBarrierDeflect,
+          playPlayerExplosion,
+          playWaveClear,
+          playGameOver,
+        };
+      })();
+
+      /* ======================================================================
+         4. CORE ARCADE GAME ENGINE & LOCAL STORAGE
+         ====================================================================== */
+      const CANVAS_WIDTH = 540;
+      const CANVAS_HEIGHT = 660;
+      const STORAGE_KEY = 'astra_line_save_v1';
+      const LEGACY_SCORE_KEY = 'star_bastion_high_score_v1';
+      const PIXEL_SIZE = 3;
+      const PLAYER_Y = CANVAS_HEIGHT - 54;
+      const PLAYER_WIDTH = PLAYER_SPRITE[0].length * PIXEL_SIZE;
+      const PLAYER_HEIGHT = PLAYER_SPRITE.length * PIXEL_SIZE;
+      const GROUND_Y = CANVAS_HEIGHT - 20;
+
+      const POWERUP_META = {
+        twin: { label: 'ツイン砲', short: 'T', color: '#38bdf8' },
+        rapid: { label: '高速連射', short: 'R', color: '#fbbf24' },
+        barrier: { label: 'バリア展開', short: 'B', color: '#34d399' },
+      };
+
+      const canvas = document.getElementById('gameCanvas');
+      const ctx = canvas.getContext('2d');
+      const prefersReducedMotion =
+        window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+      let state = 'TITLE_MENU';
+      let score = 0;
+      let saveData = loadSaveData();
+      let highScore = saveData.highScore;
+      let maxWaveReached = saveData.maxWaveReached;
+      let isNewRecord = false;
+      let waveNumber = 1;
+      let currentWave = getWaveTemplate(1);
+      let lives = 3;
+      const maxLives = 3;
+
+      let waveShotsFired = 0;
+      let waveShotsHit = 0;
+      let waveSummary = null;
+
+      let combo = 0;
+      let comboTimer = 0;
+
+      let playerX = (CANVAS_WIDTH - PLAYER_WIDTH) / 2;
+      const playerSpeed = 305;
+      let playerInvulnTimer = 0;
+      let playerFireCooldown = 0;
+      let playerRecoil = 0;
+      let engineFlicker = 0;
+
+      let twinTimer = 0;
+      let rapidTimer = 0;
+      let hasBarrier = false;
+
+      let enemies = [];
+      let enemiesTotal = 0;
+      let fleetDir = 1;
+      let fleetAnimFrame = 0;
+      let marchTimer = 0;
+      let enemyFireTimer = 0.9;
+      let nextEnemyId = 1;
+
+      const carrier = {
+        active: false,
+        x: 0,
+        y: 44,
+        width: CARRIER_SPRITE[0].length * PIXEL_SIZE,
+        height: CARRIER_SPRITE.length * PIXEL_SIZE,
+        vx: 115,
+        points: 150,
+      };
+      let carrierCooldown = 14;
+
+      let bunkers = [];
+      let projectiles = [];
+      let powerUps = [];
+      let particles = [];
+      let floatingTexts = [];
+      let stars = [];
+
+      let shakeTimer = 0;
+      let shakeIntensity = 0;
+      let screenFlashAlpha = 0;
+      let hudSyncAcc = 0;
+
+      const input = { left: false, right: false, fire: false };
+      let pointerTargetX = null;
+
+      function normalizeSaveData(raw) {
+        const obj = (raw && typeof raw === 'object') ? raw : {};
+        const parsedScore = Number(obj.highScore ?? obj.score ?? 0);
+        const parsedWave = Number(obj.maxWaveReached ?? obj.wave ?? 1);
+        return {
+          highScore: Number.isFinite(parsedScore) ? Math.max(0, Math.floor(parsedScore)) : 0,
+          maxWaveReached: Number.isFinite(parsedWave) ? Math.max(1, Math.floor(parsedWave)) : 1,
+          crtEnabled: typeof obj.crtEnabled === 'boolean' ? obj.crtEnabled : true,
+          updatedAt: typeof obj.updatedAt === 'string' ? obj.updatedAt : new Date().toISOString(),
+        };
+      }
+
+      function loadSaveData() {
+        try {
+          const raw = localStorage.getItem(STORAGE_KEY);
+          if (raw) {
+            return normalizeSaveData(JSON.parse(raw));
+          }
+          const legacy = parseInt(localStorage.getItem(LEGACY_SCORE_KEY) || '0', 10) || 0;
+          return normalizeSaveData({ highScore: legacy });
+        } catch (_) {
+          return normalizeSaveData({});
+        }
+      }
+
+      function persistSaveData() {
+        saveData = {
+          highScore: highScore,
+          maxWaveReached: maxWaveReached,
+          crtEnabled: crtEnabled,
+          updatedAt: new Date().toISOString(),
+        };
+        try {
+          localStorage.setItem(STORAGE_KEY, JSON.stringify(saveData));
+        } catch (_) {}
+      }
+
+      function formatTimestampForFilename(date) {
+        const y = date.getFullYear();
+        const m = String(date.getMonth() + 1).padStart(2, '0');
+        const d = String(date.getDate()).padStart(2, '0');
+        const hh = String(date.getHours()).padStart(2, '0');
+        const mm = String(date.getMinutes()).padStart(2, '0');
+        return y + '-' + m + '-' + d + '-' + hh + mm;
+      }
+
+      function exportJsonBackup() {
+        const payload = {
+          app: 'astra',
+          version: 1,
+          exportedAt: new Date().toISOString(),
+          highScore: highScore,
+          maxWaveReached: maxWaveReached,
+          crtEnabled: crtEnabled,
+        };
+        const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = 'astra-backup-' + formatTimestampForFilename(new Date()) + '.json';
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+        showBackupStatus('バックアップを保存しました');
+      }
+
+      function importJsonBackup(file) {
+        if (!file) return;
+        const reader = new FileReader();
+        reader.onload = function (ev) {
+          try {
+            const parsed = JSON.parse(String(ev.target.result || '{}'));
+            const normalized = normalizeSaveData(parsed);
+            highScore = Math.max(highScore, normalized.highScore);
+            maxWaveReached = Math.max(maxWaveReached, normalized.maxWaveReached);
+            crtEnabled = normalized.crtEnabled;
+            applyCrtState();
+            persistSaveData();
+            syncHud();
+            showBackupStatus('記録を復元しました');
+          } catch (_) {
+            showBackupStatus('JSONの読み込みに失敗しました', true);
+          }
+        };
+        reader.readAsText(file);
+      }
+
+      function showBackupStatus(msg, isError) {
+        const el = document.getElementById('backup-status');
+        el.style.color = isError ? '#fb7185' : '#34d399';
+        el.textContent = msg;
+        setTimeout(function () {
+          if (el.textContent === msg) el.textContent = '';
+        }, 3000);
+      }
+
+      function setupCanvasResolution() {
+        const dpr = Math.min(window.devicePixelRatio || 1, 2);
+        canvas.width = CANVAS_WIDTH * dpr;
+        canvas.height = CANVAS_HEIGHT * dpr;
+        ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+        ctx.imageSmoothingEnabled = false;
+      }
+
+      function initStarfield() {
+        stars = [];
+        for (let i = 0; i < 65; i++) {
+          const layer = i % 3;
+          stars.push({
+            x: Math.random() * CANVAS_WIDTH,
+            y: Math.random() * (GROUND_Y - 10),
+            size: layer === 2 ? 2 : 1,
+            speed: layer === 0 ? 10 : layer === 1 ? 22 : 36,
+            brightness: 0.25 + layer * 0.24 + Math.random() * 0.2,
+            twinklePhase: Math.random() * Math.PI * 2,
+          });
+        }
+      }
+
+      function buildBunkers() {
+        bunkers = [];
+        const cellSize = 4;
+        const cols = BUNKER_TEMPLATE[0].length;
+        const rows = BUNKER_TEMPLATE.length;
+        const bunkerWidth = cols * cellSize;
+        const count = 4;
+        const sidePadding = 52;
+        const spacing = (CANVAS_WIDTH - sidePadding * 2 - bunkerWidth * count) / (count - 1);
+        const y = PLAYER_Y - 76;
+
+        for (let i = 0; i < count; i++) {
+          bunkers.push({
+            x: Math.round(sidePadding + i * (bunkerWidth + spacing)),
+            y: y,
+            cellSize: cellSize,
+            cols: cols,
+            rows: rows,
+            cells: BUNKER_TEMPLATE.map(function (row) { return row.slice(); }),
+          });
+        }
+      }
+
+      function repairBunkersPartial() {
+        for (let b = 0; b < bunkers.length; b++) {
+          const bunker = bunkers[b];
+          for (let r = 0; r < bunker.rows; r++) {
+            for (let c = 0; c < bunker.cols; c++) {
+              if (BUNKER_TEMPLATE[r][c] > 0 && bunker.cells[r][c] === 1) {
+                bunker.cells[r][c] = 2;
+              }
+            }
+          }
+        }
+      }
+
+      function spawnWaveEntities(waveNum) {
+        waveNumber = waveNum;
+        if (waveNumber > maxWaveReached) {
+          maxWaveReached = waveNumber;
+          persistSaveData();
+        }
+        currentWave = getWaveTemplate(waveNum);
+        enemies = [];
+        projectiles = [];
+        powerUps = [];
+        carrier.active = false;
+        retroAudio.stopCarrierBeacon();
+        carrierCooldown = 12 + Math.random() * 6;
+        fleetDir = 1;
+        fleetAnimFrame = 0;
+        marchTimer = currentWave.baseStepInterval;
+        enemyFireTimer = 0.85;
+        waveShotsFired = 0;
+        waveShotsHit = 0;
+        waveSummary = null;
+
+        const layout = currentWave.layout;
+        const cols = layout[0].length;
+        const cellW = 44;
+        const cellH = 38;
+        const totalGridW = (cols - 1) * cellW + 36;
+        const startX = Math.round((CANVAS_WIDTH - totalGridW) / 2);
+        const startY = 86;
+        const charToKind = { P: 'prism', S: 'striker', C: 'crawler', W: 'warden' };
+
+        for (let r = 0; r < layout.length; r++) {
+          const rowStr = layout[r];
+          for (let c = 0; c < rowStr.length; c++) {
+            const kind = charToKind[rowStr[c]];
+            if (!kind) continue;
+            const def = ENEMY_SPRITES[kind];
+            const spriteW = def.frames[0][0].length * PIXEL_SIZE;
+            const spriteH = def.frames[0].length * PIXEL_SIZE;
+            enemies.push({
+              id: nextEnemyId++,
+              kind: kind,
+              row: r,
+              col: c,
+              x: startX + c * cellW + Math.round((36 - spriteW) / 2),
+              y: startY + r * cellH,
+              width: spriteW,
+              height: spriteH,
+              hp: def.hp,
+              maxHp: def.hp,
+              points: def.points,
+              alive: true,
+              hitFlash: 0,
+            });
+          }
+        }
+        enemiesTotal = enemies.length;
+      }
+
+      function getLivingEnemies() {
+        return enemies.filter(function (e) { return e.alive; });
+      }
+
+      function addScore(pts) {
+        score += pts;
+        if (score > highScore) {
+          highScore = score;
+          isNewRecord = true;
+          persistSaveData();
+        }
+      }
+
+      function rectsOverlap(ax, ay, aw, ah, bx, by, bw, bh) {
+        return ax < bx + bw && ax + aw > bx && ay < by + bh && ay + ah > by;
+      }
+
+      function triggerShake(duration, intensity) {
+        if (prefersReducedMotion) return;
+        shakeTimer = Math.max(shakeTimer, duration);
+        shakeIntensity = Math.max(shakeIntensity, intensity);
+      }
+
+      function spawnSparks(x, y, color, count) {
+        const cap = prefersReducedMotion ? Math.min(4, count) : count;
+        for (let i = 0; i < cap; i++) {
+          const angle = Math.random() * Math.PI * 2;
+          const speed = 45 + Math.random() * 170;
+          particles.push({
+            x: x,
+            y: y,
+            vx: Math.cos(angle) * speed,
+            vy: Math.sin(angle) * speed,
+            size: Math.random() < 0.45 ? 4 : 2.5,
+            color: color,
+            alpha: 1,
+            decay: 1.6 + Math.random() * 1.4,
+          });
+        }
+      }
+
+      function addFloatingText(x, y, text, color) {
+        floatingTexts.push({
+          x: x,
+          y: y,
+          text: text,
+          color: color,
+          alpha: 1,
+          vy: -42,
+          life: 0.72,
+          maxLife: 0.72,
+        });
+      }
+
+      function spawnPowerUp(x, y) {
+        const roll = Math.random();
+        const kind = roll < 0.4 ? 'twin' : roll < 0.78 ? 'rapid' : 'barrier';
+        powerUps.push({
+          x: Math.max(24, Math.min(CANVAS_WIDTH - 24, x)),
+          y: y,
+          vy: 118,
+          size: 20,
+          kind: kind,
+          pulse: 0,
+        });
+      }
+
+      function applyPowerUp(kind) {
+        const meta = POWERUP_META[kind];
+        retroAudio.playPowerUp();
+        addFloatingText(playerX + PLAYER_WIDTH / 2, PLAYER_Y - 14, meta.label, meta.color);
+        spawnSparks(playerX + PLAYER_WIDTH / 2, PLAYER_Y + 6, meta.color, 14);
+        if (kind === 'twin') twinTimer = 8500;
+        else if (kind === 'rapid') rapidTimer = 8500;
+        else if (kind === 'barrier') hasBarrier = true;
+        syncHud();
+      }
+
+      function startNewGame(startWave) {
+        retroAudio.unlock();
+        closeStageModal();
+        score = 0;
+        isNewRecord = false;
+        lives = maxLives;
+        combo = 0;
+        comboTimer = 0;
+        twinTimer = 0;
+        rapidTimer = 0;
+        hasBarrier = false;
+        playerX = (CANVAS_WIDTH - PLAYER_WIDTH) / 2;
+        playerInvulnTimer = 0;
+        playerFireCooldown = 0;
+        particles = [];
+        floatingTexts = [];
+        pointerTargetX = null;
+        buildBunkers();
+        spawnWaveEntities(startWave || 1);
+        state = 'PLAYING';
+        syncHud();
+      }
+
+      function startNextWave() {
+        retroAudio.unlock();
+        const nextWave = waveNumber + 1;
+        if (nextWave % 2 === 1) buildBunkers();
+        else repairBunkersPartial();
+        playerX = (CANVAS_WIDTH - PLAYER_WIDTH) / 2;
+        playerInvulnTimer = 1.0;
+        spawnWaveEntities(nextWave);
+        state = 'PLAYING';
+        syncHud();
+      }
+
+      function restartCurrentWave() {
+        startNewGame(waveNumber);
+      }
+
+      function togglePause() {
+        if (state === 'PLAYING') {
+          state = 'PAUSED';
+          retroAudio.stopCarrierBeacon();
+          syncHud();
+        } else if (state === 'PAUSED') {
+          state = 'PLAYING';
+          if (carrier.active) retroAudio.startCarrierBeacon();
+          syncHud();
+        }
+      }
+
+      function returnToTitle() {
+        retroAudio.stopCarrierBeacon();
+        closeStageModal();
+        state = 'TITLE_MENU';
+        buildBunkers();
+        spawnWaveEntities(1);
+        syncHud();
+      }
+
+      /* 連射仕様：発射間隔 0.15秒（高速連射時 0.09秒）、同時弾数 4発（高速連射 6発、ツイン砲 8発） */
+      function tryFirePlayerShot() {
+        const activePlayerShots = projectiles.filter(function (p) { return p.fromPlayer; }).length;
+        const isTwin = twinTimer > 0;
+        const isRapid = rapidTimer > 0;
+        const maxBolts = isTwin ? 8 : isRapid ? 6 : 4;
+        if (activePlayerShots >= maxBolts) return;
+
+        const boltSpeed = isRapid ? -660 : -560;
+        const centerX = playerX + PLAYER_WIDTH / 2;
+
+        if (isTwin) {
+          projectiles.push(
+            { x: centerX - 11, y: PLAYER_Y - 6, vx: 0, vy: boltSpeed, width: 3, height: 13, fromPlayer: true, kind: 'twin', phase: 0 },
+            { x: centerX + 8, y: PLAYER_Y - 6, vx: 0, vy: boltSpeed, width: 3, height: 13, fromPlayer: true, kind: 'twin', phase: 0 }
+          );
+          waveShotsFired += 2;
+        } else {
+          projectiles.push({
+            x: centerX - 1.5,
+            y: PLAYER_Y - 8,
+            vx: 0,
+            vy: boltSpeed,
+            width: 3,
+            height: 14,
+            fromPlayer: true,
+            kind: 'plasma',
+            phase: 0,
+          });
+          waveShotsFired += 1;
+        }
+
+        playerFireCooldown = isRapid ? 0.09 : 0.15;
+        playerRecoil = 3.0;
+        retroAudio.playPlayerShot(isTwin);
+      }
+
+      function erodeBunkersFromEnemies(living) {
+        for (let i = 0; i < living.length; i++) {
+          const enemy = living[i];
+          for (let b = 0; b < bunkers.length; b++) {
+            const bunker = bunkers[b];
+            const bw = bunker.cols * bunker.cellSize;
+            const bh = bunker.rows * bunker.cellSize;
+            if (!rectsOverlap(enemy.x, enemy.y, enemy.width, enemy.height, bunker.x, bunker.y, bw, bh)) continue;
+            for (let r = 0; r < bunker.rows; r++) {
+              for (let c = 0; c < bunker.cols; c++) {
+                if (bunker.cells[r][c] === 0) continue;
+                const cx = bunker.x + c * bunker.cellSize;
+                const cy = bunker.y + r * bunker.cellSize;
+                if (rectsOverlap(cx, cy, bunker.cellSize, bunker.cellSize, enemy.x, enemy.y, enemy.width, enemy.height)) {
+                  bunker.cells[r][c] = 0;
+                }
+              }
+            }
+          }
+        }
+      }
+
+      function erodeCrater(bunker, centerR, centerC) {
+        for (let dr = -1; dr <= 1; dr++) {
+          for (let dc = -1; dc <= 1; dc++) {
+            const nr = centerR + dr;
+            const nc = centerC + dc;
+            if (nr < 0 || nr >= bunker.rows || nc < 0 || nc >= bunker.cols) continue;
+            if (bunker.cells[nr][nc] === 0) continue;
+            if (dr === 0 && dc === 0) bunker.cells[nr][nc] = 0;
+            else if (Math.abs(dr) + Math.abs(dc) === 1) bunker.cells[nr][nc] = Math.max(0, bunker.cells[nr][nc] - 1);
+            else if (Math.random() < 0.45) bunker.cells[nr][nc] = Math.max(0, bunker.cells[nr][nc] - 1);
+          }
+        }
+      }
+
+      function checkBunkerHit(p) {
+        for (let b = 0; b < bunkers.length; b++) {
+          const bunker = bunkers[b];
+          const bw = bunker.cols * bunker.cellSize;
+          const bh = bunker.rows * bunker.cellSize;
+          if (!rectsOverlap(p.x, p.y, p.width, p.height, bunker.x, bunker.y, bw, bh)) continue;
+          const startCol = Math.max(0, Math.floor((p.x - bunker.x) / bunker.cellSize));
+          const endCol = Math.min(bunker.cols - 1, Math.floor((p.x + p.width - bunker.x) / bunker.cellSize));
+          const startRow = Math.max(0, Math.floor((p.y - bunker.y) / bunker.cellSize));
+          const endRow = Math.min(bunker.rows - 1, Math.floor((p.y + p.height - bunker.y) / bunker.cellSize));
+
+          for (let r = startRow; r <= endRow; r++) {
+            for (let c = startCol; c <= endCol; c++) {
+              if (bunker.cells[r][c] > 0) {
+                erodeCrater(bunker, r, c);
+                retroAudio.playBunkerChip();
+                spawnSparks(bunker.x + c * bunker.cellSize, bunker.y + r * bunker.cellSize, '#34d399', 5);
+                return true;
+              }
+            }
+          }
+        }
+        return false;
+      }
+
+      function damageEnemy(enemy) {
+        const def = ENEMY_SPRITES[enemy.kind];
+        enemy.hp--;
+        if (enemy.hp > 0) {
+          enemy.hitFlash = 1;
+          retroAudio.playEnemyHit(combo, false);
+          spawnSparks(enemy.x + enemy.width / 2, enemy.y + enemy.height / 2, '#ffe4e6', 7);
+          return;
+        }
+
+        enemy.alive = false;
+        combo++;
+        comboTimer = 2.1;
+
+        const comboMultiplier = 1 + Math.min(1.0, Math.floor(combo / 4) * 0.25);
+        const earned = Math.round(enemy.points * comboMultiplier);
+        addScore(earned);
+
+        const cx = enemy.x + enemy.width / 2;
+        const cy = enemy.y + enemy.height / 2;
+        retroAudio.playEnemyHit(combo, true);
+        spawnSparks(cx, cy, def.primaryColor, 14);
+        spawnSparks(cx, cy, def.accentColor, 6);
+
+        const label = combo >= 4 && combo % 4 === 0 ? '+' + earned + ' ' + combo + 'x' : '+' + earned;
+        addFloatingText(cx, cy - 6, label, def.accentColor);
+
+        const dropChance = enemy.kind === 'warden' ? 0.18 : 0.045;
+        if (Math.random() < dropChance) spawnPowerUp(cx, cy);
+        syncHud();
+      }
+
+      function triggerPlayerHit(breached) {
+        combo = 0;
+        comboTimer = 0;
+        twinTimer = 0;
+        rapidTimer = 0;
+        lives = breached ? 0 : Math.max(0, lives - 1);
+
+        const cx = playerX + PLAYER_WIDTH / 2;
+        const cy = PLAYER_Y + PLAYER_HEIGHT / 2;
+        spawnSparks(cx, cy, '#38bdf8', 22);
+        spawnSparks(cx, cy, '#fbbf24', 18);
+        spawnSparks(cx, cy, '#f43f5e', 14);
+        triggerShake(0.32, 6);
+        screenFlashAlpha = 0.28;
+        projectiles = projectiles.filter(function (p) { return p.fromPlayer; });
+
+        if (lives <= 0) {
+          retroAudio.playPlayerExplosion();
+          setTimeout(function () { retroAudio.playGameOver(); }, 340);
+          state = 'GAME_OVER';
+        } else {
+          retroAudio.playPlayerExplosion();
+          playerInvulnTimer = 2.0;
+        }
+        syncHud();
+      }
+
+      function handleWaveClear() {
+        const accuracyPercent =
+          waveShotsFired > 0 ? Math.min(100, Math.round((waveShotsHit / waveShotsFired) * 100)) : 100;
+        const waveBonus = 200 * waveNumber;
+        const accuracyBonus = accuracyPercent >= 70 ? 150 : accuracyPercent >= 50 ? 75 : 0;
+
+        addScore(waveBonus + accuracyBonus);
+        waveSummary = {
+          waveNumber: waveNumber,
+          waveName: currentWave.name,
+          waveBonus: waveBonus,
+          accuracyPercent: accuracyPercent,
+          accuracyBonus: accuracyBonus,
+          score: score,
+        };
+
+        retroAudio.playWaveClear();
+        state = 'WAVE_CLEAR';
+        syncHud();
+      }
+
+      function update(dt) {
+        engineFlicker += dt * 16;
+
+        for (let i = 0; i < stars.length; i++) {
+          const s = stars[i];
+          s.y += s.speed * dt * (state === 'PLAYING' ? 1 : 0.35);
+          s.twinklePhase += dt * 2.5;
+          if (s.y > GROUND_Y - 6) {
+            s.y = 4;
+            s.x = Math.random() * CANVAS_WIDTH;
+          }
+        }
+
+        if (state !== 'PLAYING') return;
+
+        if (shakeTimer > 0) shakeTimer = Math.max(0, shakeTimer - dt);
+        if (screenFlashAlpha > 0) screenFlashAlpha = Math.max(0, screenFlashAlpha - dt * 2.8);
+        if (playerRecoil > 0) playerRecoil = Math.max(0, playerRecoil - dt * 28);
+        if (playerInvulnTimer > 0) playerInvulnTimer = Math.max(0, playerInvulnTimer - dt);
+
+        if (twinTimer > 0) twinTimer = Math.max(0, twinTimer - dt * 1000);
+        if (rapidTimer > 0) rapidTimer = Math.max(0, rapidTimer - dt * 1000);
+        if (comboTimer > 0) {
+          comboTimer -= dt;
+          if (comboTimer <= 0) combo = 0;
+        }
+
+        const moveDir = (input.right ? 1 : 0) - (input.left ? 1 : 0);
+        if (moveDir !== 0) {
+          playerX += moveDir * playerSpeed * dt;
+        } else if (pointerTargetX !== null) {
+          const diff = pointerTargetX - playerX;
+          playerX += Math.sign(diff) * Math.min(Math.abs(diff), playerSpeed * 1.45 * dt);
+        }
+        playerX = Math.max(14, Math.min(CANVAS_WIDTH - PLAYER_WIDTH - 14, playerX));
+
+        if (playerFireCooldown > 0) playerFireCooldown -= dt;
+        if (input.fire && playerFireCooldown <= 0) tryFirePlayerShot();
+
+        for (let i = 0; i < enemies.length; i++) {
+          if (enemies[i].hitFlash > 0) enemies[i].hitFlash = Math.max(0, enemies[i].hitFlash - dt * 7);
+        }
+
+        const living = getLivingEnemies();
+        if (living.length === 0) {
+          handleWaveClear();
+          return;
+        }
+
+        const remainingRatio = living.length / Math.max(1, enemiesTotal);
+        const tension = 1 - remainingRatio;
+        const dynamicInterval = Math.max(
+          0.075,
+          currentWave.baseStepInterval * (0.12 + 0.88 * Math.pow(remainingRatio, 0.72))
+        );
+
+        marchTimer -= dt;
+        if (marchTimer <= 0) {
+          marchTimer = dynamicInterval;
+          fleetAnimFrame = fleetAnimFrame === 0 ? 1 : 0;
+          retroAudio.playMarchPulse(tension);
+
+          const stepX = 11 + Math.round(tension * 5);
+          let hitEdge = false;
+          for (let i = 0; i < living.length; i++) {
+            const nextX = living[i].x + fleetDir * stepX;
+            if (nextX < 18 || nextX + living[i].width > CANVAS_WIDTH - 18) {
+              hitEdge = true;
+              break;
+            }
+          }
+
+          if (hitEdge) {
+            fleetDir = fleetDir === 1 ? -1 : 1;
+            let lowestY = 0;
+            for (let i = 0; i < living.length; i++) {
+              living[i].y += currentWave.dropDistance;
+              if (living[i].y + living[i].height > lowestY) {
+                lowestY = living[i].y + living[i].height;
+              }
+            }
+            erodeBunkersFromEnemies(living);
+            if (lowestY >= PLAYER_Y - 4) {
+              lives = 0;
+              triggerPlayerHit(true);
+              return;
+            }
+          } else {
+            for (let i = 0; i < living.length; i++) {
+              living[i].x += fleetDir * stepX;
+            }
+            erodeBunkersFromEnemies(living);
+          }
+        }
+
+        enemyFireTimer -= dt;
+        if (enemyFireTimer <= 0) {
+          const bottomByCol = new Map();
+          for (let i = 0; i < living.length; i++) {
+            const e = living[i];
+            const existing = bottomByCol.get(e.col);
+            if (!existing || e.row > existing.row) bottomByCol.set(e.col, e);
+          }
+          const shooters = Array.from(bottomByCol.values());
+          const maxEnemyShots = Math.min(6, 2 + Math.floor(waveNumber * 0.7));
+          const currentEnemyShots = projectiles.filter(function (p) { return !p.fromPlayer; }).length;
+
+          if (shooters.length > 0 && currentEnemyShots < maxEnemyShots) {
+            let chosen;
+            if (Math.random() < 0.35) {
+              const playerCenter = playerX + PLAYER_WIDTH / 2;
+              chosen = shooters.reduce(function (best, curr) {
+                return Math.abs(curr.x + curr.width / 2 - playerCenter) <
+                  Math.abs(best.x + best.width / 2 - playerCenter)
+                  ? curr
+                  : best;
+              });
+            } else {
+              chosen = shooters[Math.floor(Math.random() * shooters.length)];
+            }
+
+            const isZigzag = chosen.kind === 'prism' || chosen.kind === 'warden';
+            const speed = isZigzag ? 235 + waveNumber * 12 : 195 + waveNumber * 10;
+            projectiles.push({
+              x: chosen.x + chosen.width / 2 - 2,
+              y: chosen.y + chosen.height + 2,
+              vx: 0,
+              vy: Math.min(speed, 340),
+              width: isZigzag ? 5 : 4,
+              height: 12,
+              fromPlayer: false,
+              kind: isZigzag ? 'zigzag' : 'bolt',
+              phase: Math.random() * Math.PI * 2,
+            });
+          }
+
+          enemyFireTimer = (1 / currentWave.enemyFireRate) * (0.65 + Math.random() * 0.7);
+        }
+
+        if (!carrier.active) {
+          carrierCooldown -= dt;
+          if (carrierCooldown <= 0 && living.length >= 5) {
+            const fromLeft = Math.random() < 0.5;
+            const pts = [100, 150, 200, 300];
+            carrier.active = true;
+            carrier.x = fromLeft ? -carrier.width - 8 : CANVAS_WIDTH + 8;
+            carrier.vx = fromLeft ? 112 : -112;
+            carrier.points = pts[Math.floor(Math.random() * pts.length)];
+            retroAudio.startCarrierBeacon();
+          }
+        } else {
+          carrier.x += carrier.vx * dt;
+          if ((carrier.vx > 0 && carrier.x > CANVAS_WIDTH + 24) || (carrier.vx < 0 && carrier.x + carrier.width < -24)) {
+            carrier.active = false;
+            retroAudio.stopCarrierBeacon();
+            carrierCooldown = 16 + Math.random() * 8;
+          }
+        }
+
+        for (let i = projectiles.length - 1; i >= 0; i--) {
+          const p = projectiles[i];
+          p.x += p.vx * dt;
+          p.y += p.vy * dt;
+          p.phase += dt * 18;
+
+          if (p.y + p.height < 16 || p.y > GROUND_Y) {
+            if (p.y + p.height < 16 && p.fromPlayer) spawnSparks(p.x, 20, '#38bdf8', 5);
+            projectiles.splice(i, 1);
+            continue;
+          }
+
+          if (checkBunkerHit(p)) {
+            projectiles.splice(i, 1);
+            continue;
+          }
+
+          if (p.fromPlayer) {
+            if (carrier.active && rectsOverlap(p.x, p.y, p.width, p.height, carrier.x, carrier.y, carrier.width, carrier.height)) {
+              const cx = carrier.x + carrier.width / 2;
+              const cy = carrier.y + carrier.height / 2;
+              carrier.active = false;
+              carrierCooldown = 18 + Math.random() * 8;
+              waveShotsHit++;
+              addScore(carrier.points);
+              retroAudio.playCarrierDestroyed();
+              spawnSparks(cx, cy, '#f43f5e', 22);
+              spawnSparks(cx, cy, '#fbbf24', 14);
+              addFloatingText(cx, cy, '+' + carrier.points, '#fbbf24');
+              triggerShake(0.2, 4);
+              spawnPowerUp(cx, cy + 8);
+              projectiles.splice(i, 1);
+              syncHud();
+              continue;
+            }
+
+            let hitEnemy = false;
+            for (let eIdx = 0; eIdx < enemies.length; eIdx++) {
+              const enemy = enemies[eIdx];
+              if (!enemy.alive) continue;
+              if (rectsOverlap(p.x, p.y, p.width, p.height, enemy.x, enemy.y, enemy.width, enemy.height)) {
+                hitEnemy = true;
+                waveShotsHit++;
+                damageEnemy(enemy);
+                break;
+              }
+            }
+            if (hitEnemy) {
+              projectiles.splice(i, 1);
+              continue;
+            }
+
+            let intercepted = false;
+            for (let j = projectiles.length - 1; j >= 0; j--) {
+              if (i === j) continue;
+              const other = projectiles[j];
+              if (other.fromPlayer) continue;
+              if (rectsOverlap(p.x - 1, p.y, p.width + 2, p.height, other.x - 1, other.y, other.width + 2, other.height)) {
+                spawnSparks(p.x, p.y, '#e2e8f0', 8);
+                projectiles.splice(Math.max(i, j), 1);
+                projectiles.splice(Math.min(i, j), 1);
+                if (j < i) i--;
+                intercepted = true;
+                break;
+              }
+            }
+            if (intercepted) continue;
+          } else {
+            if (
+              playerInvulnTimer <= 0 &&
+              rectsOverlap(p.x, p.y, p.width, p.height, playerX + 4, PLAYER_Y + 4, PLAYER_WIDTH - 8, PLAYER_HEIGHT - 6)
+            ) {
+              projectiles.splice(i, 1);
+              if (hasBarrier) {
+                hasBarrier = false;
+                playerInvulnTimer = 0.65;
+                retroAudio.playBarrierDeflect();
+                spawnSparks(playerX + PLAYER_WIDTH / 2, PLAYER_Y + 8, '#34d399', 16);
+                addFloatingText(playerX + PLAYER_WIDTH / 2, PLAYER_Y - 12, 'BARRIER!', '#34d399');
+                syncHud();
+              } else {
+                triggerPlayerHit(false);
+                return;
+              }
+            }
+          }
+        }
+
+        for (let i = powerUps.length - 1; i >= 0; i--) {
+          const drop = powerUps[i];
+          drop.y += drop.vy * dt;
+          drop.pulse += dt * 7;
+          if (rectsOverlap(drop.x - drop.size / 2, drop.y - drop.size / 2, drop.size, drop.size, playerX, PLAYER_Y, PLAYER_WIDTH, PLAYER_HEIGHT)) {
+            applyPowerUp(drop.kind);
+            powerUps.splice(i, 1);
+            continue;
+          }
+          if (drop.y > GROUND_Y) powerUps.splice(i, 1);
+        }
+
+        for (let i = particles.length - 1; i >= 0; i--) {
+          const pt = particles[i];
+          pt.x += pt.vx * dt;
+          pt.y += pt.vy * dt;
+          pt.vx *= 0.96;
+          pt.vy *= 0.96;
+          pt.alpha -= pt.decay * dt;
+          if (pt.alpha <= 0) particles.splice(i, 1);
+        }
+
+        for (let i = floatingTexts.length - 1; i >= 0; i--) {
+          const ft = floatingTexts[i];
+          ft.y += ft.vy * dt;
+          ft.life -= dt;
+          ft.alpha = Math.max(0, ft.life / ft.maxLife);
+          if (ft.life <= 0) floatingTexts.splice(i, 1);
+        }
+
+        if (getLivingEnemies().length === 0) {
+          handleWaveClear();
+          return;
+        }
+
+        hudSyncAcc += dt;
+        if (hudSyncAcc >= 0.08) {
+          hudSyncAcc = 0;
+          syncHud();
+        }
+      }
+
+      function render() {
+        ctx.fillStyle = '#060912';
+        ctx.fillRect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
+
+        ctx.save();
+        if (shakeTimer > 0) {
+          ctx.translate((Math.random() - 0.5) * 2 * shakeIntensity, (Math.random() - 0.5) * 2 * shakeIntensity);
+        }
+
+        for (let i = 0; i < stars.length; i++) {
+          const s = stars[i];
+          const twinkle = 0.65 + 0.35 * Math.sin(s.twinklePhase);
+          ctx.fillStyle = 'rgba(203, 213, 225, ' + (s.brightness * twinkle).toFixed(2) + ')';
+          ctx.fillRect(Math.round(s.x), Math.round(s.y), s.size, s.size);
+        }
+
+        ctx.fillStyle = '#1e293b';
+        ctx.fillRect(14, GROUND_Y, CANVAS_WIDTH - 28, 2);
+        ctx.fillStyle = '#34d399';
+        ctx.fillRect(14, GROUND_Y, CANVAS_WIDTH - 28, 1);
+
+        for (let b = 0; b < bunkers.length; b++) {
+          const bunker = bunkers[b];
+          for (let r = 0; r < bunker.rows; r++) {
+            for (let c = 0; c < bunker.cols; c++) {
+              const val = bunker.cells[r][c];
+              if (val === 0) continue;
+              ctx.fillStyle = val === 2 ? '#10b981' : '#065f46';
+              ctx.fillRect(bunker.x + c * bunker.cellSize, bunker.y + r * bunker.cellSize, bunker.cellSize, bunker.cellSize);
+              if (val === 2 && r === 0) {
+                ctx.fillStyle = '#6ee7b7';
+                ctx.fillRect(bunker.x + c * bunker.cellSize, bunker.y + r * bunker.cellSize, bunker.cellSize, 1);
+              }
+            }
+          }
+        }
+
+        if (carrier.active) {
+          const trailDir = carrier.vx > 0 ? -1 : 1;
+          const trailX = carrier.vx > 0 ? carrier.x - 10 : carrier.x + carrier.width + 2;
+          ctx.fillStyle = 'rgba(251, 191, 36, 0.45)';
+          ctx.fillRect(Math.round(trailX), Math.round(carrier.y + 8), 8, 3);
+          ctx.fillStyle = 'rgba(244, 63, 94, 0.25)';
+          ctx.fillRect(Math.round(trailX + trailDir * 8), Math.round(carrier.y + 9), 8, 2);
+          drawSprite(ctx, CARRIER_SPRITE, carrier.x, carrier.y, PIXEL_SIZE, '#f43f5e', '#fde047', 'rgba(244, 63, 94, 0.55)');
+        }
+
+        for (let i = 0; i < enemies.length; i++) {
+          const enemy = enemies[i];
+          if (!enemy.alive) continue;
+          const def = ENEMY_SPRITES[enemy.kind];
+          const primary = enemy.hitFlash > 0 ? '#ffffff' : (enemy.kind === 'warden' && enemy.hp === 1 ? '#fb7185' : def.primaryColor);
+          const accent = enemy.hitFlash > 0 ? '#ffffff' : def.accentColor;
+          drawSprite(ctx, def.frames[fleetAnimFrame], enemy.x, enemy.y, PIXEL_SIZE, primary, accent);
+
+          if (enemy.maxHp > 1 && enemy.hp > 1) {
+            ctx.fillStyle = '#ffe4e6';
+            ctx.fillRect(Math.round(enemy.x + enemy.width / 2 - 4), Math.round(enemy.y - 5), 8, 2);
+          }
+        }
+
+        for (let i = 0; i < powerUps.length; i++) {
+          const drop = powerUps[i];
+          const meta = POWERUP_META[drop.kind];
+          const size = drop.size * (1 + Math.sin(drop.pulse) * 0.08);
+          ctx.save();
+          ctx.translate(Math.round(drop.x), Math.round(drop.y));
+          ctx.fillStyle = '#0f172a';
+          ctx.strokeStyle = meta.color;
+          ctx.lineWidth = 2;
+          ctx.fillRect(-size / 2, -size / 2, size, size);
+          ctx.strokeRect(-size / 2, -size / 2, size, size);
+          ctx.fillStyle = meta.color;
+          ctx.font = 'bold 12px monospace';
+          ctx.textAlign = 'center';
+          ctx.textBaseline = 'middle';
+          ctx.fillText(meta.short, 0, 1);
+          ctx.restore();
+          ctx.fillStyle = '#ffffff';
+          ctx.fillRect(Math.round(drop.x - drop.size / 2), Math.round(drop.y - drop.size / 2), 2, 2);
+        }
+
+        for (let i = 0; i < projectiles.length; i++) {
+          const p = projectiles[i];
+          if (p.fromPlayer) {
+            const color = p.kind === 'twin' ? '#38bdf8' : '#fef08a';
+            ctx.save();
+            ctx.shadowColor = color;
+            ctx.shadowBlur = 8;
+            ctx.fillStyle = color;
+            ctx.fillRect(Math.round(p.x), Math.round(p.y), p.width, p.height);
+            ctx.fillStyle = '#ffffff';
+            ctx.fillRect(Math.round(p.x + 1), Math.round(p.y + 1), 1, p.height - 3);
+            ctx.restore();
+          } else if (p.kind === 'zigzag') {
+            const offset = Math.sin(p.phase) > 0 ? 2 : -2;
+            ctx.fillStyle = '#f43f5e';
+            ctx.fillRect(Math.round(p.x + offset), Math.round(p.y), 3, 4);
+            ctx.fillStyle = '#fda4af';
+            ctx.fillRect(Math.round(p.x - offset), Math.round(p.y + 4), 3, 4);
+            ctx.fillStyle = '#f43f5e';
+            ctx.fillRect(Math.round(p.x + offset), Math.round(p.y + 8), 3, 4);
+          } else {
+            ctx.fillStyle = '#fb923c';
+            ctx.fillRect(Math.round(p.x), Math.round(p.y), p.width, p.height);
+            ctx.fillStyle = '#ffedd5';
+            ctx.fillRect(Math.round(p.x + 1), Math.round(p.y + 2), 2, 4);
+          }
+        }
+
+        const playerVisible = state !== 'GAME_OVER' && (playerInvulnTimer <= 0 || Math.floor(playerInvulnTimer * 16) % 2 === 0);
+        if (playerVisible) {
+          const py = PLAYER_Y + playerRecoil;
+          const shipPrimary = twinTimer > 0 ? '#38bdf8' : '#e2e8f0';
+          const shipAccent = rapidTimer > 0 ? '#fbbf24' : '#38bdf8';
+
+          const flameH = 3 + (Math.floor(engineFlicker) % 2) * 3;
+          ctx.fillStyle = '#f59e0b';
+          ctx.fillRect(Math.round(playerX + PLAYER_WIDTH / 2 - 4), Math.round(py + PLAYER_HEIGHT), 3, flameH);
+          ctx.fillRect(Math.round(playerX + PLAYER_WIDTH / 2 + 1), Math.round(py + PLAYER_HEIGHT), 3, flameH);
+
+          drawSprite(ctx, PLAYER_SPRITE, playerX, py, PIXEL_SIZE, shipPrimary, shipAccent, 'rgba(56, 189, 248, 0.35)');
+
+          if (hasBarrier) {
+            ctx.save();
+            ctx.strokeStyle = '#34d399';
+            ctx.lineWidth = 2;
+            ctx.setLineDash([4, 3]);
+            ctx.beginPath();
+            ctx.arc(playerX + PLAYER_WIDTH / 2, py + PLAYER_HEIGHT / 2 + 2, 26, Math.PI * 1.12, Math.PI * 1.88);
+            ctx.stroke();
+            ctx.restore();
+          }
+        }
+
+        for (let i = 0; i < particles.length; i++) {
+          const pt = particles[i];
+          ctx.save();
+          ctx.globalAlpha = Math.max(0, pt.alpha);
+          ctx.fillStyle = pt.color;
+          ctx.fillRect(Math.round(pt.x), Math.round(pt.y), pt.size, pt.size);
+          ctx.restore();
+        }
+
+        for (let i = 0; i < floatingTexts.length; i++) {
+          const ft = floatingTexts[i];
+          ctx.save();
+          ctx.globalAlpha = Math.max(0, ft.alpha);
+          ctx.font = 'bold 12px monospace';
+          ctx.textAlign = 'center';
+          ctx.fillStyle = ft.color;
+          ctx.fillText(ft.text, Math.round(ft.x), Math.round(ft.y));
+          ctx.restore();
+        }
+
+        if (screenFlashAlpha > 0) {
+          ctx.fillStyle = 'rgba(244, 63, 94, ' + screenFlashAlpha.toFixed(2) + ')';
+          ctx.fillRect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
+        }
+
+        ctx.restore();
+      }
+
+      /* ======================================================================
+         5. DOM / HUD SYNCHRONIZATION & MODALS
+         ====================================================================== */
+      const elScore = document.getElementById('hud-score');
+      const elHiScore = document.getElementById('hud-hiscore');
+      const elWave = document.getElementById('hud-wave');
+      const elScoreMobile = document.getElementById('hud-score-mobile');
+      const elWaveMobile = document.getElementById('hud-wave-mobile');
+      const elLivesDesktop = document.getElementById('hud-lives-desktop');
+      const elLivesMobile = document.getElementById('hud-lives-mobile');
+      const elLivesCount = document.getElementById('hud-lives-count');
+
+      const elWaveName = document.getElementById('status-wave-name');
+      const elStatusSep = document.getElementById('status-sep');
+      const elRemaining = document.getElementById('status-remaining');
+      const elBoosts = document.getElementById('status-boosts');
+
+      const btnMute = document.getElementById('btn-mute');
+      const iconSoundOn = document.getElementById('icon-sound-on');
+      const iconSoundOff = document.getElementById('icon-sound-off');
+      const btnCrt = document.getElementById('btn-crt');
+      const crtOverlay = document.getElementById('crt-overlay');
+      const btnPause = document.getElementById('btn-pause');
+      const iconPause = document.getElementById('icon-pause');
+      const iconPlay = document.getElementById('icon-play');
+
+      const overlayTitle = document.getElementById('overlay-title');
+      const overlayPause = document.getElementById('overlay-pause');
+      const overlayClear = document.getElementById('overlay-clear');
+      const overlayGameOver = document.getElementById('overlay-gameover');
+
+      const modalStages = document.getElementById('modal-stages');
+      const stageList = document.getElementById('stage-list');
+      const btnResetHiScore = document.getElementById('btn-reset-hiscore');
+      const modalRecordText = document.getElementById('modal-record-text');
+
+      let crtEnabled = saveData.crtEnabled;
+      let stageModalOpen = false;
+
+      function applyCrtState() {
+        btnCrt.classList.toggle('is-crt-on', crtEnabled);
+        btnCrt.setAttribute('aria-pressed', String(crtEnabled));
+        btnCrt.title = crtEnabled ? 'CRT走査線をオフ' : 'CRT走査線をオン';
+        btnCrt.setAttribute('aria-label', crtEnabled ? 'CRT走査線をオフ' : 'CRT走査線をオン');
+        crtOverlay.classList.toggle('hidden', !crtEnabled);
+      }
+
+      function createHeartSvg(active) {
+        const cls = active ? 'heart-icon heart-active' : 'heart-icon heart-empty';
+        return (
+          '<svg class="' + cls + '" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' +
+          '<path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z"></path>' +
+          '</svg>'
+        );
+      }
+
+      function renderSpritePreviews() {
+        const brandCanvas = document.getElementById('brand-sprite');
+        const bctx = brandCanvas.getContext('2d');
+        bctx.imageSmoothingEnabled = false;
+        drawSprite(bctx, PLAYER_SPRITE, 0, 0, 2, '#e2e8f0', '#38bdf8');
+
+        const table = document.getElementById('score-advance-table');
+        const entries = [
+          { matrix: CARRIER_SPRITE, primary: '#f43f5e', accent: '#fde047', label: 'コマンド・キャリア', pts: '100–300 PTS', ptsColor: '#fcd34d' },
+          { matrix: ENEMY_SPRITES.warden.frames[0], primary: ENEMY_SPRITES.warden.primaryColor, accent: ENEMY_SPRITES.warden.accentColor, label: ENEMY_SPRITES.warden.label, pts: '60 PTS', ptsColor: '#fda4af' },
+          { matrix: ENEMY_SPRITES.prism.frames[0], primary: ENEMY_SPRITES.prism.primaryColor, accent: ENEMY_SPRITES.prism.accentColor, label: ENEMY_SPRITES.prism.label, pts: '30 PTS', ptsColor: '#7dd3fc' },
+          { matrix: ENEMY_SPRITES.striker.frames[0], primary: ENEMY_SPRITES.striker.primaryColor, accent: ENEMY_SPRITES.striker.accentColor, label: ENEMY_SPRITES.striker.label, pts: '20 PTS', ptsColor: '#6ee7b7' },
+          { matrix: ENEMY_SPRITES.crawler.frames[0], primary: ENEMY_SPRITES.crawler.primaryColor, accent: ENEMY_SPRITES.crawler.accentColor, label: ENEMY_SPRITES.crawler.label, pts: '10 PTS', ptsColor: '#fde68a' },
+        ];
+
+        table.innerHTML = '';
+        for (let i = 0; i < entries.length; i++) {
+          const item = entries[i];
+          const row = document.createElement('div');
+          row.className = 'score-row';
+
+          const left = document.createElement('div');
+          left.className = 'score-row-left';
+
+          const slot = document.createElement('div');
+          slot.className = 'sprite-slot';
+
+          const c = document.createElement('canvas');
+          c.className = 'pixel-canvas';
+          c.width = item.matrix[0].length * 2;
+          c.height = item.matrix.length * 2;
+          const sctx = c.getContext('2d');
+          sctx.imageSmoothingEnabled = false;
+          drawSprite(sctx, item.matrix, 0, 0, 2, item.primary, item.accent);
+          slot.appendChild(c);
+
+          const nameSpan = document.createElement('span');
+          nameSpan.style.color = '#e2e8f0';
+          nameSpan.textContent = item.label;
+
+          left.appendChild(slot);
+          left.appendChild(nameSpan);
+
+          const ptsSpan = document.createElement('span');
+          ptsSpan.className = 'font-mono-num';
+          ptsSpan.style.fontWeight = '700';
+          ptsSpan.style.color = item.ptsColor;
+          ptsSpan.textContent = item.pts;
+
+          row.appendChild(left);
+          row.appendChild(ptsSpan);
+          table.appendChild(row);
+        }
+      }
+
+      function syncHud() {
+        elScore.textContent = score.toLocaleString();
+        elHiScore.textContent = highScore.toLocaleString();
+        elWave.textContent = String(waveNumber);
+        elScoreMobile.textContent = score.toLocaleString();
+        elWaveMobile.textContent = String(waveNumber);
+
+        let heartsHtml = '';
+        for (let i = 0; i < maxLives; i++) heartsHtml += createHeartSvg(i < lives);
+        elLivesDesktop.innerHTML = heartsHtml;
+        elLivesMobile.innerHTML = heartsHtml;
+        elLivesCount.textContent = lives + '/' + maxLives;
+
+        elWaveName.textContent = currentWave.name;
+        const livingCount = getLivingEnemies().length;
+        if (state === 'PLAYING') {
+          elStatusSep.style.display = 'inline';
+          elRemaining.style.display = 'inline';
+          elRemaining.textContent = '残り ' + livingCount + '/' + enemiesTotal;
+        } else {
+          elStatusSep.style.display = 'none';
+          elRemaining.style.display = 'none';
+        }
+
+        const boostParts = [];
+        if (combo >= 3 && state === 'PLAYING') {
+          boostParts.push('<span class="combo-text">' + combo + ' COMBO</span>');
+        }
+        if (twinTimer > 0) {
+          boostParts.push('<span class="boost-twin">ツイン砲 ' + (twinTimer / 1000).toFixed(1) + '秒</span>');
+        }
+        if (rapidTimer > 0) {
+          boostParts.push('<span class="boost-rapid">高速連射 ' + (rapidTimer / 1000).toFixed(1) + '秒</span>');
+        }
+        if (hasBarrier) {
+          boostParts.push('<span class="boost-barrier">バリア有効</span>');
+        }
+        elBoosts.innerHTML = boostParts.join('<span style="color:#475569" aria-hidden="true">·</span>');
+
+        const canPause = state === 'PLAYING' || state === 'PAUSED';
+        btnPause.disabled = !canPause;
+        iconPause.style.display = state === 'PAUSED' ? 'none' : 'block';
+        iconPlay.style.display = state === 'PAUSED' ? 'block' : 'none';
+        btnPause.title = state === 'PAUSED' ? 'ゲームを再開 (P)' : '一時停止 (P)';
+        btnPause.setAttribute('aria-label', state === 'PAUSED' ? 'ゲームを再開' : '一時停止');
+
+        overlayTitle.classList.toggle('hidden', state !== 'TITLE_MENU');
+        overlayPause.classList.toggle('hidden', state !== 'PAUSED');
+        overlayClear.classList.toggle('hidden', state !== 'WAVE_CLEAR');
+        overlayGameOver.classList.toggle('hidden', state !== 'GAME_OVER');
+
+        if (state === 'WAVE_CLEAR' && waveSummary) {
+          document.getElementById('clear-heading').textContent = 'WAVE ' + waveSummary.waveNumber + ' CLEAR';
+          document.getElementById('clear-subtitle').textContent = waveSummary.waveName + ' を突破しました';
+          document.getElementById('clear-wave-bonus').textContent = '+' + waveSummary.waveBonus.toLocaleString();
+          document.getElementById('clear-acc-label').textContent = '命中率 (' + waveSummary.accuracyPercent + '%)';
+          document.getElementById('clear-acc-bonus').textContent = '+' + waveSummary.accuracyBonus.toLocaleString();
+          document.getElementById('clear-score').textContent = waveSummary.score.toLocaleString();
+        }
+
+        if (state === 'GAME_OVER') {
+          const goSub = document.getElementById('gameover-sub');
+          if (isNewRecord && score > 0) {
+            goSub.textContent = 'ハイスコア更新';
+            goSub.classList.add('is-record');
+          } else {
+            goSub.textContent = '防衛ラインが突破されました';
+            goSub.classList.remove('is-record');
+          }
+          document.getElementById('gameover-score').textContent = score.toLocaleString();
+          document.getElementById('gameover-wave').textContent = 'WAVE ' + waveNumber;
+          document.getElementById('gameover-hiscore').textContent = highScore.toLocaleString();
+        }
+
+        if (stageModalOpen) renderStageModalList();
+      }
+
+      function renderStageModalList() {
+        stageList.innerHTML = '';
+        for (let i = 0; i < WAVE_TEMPLATES.length; i++) {
+          const w = WAVE_TEMPLATES[i];
+          const isActive = waveNumber === w.id;
+          const btn = document.createElement('button');
+          btn.type = 'button';
+          btn.className = 'stage-item' + (isActive ? ' is-active' : '');
+          btn.innerHTML =
+            '<div class="stage-item-body">' +
+              '<div class="stage-item-top">' +
+                '<span class="font-mono-num stage-item-num">0' + w.id + '</span>' +
+                '<span class="stage-item-name">' + w.name + '</span>' +
+              '</div>' +
+              '<div class="stage-item-meta">' +
+                '<span>' + w.difficulty + '</span>' +
+                '<span aria-hidden="true">·</span>' +
+                '<span class="stage-item-desc">' + w.description + '</span>' +
+              '</div>' +
+            '</div>' +
+            (isActive ? '<span class="stage-active-label">選択中</span>' : '');
+          btn.addEventListener('click', function () {
+            startNewGame(w.id);
+          });
+          stageList.appendChild(btn);
+        }
+        modalRecordText.textContent = '記録: ' + highScore.toLocaleString() + ' (最高W' + maxWaveReached + ')';
+        btnResetHiScore.disabled = highScore === 0 && maxWaveReached <= 1;
+      }
+
+      function openStageModal() {
+        if (state === 'PLAYING') togglePause();
+        stageModalOpen = true;
+        renderStageModalList();
+        modalStages.classList.remove('hidden');
+      }
+
+      function closeStageModal() {
+        stageModalOpen = false;
+        modalStages.classList.add('hidden');
+      }
+
+      /* ======================================================================
+         6. EVENT BINDINGS & MAIN LOOP
+         ====================================================================== */
+      function updateMuteUi(isMuted) {
+        btnMute.classList.toggle('is-muted', isMuted);
+        btnMute.setAttribute('aria-pressed', String(!isMuted));
+        btnMute.title = isMuted ? 'サウンドをオン (M)' : 'サウンドをミュート (M)';
+        btnMute.setAttribute('aria-label', isMuted ? 'サウンドをオン' : 'サウンドをミュート');
+        iconSoundOn.style.display = isMuted ? 'none' : 'block';
+        iconSoundOff.style.display = isMuted ? 'block' : 'none';
+      }
+
+      document.getElementById('btn-brand').addEventListener('click', returnToTitle);
+      btnMute.addEventListener('click', function () {
+        updateMuteUi(retroAudio.toggleMute());
+      });
+      btnCrt.addEventListener('click', function () {
+        crtEnabled = !crtEnabled;
+        applyCrtState();
+        persistSaveData();
+      });
+      btnPause.addEventListener('click', togglePause);
+      document.getElementById('btn-stages').addEventListener('click', openStageModal);
+      document.getElementById('btn-title-stages').addEventListener('click', openStageModal);
+      document.getElementById('btn-gameover-stages').addEventListener('click', openStageModal);
+      document.getElementById('btn-close-stages').addEventListener('click', closeStageModal);
+      modalStages.addEventListener('click', closeStageModal);
+      document.getElementById('modal-panel').addEventListener('click', function (e) { e.stopPropagation(); });
+
+      document.getElementById('btn-export-json').addEventListener('click', exportJsonBackup);
+      const inputImportJson = document.getElementById('input-import-json');
+      document.getElementById('btn-import-json').addEventListener('click', function () {
+        inputImportJson.value = '';
+        inputImportJson.click();
+      });
+      inputImportJson.addEventListener('change', function (e) {
+        if (e.target.files && e.target.files[0]) {
+          importJsonBackup(e.target.files[0]);
+        }
+      });
+
+      btnResetHiScore.addEventListener('click', function () {
+        highScore = 0;
+        maxWaveReached = 1;
+        isNewRecord = false;
+        persistSaveData();
+        syncHud();
+      });
+
+      document.getElementById('btn-start').addEventListener('click', function () { startNewGame(1); });
+      document.getElementById('btn-resume').addEventListener('click', togglePause);
+      document.getElementById('btn-restart').addEventListener('click', restartCurrentWave);
+      document.getElementById('btn-next-wave').addEventListener('click', startNextWave);
+      document.getElementById('btn-retry').addEventListener('click', function () { startNewGame(1); });
+
+      function setPointerFromEvent(e) {
+        const rect = canvas.getBoundingClientRect();
+        const normX = (e.clientX - rect.left) / rect.width;
+        pointerTargetX = Math.max(14, Math.min(CANVAS_WIDTH - PLAYER_WIDTH - 14, normX * CANVAS_WIDTH - PLAYER_WIDTH / 2));
+      }
+
+      canvas.addEventListener('pointermove', function (e) {
+        if (state !== 'PLAYING') return;
+        if (e.pointerType === 'mouse' && e.buttons === 0) return;
+        setPointerFromEvent(e);
+      });
+      canvas.addEventListener('pointerdown', function (e) {
+        if (state !== 'PLAYING') return;
+        retroAudio.unlock();
+        setPointerFromEvent(e);
+        input.fire = true;
+      });
+      canvas.addEventListener('pointerup', function () { input.fire = false; });
+      canvas.addEventListener('pointerleave', function () { input.fire = false; });
+
+      function bindHoldButton(el, key) {
+        el.addEventListener('pointerdown', function (e) {
+          e.preventDefault();
+          retroAudio.unlock();
+          input[key] = true;
+          if (key === 'left' || key === 'right') pointerTargetX = null;
+        });
+        const release = function () { input[key] = false; };
+        el.addEventListener('pointerup', release);
+        el.addEventListener('pointerleave', release);
+        el.addEventListener('pointercancel', release);
+      }
+      bindHoldButton(document.getElementById('touch-left'), 'left');
+      bindHoldButton(document.getElementById('touch-right'), 'right');
+      bindHoldButton(document.getElementById('touch-fire'), 'fire');
+
+      /* 物理キーコード (e.code) 優先判定（IMEオン時でも即時発射を保証） */
+      window.addEventListener('keydown', function (e) {
+        if (stageModalOpen) {
+          if (e.code === 'Escape') closeStageModal();
+          return;
+        }
+        const code = e.code;
+        if (code === 'ArrowLeft' || code === 'KeyA') {
+          e.preventDefault();
+          input.left = true;
+          pointerTargetX = null;
+        } else if (code === 'ArrowRight' || code === 'KeyD') {
+          e.preventDefault();
+          input.right = true;
+          pointerTargetX = null;
+        } else if (code === 'Space' || code === 'KeyZ' || code === 'ArrowUp' || code === 'KeyW' || e.key === ' ') {
+          e.preventDefault();
+          retroAudio.unlock();
+          if (state === 'TITLE_MENU') startNewGame(1);
+          else if (state === 'WAVE_CLEAR') startNextWave();
+          else if (state === 'GAME_OVER') startNewGame(1);
+          else {
+            input.fire = true;
+            if (!e.repeat && playerFireCooldown <= 0) {
+              tryFirePlayerShot();
+            }
+          }
+        } else if (code === 'Enter') {
+          if (state === 'TITLE_MENU') { e.preventDefault(); startNewGame(1); }
+          else if (state === 'WAVE_CLEAR') { e.preventDefault(); startNextWave(); }
+          else if (state === 'GAME_OVER') { e.preventDefault(); startNewGame(1); }
+          else if (state === 'PAUSED') { e.preventDefault(); togglePause(); }
+        } else if (code === 'KeyP' || code === 'Escape') {
+          e.preventDefault();
+          togglePause();
+        } else if (code === 'KeyM') {
+          e.preventDefault();
+          updateMuteUi(retroAudio.toggleMute());
+        }
+      });
+
+      window.addEventListener('keyup', function (e) {
+        const code = e.code;
+        if (code === 'ArrowLeft' || code === 'KeyA') input.left = false;
+        else if (code === 'ArrowRight' || code === 'KeyD') input.right = false;
+        else if (code === 'Space' || code === 'KeyZ' || code === 'ArrowUp' || code === 'KeyW' || e.key === ' ') input.fire = false;
+      });
+
+      window.addEventListener('blur', function () {
+        input.left = false;
+        input.right = false;
+        input.fire = false;
+        if (state === 'PLAYING') togglePause();
+      });
+
+      window.addEventListener('resize', setupCanvasResolution);
+
+      applyCrtState();
+      setupCanvasResolution();
+      initStarfield();
+      buildBunkers();
+      spawnWaveEntities(1);
+      renderSpritePreviews();
+      syncHud();
+
+      let lastTime = performance.now();
+      function frame(now) {
+        const dt = Math.min((now - lastTime) / 1000, 0.05);
+        lastTime = now;
+        update(dt);
+        render();
+        requestAnimationFrame(frame);
+      }
+      requestAnimationFrame(frame);
+    })();
+  </script>
+</body>
+</html>

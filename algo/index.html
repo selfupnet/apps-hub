@@ -1,0 +1,2705 @@
+<!doctype html>
+<html lang="ja">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+    <title>アルゴリズム可視化ラボ — ソート＆経路探索シミュレータ</title>
+    <meta
+      name="description"
+      content="ソートアルゴリズムの比較レースと2D迷路の経路探索を、高精細アニメーションとWeb Audio音階合成で体験するインタラクティブ学習シミュレータ。"
+    />
+    <meta property="og:title" content="アルゴリズム可視化ラボ — ソート＆経路探索シミュレータ" />
+    <meta
+      property="og:description"
+      content="ソートアルゴリズムの比較レースと2D迷路の経路探索を、高精細アニメーションとWeb Audio音階合成で体験するインタラクティブ学習シミュレータ。"
+    />
+    <meta property="og:type" content="website" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&family=Noto+Sans+JP:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@500;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css"
+    />
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+      tailwind.config = {
+        theme: {
+          extend: {
+            fontFamily: {
+              display: ['"Plus Jakarta Sans"', '"Noto Sans JP"', 'system-ui', 'sans-serif'],
+              sans: ['"Noto Sans JP"', '"Plus Jakarta Sans"', 'system-ui', 'sans-serif'],
+              mono: ['"JetBrains Mono"', 'ui-monospace', 'SFMono-Regular', 'Menlo', 'monospace'],
+            },
+          },
+        },
+      };
+    </script>
+    <style>
+      body {
+        font-family: "Noto Sans JP", "Plus Jakarta Sans", system-ui, sans-serif;
+        background-color: #f8fafc;
+        color: #0f172a;
+        padding-bottom: env(safe-area-inset-bottom);
+      }
+      .font-mono {
+        font-family: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
+        font-variant-numeric: tabular-nums;
+      }
+      input[type="range"].lab-slider {
+        -webkit-appearance: none;
+        appearance: none;
+        height: 6px;
+        border-radius: 9999px;
+        background: #e2e8f0;
+        outline: none;
+        cursor: pointer;
+      }
+      input[type="range"].lab-slider::-webkit-slider-thumb {
+        -webkit-appearance: none;
+        appearance: none;
+        width: 18px;
+        height: 18px;
+        border-radius: 50%;
+        background: #0f172a;
+        border: 2px solid #ffffff;
+        box-shadow: 0 1px 3px rgba(15, 23, 42, 0.25);
+        transition: transform 150ms cubic-bezier(0.16, 1, 0.3, 1), background-color 150ms ease;
+      }
+      input[type="range"].lab-slider::-webkit-slider-thumb:hover {
+        transform: scale(1.1);
+        background: #4f46e5;
+      }
+      input[type="range"].lab-slider::-moz-range-thumb {
+        width: 18px;
+        height: 18px;
+        border-radius: 50%;
+        background: #0f172a;
+        border: 2px solid #ffffff;
+        box-shadow: 0 1px 3px rgba(15, 23, 42, 0.25);
+        cursor: pointer;
+      }
+    </style>
+  </head>
+  <body class="bg-slate-50 text-slate-800 antialiased selection:bg-indigo-100 selection:text-indigo-900 min-h-screen flex flex-col">
+    <!-- Top Bar (Apps Hub Unified Header) -->
+    <header class="sticky top-0 z-30 border-b border-slate-200/80 bg-white/95 backdrop-blur-sm">
+      <div class="mx-auto flex max-w-[1440px] items-center justify-between gap-4 px-4 py-3 sm:px-6 lg:px-8">
+        <!-- Left: Apps Hub Return Link -->
+        <div class="flex items-center gap-3 shrink-0">
+          <a
+            href="../"
+            class="inline-flex items-center gap-1.5 text-xs font-semibold text-slate-500 hover:text-slate-900 transition py-1.5 px-3 rounded-xl bg-slate-100 hover:bg-slate-200"
+          >
+            <i class="fa-solid fa-arrow-left text-[10px]"></i>
+            <span>Apps Hub</span>
+          </a>
+        </div>
+
+        <!-- Center: Title & Nav -->
+        <div class="flex items-center gap-6">
+          <button
+            id="brand-home-btn"
+            type="button"
+            class="inline-flex items-center gap-2 font-display text-left text-base sm:text-lg font-bold tracking-tight text-slate-900 whitespace-nowrap shrink-0 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-indigo-600"
+          >
+            <span class="flex h-7 w-7 items-center justify-center rounded-lg bg-indigo-50 text-indigo-600 text-xs">
+              <i class="fa-solid fa-bars-staggered"></i>
+            </span>
+            <span>アルゴリズム可視化ラボ</span>
+          </button>
+
+          <nav class="hidden lg:flex items-center gap-6 text-sm font-medium text-slate-600">
+            <button
+              id="nav-sort-btn"
+              type="button"
+              class="py-1 transition-colors whitespace-nowrap shrink-0 border-b-2 border-indigo-600 text-slate-900 font-semibold"
+            >
+              ソート・レース盤
+            </button>
+            <button
+              id="nav-path-btn"
+              type="button"
+              class="py-1 transition-colors whitespace-nowrap shrink-0 border-b-2 border-transparent hover:text-slate-900 hover:border-slate-300"
+            >
+              経路探索・迷路ラボ
+            </button>
+            <button
+              id="nav-guide-btn"
+              type="button"
+              class="py-1 border-b-2 border-transparent hover:text-slate-900 hover:border-slate-300 transition-colors whitespace-nowrap shrink-0"
+            >
+              アルゴリズム比較表
+            </button>
+          </nav>
+        </div>
+
+        <!-- Right: Functional Sound Toggle -->
+        <div class="flex items-center shrink-0">
+          <button
+            id="sound-toggle-btn"
+            type="button"
+            aria-pressed="true"
+            class="inline-flex items-center gap-2 rounded-xl border border-slate-900 bg-slate-900 px-3.5 py-2 text-xs font-semibold text-white transition-colors hover:bg-slate-800 whitespace-nowrap shrink-0"
+          >
+            <i id="sound-icon-on" class="fa-solid fa-volume-high text-xs"></i>
+            <i id="sound-icon-off" class="fa-solid fa-volume-xmark text-xs hidden"></i>
+            <span id="sound-toggle-label">音声: ON</span>
+          </button>
+        </div>
+      </div>
+    </header>
+
+    <main class="mx-auto w-full max-w-[1440px] flex-1 space-y-6 px-4 py-6 sm:px-6 lg:px-8">
+      <!-- Workspace Mode Switcher -->
+      <div class="flex flex-wrap items-center justify-between gap-4">
+        <div role="tablist" aria-label="シミュレータモード切替" class="inline-flex items-center gap-1 rounded-2xl border border-slate-200/80 bg-white p-1.5 shadow-xs">
+          <button
+            id="tab-sort-btn"
+            type="button"
+            role="tab"
+            aria-selected="true"
+            class="inline-flex items-center gap-2 rounded-xl bg-slate-900 px-4 py-2 text-xs font-semibold text-white transition-colors whitespace-nowrap shrink-0"
+          >
+            <i class="fa-solid fa-chart-column"></i>
+            <span>モードA：ソート・レース盤</span>
+          </button>
+          <button
+            id="tab-path-btn"
+            type="button"
+            role="tab"
+            aria-selected="false"
+            class="inline-flex items-center gap-2 rounded-xl px-4 py-2 text-xs font-semibold text-slate-600 transition-colors hover:bg-slate-50 hover:text-slate-900 whitespace-nowrap shrink-0"
+          >
+            <i class="fa-solid fa-route"></i>
+            <span>モードB：経路探索・迷路ラボ</span>
+          </button>
+        </div>
+
+        <p class="text-xs text-slate-500">Web Audio API 音階合成対応 · 高DPI Canvas 描画</p>
+      </div>
+
+      <!-- ==================== MODE A: SORT RACE BOARD ==================== -->
+      <section id="mode-sort-section" class="space-y-6">
+        <!-- Toolbar -->
+        <div class="flex flex-col gap-4 rounded-2xl border border-slate-200/80 bg-white p-4 sm:p-5 shadow-xs">
+          <div class="flex flex-wrap items-center justify-between gap-4 border-b border-slate-100 pb-4">
+            <div class="flex flex-wrap items-center gap-3">
+              <h1 class="font-display text-xl font-bold tracking-tight text-slate-900">
+                モードA：ソート・レース盤
+              </h1>
+              <span id="sort-toolbar-meta" class="text-xs text-slate-500">
+                配列要素数 40 · 再生速度 18x
+              </span>
+            </div>
+
+            <div role="group" aria-label="表示モード切替" class="inline-flex items-center gap-1 rounded-xl bg-slate-100 p-1">
+              <button
+                id="sort-view-single-btn"
+                type="button"
+                class="inline-flex items-center gap-1.5 rounded-lg bg-white px-3 py-1.5 text-xs font-semibold text-slate-900 shadow-xs transition-colors whitespace-nowrap shrink-0"
+              >
+                <i class="fa-regular fa-square"></i>
+                <span>シングル観察</span>
+              </button>
+              <button
+                id="sort-view-vs-btn"
+                type="button"
+                class="inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-semibold text-slate-600 hover:text-slate-900 transition-colors whitespace-nowrap shrink-0"
+              >
+                <i class="fa-solid fa-table-columns"></i>
+                <span>2種同時レース (VS比較)</span>
+              </button>
+            </div>
+          </div>
+
+          <div class="grid grid-cols-1 gap-5 lg:grid-cols-12 lg:items-end">
+            <!-- Sliders -->
+            <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:col-span-5">
+              <div class="space-y-2">
+                <div class="flex items-center justify-between text-xs font-medium text-slate-700">
+                  <label for="sort-count-slider">要素数</label>
+                  <span id="sort-count-val" class="font-mono font-semibold text-slate-900">40 本</span>
+                </div>
+                <input id="sort-count-slider" type="range" min="10" max="100" step="1" value="40" class="lab-slider w-full" />
+                <div class="flex justify-between text-[11px] text-slate-400 font-mono">
+                  <span>10</span><span>40</span><span>100</span>
+                </div>
+              </div>
+
+              <div class="space-y-2">
+                <div class="flex items-center justify-between text-xs font-medium text-slate-700">
+                  <label for="sort-speed-slider">再生速度</label>
+                  <span id="sort-speed-val" class="font-mono font-semibold text-slate-900">18x</span>
+                </div>
+                <input id="sort-speed-slider" type="range" min="1" max="50" step="1" value="18" class="lab-slider w-full" />
+                <div class="flex justify-between text-[11px] text-slate-400 font-mono">
+                  <span>1x</span><span>25x</span><span>50x</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Initial Data Pattern -->
+            <div class="space-y-2 lg:col-span-4">
+              <span class="block text-xs font-medium text-slate-700">初期データパターン</span>
+              <div id="sort-pattern-group" class="grid grid-cols-2 gap-1.5 sm:grid-cols-4 lg:grid-cols-2 xl:grid-cols-4">
+                <button type="button" data-pattern="random" title="一様乱数シャッフル" class="sort-pattern-btn rounded-xl border border-indigo-600 bg-indigo-50 px-2.5 py-2 text-xs font-semibold text-indigo-900 transition-colors whitespace-nowrap truncate">ランダム</button>
+                <button type="button" data-pattern="nearly-sorted" title="挿入ソートの強み検証用" class="sort-pattern-btn rounded-xl border border-slate-200 bg-white px-2.5 py-2 text-xs font-medium text-slate-700 hover:bg-slate-50 transition-colors whitespace-nowrap truncate">ほぼ整列済み</button>
+                <button type="button" data-pattern="reversed" title="ワーストケース検証用" class="sort-pattern-btn rounded-xl border border-slate-200 bg-white px-2.5 py-2 text-xs font-medium text-slate-700 hover:bg-slate-50 transition-colors whitespace-nowrap truncate">逆順</button>
+                <button type="button" data-pattern="pyramid" title="ピラミッド配列" class="sort-pattern-btn rounded-xl border border-slate-200 bg-white px-2.5 py-2 text-xs font-medium text-slate-700 hover:bg-slate-50 transition-colors whitespace-nowrap truncate">山型</button>
+              </div>
+            </div>
+
+            <!-- Playback Controls -->
+            <div class="flex flex-wrap items-center gap-2 lg:col-span-3 lg:justify-end">
+              <button
+                id="sort-play-btn"
+                type="button"
+                class="inline-flex min-h-[40px] flex-1 sm:flex-initial items-center justify-center gap-1.5 rounded-xl bg-indigo-600 px-4 py-2 text-xs font-semibold text-white transition-colors hover:bg-indigo-700 whitespace-nowrap shrink-0"
+              >
+                <span id="sort-play-label">スタート</span>
+              </button>
+              <button
+                id="sort-step-btn"
+                type="button"
+                class="inline-flex min-h-[40px] items-center justify-center gap-1.5 rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs font-semibold text-slate-700 transition-colors hover:bg-slate-50 disabled:opacity-40 whitespace-nowrap shrink-0"
+                title="1ステップ進む"
+              >
+                <span>1手進む</span>
+              </button>
+              <button
+                id="sort-rewind-btn"
+                type="button"
+                class="inline-flex min-h-[40px] items-center justify-center gap-1.5 rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs font-semibold text-slate-700 transition-colors hover:bg-slate-50 whitespace-nowrap shrink-0"
+                title="現在の配列のまま先頭に戻す"
+              >
+                <span>先頭へ</span>
+              </button>
+              <button
+                id="sort-reset-btn"
+                type="button"
+                class="inline-flex min-h-[40px] items-center justify-center gap-1.5 rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs font-semibold text-slate-700 transition-colors hover:bg-slate-50 whitespace-nowrap shrink-0"
+                title="配列を再生成してリセット"
+              >
+                <span>リセット</span>
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Single View -->
+        <div id="sort-single-container" class="grid grid-cols-1 gap-6 lg:grid-cols-12 lg:items-start">
+          <div class="space-y-4 rounded-2xl border border-slate-200/80 bg-white p-4 sm:p-5 shadow-xs lg:col-span-8">
+            <div class="flex flex-wrap items-baseline justify-between gap-3 border-b border-slate-100 pb-3">
+              <div>
+                <h2 id="sort-single-title" class="font-display text-lg font-bold text-slate-900">クイックソート</h2>
+                <p id="sort-single-meta" class="mt-0.5 text-xs text-slate-500">
+                  平均計算量 <span class="font-mono text-slate-700">O(n log n)</span> · 不安定ソート · 待機中
+                </p>
+              </div>
+              <dl class="flex flex-wrap items-center gap-5 text-xs">
+                <div>
+                  <dt class="text-slate-500">比較回数</dt>
+                  <dd id="sort-single-comp" class="font-mono text-base font-semibold text-slate-900">0</dd>
+                </div>
+                <div>
+                  <dt class="text-slate-500">交換 / 書込</dt>
+                  <dd id="sort-single-writes" class="font-mono text-base font-semibold text-slate-900">0</dd>
+                </div>
+                <div>
+                  <dt class="text-slate-500">経過ステップ</dt>
+                  <dd id="sort-single-steps" class="font-mono text-base font-semibold text-slate-900">0 / 0</dd>
+                </div>
+              </dl>
+            </div>
+
+            <div id="sort-single-canvas-wrap" class="relative w-full h-[340px] lg:h-[420px]">
+              <canvas id="sort-single-canvas" class="block h-full w-full"></canvas>
+            </div>
+
+            <div class="flex flex-wrap items-center gap-x-5 gap-y-2 border-t border-slate-100 pt-3 text-xs text-slate-600">
+              <span class="inline-flex items-center gap-2"><span class="h-3 w-3 rounded-sm bg-[#94a3b8]"></span><span>通常（未確定）</span></span>
+              <span class="inline-flex items-center gap-2"><span class="h-3 w-3 rounded-sm bg-[#f59e0b]"></span><span>比較中</span></span>
+              <span class="inline-flex items-center gap-2"><span class="h-3 w-3 rounded-sm bg-[#f43f5e]"></span><span>入替・上書中</span></span>
+              <span class="inline-flex items-center gap-2"><span class="h-3 w-3 rounded-sm bg-[#6366f1]"></span><span>基準値 / マージ範囲</span></span>
+              <span class="inline-flex items-center gap-2"><span class="h-3 w-3 rounded-sm bg-[#10b981]"></span><span>整列完了</span></span>
+            </div>
+          </div>
+
+          <!-- Algorithm Selector Deck -->
+          <div class="space-y-4 rounded-2xl border border-slate-200/80 bg-white p-4 sm:p-5 shadow-xs lg:col-span-4">
+            <h3 class="font-display text-sm font-bold text-slate-900">アルゴリズム選択（6種）</h3>
+            <div id="sort-algo-list" class="grid grid-cols-1 gap-2"></div>
+            <div class="border-t border-slate-100 pt-4 space-y-2">
+              <div class="text-xs font-semibold text-slate-900">解説メモ</div>
+              <p id="sort-single-summary" class="text-sm leading-relaxed text-slate-600"></p>
+              <p id="sort-single-pattern-note" class="text-xs text-slate-500"></p>
+            </div>
+          </div>
+        </div>
+
+        <!-- VS Race View -->
+        <div id="sort-vs-container" class="hidden space-y-4">
+          <div class="grid grid-cols-1 gap-5 lg:grid-cols-2">
+            <!-- Lane A -->
+            <div class="flex flex-col gap-3 rounded-2xl border border-slate-200/80 bg-white p-4 sm:p-5 shadow-xs">
+              <div class="flex flex-wrap items-center justify-between gap-3 border-b border-slate-100 pb-3">
+                <div class="flex items-center gap-3">
+                  <span class="text-xs font-semibold text-slate-500">レーン A</span>
+                  <select id="sort-vs-select-a" aria-label="レーンAのアルゴリズム" class="rounded-xl border border-slate-300 bg-white px-3 py-1.5 text-sm font-semibold text-slate-900 focus:border-indigo-600 focus:outline-none"></select>
+                </div>
+                <div id="sort-vs-status-a" class="hidden items-center gap-1.5 text-xs font-semibold text-emerald-700"></div>
+              </div>
+              <dl class="grid grid-cols-3 gap-3 text-xs">
+                <div><dt class="text-slate-500">比較回数</dt><dd id="sort-vs-comp-a" class="font-mono text-sm font-semibold text-slate-900">0</dd></div>
+                <div><dt class="text-slate-500">交換 / 書込</dt><dd id="sort-vs-writes-a" class="font-mono text-sm font-semibold text-slate-900">0</dd></div>
+                <div><dt class="text-slate-500">経過ステップ</dt><dd id="sort-vs-steps-a" class="font-mono text-sm font-semibold text-slate-900">0</dd></div>
+              </dl>
+              <div id="sort-vs-wrap-a" class="relative w-full h-[260px] sm:h-[300px]">
+                <canvas id="sort-vs-canvas-a" class="block h-full w-full"></canvas>
+              </div>
+              <p id="sort-vs-summary-a" class="text-xs text-slate-500 border-t border-slate-100 pt-2.5"></p>
+            </div>
+
+            <!-- Lane B -->
+            <div class="flex flex-col gap-3 rounded-2xl border border-slate-200/80 bg-white p-4 sm:p-5 shadow-xs">
+              <div class="flex flex-wrap items-center justify-between gap-3 border-b border-slate-100 pb-3">
+                <div class="flex items-center gap-3">
+                  <span class="text-xs font-semibold text-slate-500">レーン B</span>
+                  <select id="sort-vs-select-b" aria-label="レーンBのアルゴリズム" class="rounded-xl border border-slate-300 bg-white px-3 py-1.5 text-sm font-semibold text-slate-900 focus:border-indigo-600 focus:outline-none"></select>
+                </div>
+                <div id="sort-vs-status-b" class="hidden items-center gap-1.5 text-xs font-semibold text-emerald-700"></div>
+              </div>
+              <dl class="grid grid-cols-3 gap-3 text-xs">
+                <div><dt class="text-slate-500">比較回数</dt><dd id="sort-vs-comp-b" class="font-mono text-sm font-semibold text-slate-900">0</dd></div>
+                <div><dt class="text-slate-500">交換 / 書込</dt><dd id="sort-vs-writes-b" class="font-mono text-sm font-semibold text-slate-900">0</dd></div>
+                <div><dt class="text-slate-500">経過ステップ</dt><dd id="sort-vs-steps-b" class="font-mono text-sm font-semibold text-slate-900">0</dd></div>
+              </dl>
+              <div id="sort-vs-wrap-b" class="relative w-full h-[260px] sm:h-[300px]">
+                <canvas id="sort-vs-canvas-b" class="block h-full w-full"></canvas>
+              </div>
+              <p id="sort-vs-summary-b" class="text-xs text-slate-500 border-t border-slate-100 pt-2.5"></p>
+            </div>
+          </div>
+
+          <div class="flex flex-wrap items-center justify-between gap-4 rounded-2xl border border-slate-200/80 bg-white px-4 py-3 text-xs text-slate-600 shadow-xs">
+            <div class="flex flex-wrap items-center gap-x-5 gap-y-2">
+              <span class="inline-flex items-center gap-2"><span class="h-3 w-3 rounded-sm bg-[#94a3b8]"></span><span>通常</span></span>
+              <span class="inline-flex items-center gap-2"><span class="h-3 w-3 rounded-sm bg-[#f59e0b]"></span><span>比較中</span></span>
+              <span class="inline-flex items-center gap-2"><span class="h-3 w-3 rounded-sm bg-[#f43f5e]"></span><span>入替・上書中</span></span>
+              <span class="inline-flex items-center gap-2"><span class="h-3 w-3 rounded-sm bg-[#6366f1]"></span><span>基準値 / マージ範囲</span></span>
+              <span class="inline-flex items-center gap-2"><span class="h-3 w-3 rounded-sm bg-[#10b981]"></span><span>整列完了</span></span>
+            </div>
+            <span class="text-slate-500">同一の初期配列データに対して同時実行中</span>
+          </div>
+        </div>
+      </section>
+
+      <!-- ==================== MODE B: PATHFINDING MAZE LAB ==================== -->
+      <section id="mode-path-section" class="hidden space-y-6">
+        <div class="flex flex-col gap-4 rounded-2xl border border-slate-200/80 bg-white p-4 sm:p-5 shadow-xs">
+          <div class="flex flex-wrap items-center justify-between gap-4 border-b border-slate-100 pb-4">
+            <div class="flex flex-wrap items-center gap-3">
+              <h1 class="font-display text-xl font-bold tracking-tight text-slate-900">
+                モードB：経路探索・迷路ラボ
+              </h1>
+              <span id="path-board-meta" class="text-xs text-slate-500">
+                盤面 31 × 19 マス · 重み地形コスト 5
+              </span>
+            </div>
+
+            <div class="flex flex-wrap items-center gap-2">
+              <button id="path-fit-btn" type="button" class="hidden rounded-xl border border-slate-200 bg-white px-3 py-1.5 text-xs font-medium text-slate-700 hover:bg-slate-50 whitespace-nowrap">
+                画面幅に盤面を合わせる
+              </button>
+              <button id="path-export-btn" type="button" class="inline-flex items-center gap-1.5 rounded-xl border border-slate-200 bg-white px-3 py-1.5 text-xs font-medium text-slate-700 hover:bg-slate-50 whitespace-nowrap">
+                <i class="fa-solid fa-download text-[11px]"></i>
+                <span>JSON保存</span>
+              </button>
+              <button id="path-import-btn" type="button" class="inline-flex items-center gap-1.5 rounded-xl border border-slate-200 bg-white px-3 py-1.5 text-xs font-medium text-slate-700 hover:bg-slate-50 whitespace-nowrap">
+                <i class="fa-solid fa-upload text-[11px]"></i>
+                <span>JSON読込</span>
+              </button>
+              <input id="path-import-input" type="file" accept=".json,application/json" class="hidden" />
+            </div>
+          </div>
+
+          <div class="grid grid-cols-1 gap-4 lg:grid-cols-12 lg:items-end">
+            <!-- Drawing Tools -->
+            <div class="space-y-2 lg:col-span-6">
+              <span class="block text-xs font-medium text-slate-700">
+                描画ツール（盤面ドラッグで連続配置 · アイコン直接ドラッグ可）
+              </span>
+              <div id="path-tools-group" class="flex flex-wrap gap-1.5">
+                <button type="button" data-tool="wall" class="path-tool-btn inline-flex min-h-[38px] items-center gap-1.5 rounded-xl border border-indigo-600 bg-indigo-50 px-3 py-1.5 text-xs font-semibold text-indigo-900 transition-colors whitespace-nowrap">壁を描く/消す</button>
+                <button type="button" data-tool="weight" class="path-tool-btn inline-flex min-h-[38px] items-center gap-1.5 rounded-xl border border-slate-200 bg-white px-3 py-1.5 text-xs font-semibold text-slate-700 hover:bg-slate-50 transition-colors whitespace-nowrap">重みマス (コスト5)</button>
+                <button type="button" data-tool="erase" class="path-tool-btn inline-flex min-h-[38px] items-center gap-1.5 rounded-xl border border-slate-200 bg-white px-3 py-1.5 text-xs font-semibold text-slate-700 hover:bg-slate-50 transition-colors whitespace-nowrap">消しゴム</button>
+                <button type="button" data-tool="move-start" class="path-tool-btn inline-flex min-h-[38px] items-center gap-1.5 rounded-xl border border-slate-200 bg-white px-3 py-1.5 text-xs font-semibold text-slate-700 hover:bg-slate-50 transition-colors whitespace-nowrap">スタート移動</button>
+                <button type="button" data-tool="move-goal" class="path-tool-btn inline-flex min-h-[38px] items-center gap-1.5 rounded-xl border border-slate-200 bg-white px-3 py-1.5 text-xs font-semibold text-slate-700 hover:bg-slate-50 transition-colors whitespace-nowrap">ゴール移動</button>
+              </div>
+            </div>
+
+            <!-- Speed Slider -->
+            <div class="space-y-2 lg:col-span-3">
+              <div class="flex items-center justify-between text-xs font-medium text-slate-700">
+                <label for="path-speed-slider">探索速度</label>
+                <span id="path-speed-val" class="font-mono font-semibold text-slate-900">20x</span>
+              </div>
+              <input id="path-speed-slider" type="range" min="1" max="50" step="1" value="20" class="lab-slider w-full" />
+            </div>
+
+            <!-- Playback Controls -->
+            <div class="flex flex-wrap items-center gap-2 lg:col-span-3 lg:justify-end">
+              <button
+                id="path-play-btn"
+                type="button"
+                class="inline-flex min-h-[40px] flex-1 sm:flex-initial items-center justify-center gap-1.5 rounded-xl bg-indigo-600 px-4 py-2 text-xs font-semibold text-white transition-colors hover:bg-indigo-700 whitespace-nowrap shrink-0"
+              >
+                <span id="path-play-label">探索スタート</span>
+              </button>
+              <button
+                id="path-step-btn"
+                type="button"
+                class="inline-flex min-h-[40px] items-center justify-center gap-1.5 rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-50 whitespace-nowrap shrink-0"
+              >
+                <span>1手進む</span>
+              </button>
+              <button
+                id="path-clear-history-btn"
+                type="button"
+                class="inline-flex min-h-[40px] items-center justify-center gap-1.5 rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-50 whitespace-nowrap shrink-0"
+                title="壁を残して探索履歴のみリセット"
+              >
+                <span>履歴リセット</span>
+              </button>
+            </div>
+          </div>
+
+          <p id="path-feedback-msg" class="hidden text-xs font-medium text-indigo-700" role="status"></p>
+        </div>
+
+        <div class="grid grid-cols-1 gap-6 lg:grid-cols-12 lg:items-start">
+          <!-- Left Grid Canvas Stage -->
+          <div class="space-y-4 rounded-2xl border border-slate-200/80 bg-white p-4 sm:p-5 shadow-xs lg:col-span-8">
+            <div class="flex flex-wrap items-baseline justify-between gap-3 border-b border-slate-100 pb-3">
+              <div>
+                <h2 id="path-algo-title" class="font-display text-lg font-bold text-slate-900">A*（エースター）探索</h2>
+                <p id="path-algo-meta" class="mt-0.5 text-xs text-slate-500">最短経路保証：あり · 重み考慮：あり</p>
+              </div>
+              <dl class="flex flex-wrap items-center gap-5 text-xs">
+                <div><dt class="text-slate-500">探索マス数</dt><dd id="path-stat-visited" class="font-mono text-base font-semibold text-slate-900">0</dd></div>
+                <div><dt class="text-slate-500">最短ステップ</dt><dd id="path-stat-steps" class="font-mono text-base font-semibold text-slate-900">—</dd></div>
+                <div><dt class="text-slate-500">合計コスト</dt><dd id="path-stat-cost" class="font-mono text-base font-semibold text-slate-900">—</dd></div>
+                <div><dt class="text-slate-500">計算時間</dt><dd id="path-stat-time" class="font-mono text-base font-semibold text-slate-900">—</dd></div>
+              </dl>
+            </div>
+
+            <div id="path-unreachable-alert" class="hidden rounded-xl border border-rose-200 bg-rose-50 px-3.5 py-2.5 text-xs font-medium text-rose-800">
+              ゴールへ到達可能な経路が見つかりませんでした。壁の一部を消して通路を開けてください。
+            </div>
+
+            <div id="path-canvas-wrap" class="w-full overflow-hidden rounded-xl border border-slate-200 bg-slate-50 flex justify-center">
+              <canvas id="path-canvas" class="block cursor-crosshair select-none" style="touch-action: none;"></canvas>
+            </div>
+
+            <div class="flex flex-wrap items-center gap-x-5 gap-y-2 border-t border-slate-100 pt-3 text-xs text-slate-600">
+              <span class="inline-flex items-center gap-1.5"><span class="h-3 w-3 rounded-full bg-[#10b981]"></span><span>スタート</span></span>
+              <span class="inline-flex items-center gap-1.5"><span class="h-3 w-3 rounded-sm bg-[#f43f5e]"></span><span>ゴール</span></span>
+              <span class="inline-flex items-center gap-1.5"><span class="h-3 w-3 rounded-sm bg-[#1e293b]"></span><span>壁</span></span>
+              <span class="inline-flex items-center gap-1.5"><span class="h-3 w-3 rounded-sm border border-amber-500 bg-[#fef3c7]"></span><span>重み地形 (コスト5)</span></span>
+              <span class="inline-flex items-center gap-1.5"><span class="h-3 w-3 rounded-sm bg-[#bae6fd]"></span><span>探索候補 (Open)</span></span>
+              <span class="inline-flex items-center gap-1.5"><span class="h-3 w-3 rounded-sm bg-gradient-to-r from-[#38bdf8] to-[#6366f1]"></span><span>探索済み (Closed)</span></span>
+              <span class="inline-flex items-center gap-1.5"><span class="h-3 w-3 rounded-sm bg-[#facc15] border border-amber-600"></span><span>最短確定ルート</span></span>
+            </div>
+          </div>
+
+          <!-- Right Algorithm & Preset Deck -->
+          <div class="space-y-5 rounded-2xl border border-slate-200/80 bg-white p-4 sm:p-5 shadow-xs lg:col-span-4">
+            <div class="space-y-3">
+              <h3 class="font-display text-sm font-bold text-slate-900">探索アルゴリズム（4種）</h3>
+              <div id="path-algo-list" class="grid grid-cols-1 gap-2"></div>
+              <p id="path-algo-summary" class="text-xs leading-relaxed text-slate-600"></p>
+            </div>
+
+            <div class="border-t border-slate-100 pt-4 space-y-2.5">
+              <h3 class="font-display text-sm font-bold text-slate-900">迷路自動生成 ＆ プリセット</h3>
+              <div class="grid grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-1">
+                <button type="button" data-preset="digging" class="path-preset-btn inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-50 text-left">迷路自動生成（穴掘り法）</button>
+                <button type="button" data-preset="pillar" class="path-preset-btn inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-50 text-left">迷路自動生成（棒倒し法）</button>
+                <button type="button" data-preset="random25" class="path-preset-btn inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-50 text-left">ランダム障害物（壁密度 25%）</button>
+                <button type="button" data-preset="swamp" class="path-preset-btn inline-flex items-center gap-2 rounded-xl border border-amber-200 bg-amber-50/70 px-3 py-2 text-xs font-semibold text-amber-900 hover:bg-amber-100/70 text-left">重み付き地形マップ（BFS vs Dijkstra比較）</button>
+                <button type="button" data-preset="clear-walls" class="path-preset-btn inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs font-semibold text-rose-700 hover:bg-rose-50 text-left">盤面を全クリア（壁・重みを消去）</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ==================== REFERENCE GUIDE ==================== -->
+      <section id="algorithm-guide" class="space-y-8 border-t border-slate-200 pt-10">
+        <div class="space-y-1.5">
+          <h2 class="font-display text-xl font-bold tracking-tight text-slate-900">
+            収録アルゴリズム比較リファレンス
+          </h2>
+          <p class="text-sm text-slate-600">
+            ソート6種・経路探索4種の理論計算量と挙動の特徴をまとめたリファレンス表です。
+          </p>
+        </div>
+
+        <div class="grid grid-cols-1 gap-8 lg:grid-cols-2">
+          <div class="rounded-2xl border border-slate-200/80 bg-white overflow-hidden shadow-xs">
+            <div class="border-b border-slate-100 px-5 py-3.5">
+              <h3 class="font-display text-sm font-bold text-slate-900">ソートアルゴリズム（6種）</h3>
+            </div>
+            <div class="overflow-x-auto">
+              <table class="w-full text-left text-xs">
+                <thead>
+                  <tr class="border-b border-slate-100 bg-slate-50/80 text-slate-500">
+                    <th class="px-4 py-2.5 font-semibold whitespace-nowrap">アルゴリズム名</th>
+                    <th class="px-4 py-2.5 font-semibold whitespace-nowrap">平均計算量</th>
+                    <th class="px-4 py-2.5 font-semibold">特徴・解説</th>
+                  </tr>
+                </thead>
+                <tbody id="guide-sort-tbody" class="divide-y divide-slate-100"></tbody>
+              </table>
+            </div>
+          </div>
+
+          <div class="rounded-2xl border border-slate-200/80 bg-white overflow-hidden shadow-xs">
+            <div class="border-b border-slate-100 px-5 py-3.5">
+              <h3 class="font-display text-sm font-bold text-slate-900">経路探索アルゴリズム（4種）</h3>
+            </div>
+            <div class="overflow-x-auto">
+              <table class="w-full text-left text-xs">
+                <thead>
+                  <tr class="border-b border-slate-100 bg-slate-50/80 text-slate-500">
+                    <th class="px-4 py-2.5 font-semibold whitespace-nowrap">アルゴリズム名</th>
+                    <th class="px-4 py-2.5 font-semibold whitespace-nowrap">最短経路保証</th>
+                    <th class="px-4 py-2.5 font-semibold whitespace-nowrap">重み考慮</th>
+                    <th class="px-4 py-2.5 font-semibold">探索の特徴</th>
+                  </tr>
+                </thead>
+                <tbody id="guide-path-tbody" class="divide-y divide-slate-100"></tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <!-- Footer (Apps Hub Official Unified Disclaimer) -->
+    <footer class="mt-8 py-6 text-center border-t border-slate-200">
+      <div class="max-w-4xl mx-auto px-4">
+        <p class="text-[11px] text-slate-400">
+          ※個人開発プロトタイプにつき無保証・自己責任にてご利用ください（データは端末内完結・サポート対象外）
+        </p>
+      </div>
+    </footer>
+
+    <!-- Pure Vanilla JavaScript Application -->
+    <script>
+      (() => {
+        'use strict';
+
+        // =========================================================================
+        // 1. Web Audio API Sound Engine (with Safari/WebKit synchronous unlock)
+        // =========================================================================
+        class SoundEngine {
+          constructor() {
+            this.ctx = null;
+            this.masterGain = null;
+            this.enabled = true;
+            this.lastSortToneTime = 0;
+            this.lastPathToneTime = 0;
+          }
+
+          ensureContext() {
+            if (!this.ctx) {
+              const AudioCtx = window.AudioContext || window.webkitAudioContext;
+              if (!AudioCtx) return null;
+              this.ctx = new AudioCtx();
+              this.masterGain = this.ctx.createGain();
+              this.masterGain.gain.value = 0.25;
+              this.masterGain.connect(this.ctx.destination);
+            }
+            return this.ctx;
+          }
+
+          unlock() {
+            const ctx = this.ensureContext();
+            if (!ctx) return;
+            if (ctx.state === 'suspended') {
+              ctx.resume().catch(() => {});
+            }
+            try {
+              const buffer = ctx.createBuffer(1, 1, 22050);
+              const src = ctx.createBufferSource();
+              src.buffer = buffer;
+              src.connect(ctx.destination);
+              src.start(0);
+            } catch (_) {
+              // Ignore if context cannot play silent buffer yet
+            }
+          }
+
+          setEnabled(val) {
+            this.enabled = val;
+            if (val) this.unlock();
+          }
+
+          playSortTone(value, maxValue, pan = 0) {
+            if (!this.enabled || value == null) return;
+            const nowMs = performance.now();
+            if (nowMs - this.lastSortToneTime < 22) return;
+            this.lastSortToneTime = nowMs;
+
+            const ctx = this.ensureContext();
+            if (!ctx || !this.masterGain) return;
+            if (ctx.state === 'suspended') ctx.resume().catch(() => {});
+
+            const ratio = Math.max(0, Math.min(1, value / Math.max(1, maxValue)));
+            const freq = 220 + ratio * 660;
+            const now = ctx.currentTime;
+
+            const osc = ctx.createOscillator();
+            const gain = ctx.createGain();
+            osc.type = 'triangle';
+            osc.frequency.setValueAtTime(freq, now);
+
+            gain.gain.setValueAtTime(0.0001, now);
+            gain.gain.exponentialRampToValueAtTime(0.18, now + 0.008);
+            gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.075);
+
+            if (typeof ctx.createStereoPanner === 'function' && pan !== 0) {
+              const panner = ctx.createStereoPanner();
+              panner.pan.setValueAtTime(Math.max(-0.7, Math.min(0.7, pan)), now);
+              osc.connect(gain);
+              gain.connect(panner);
+              panner.connect(this.masterGain);
+            } else {
+              osc.connect(gain);
+              gain.connect(this.masterGain);
+            }
+
+            osc.start(now);
+            osc.stop(now + 0.085);
+          }
+
+          playSweepTone(value, maxValue) {
+            if (!this.enabled || value == null) return;
+            const ctx = this.ensureContext();
+            if (!ctx || !this.masterGain) return;
+            if (ctx.state === 'suspended') ctx.resume().catch(() => {});
+
+            const ratio = Math.max(0, Math.min(1, value / Math.max(1, maxValue)));
+            const freq = 260 + ratio * 740;
+            const now = ctx.currentTime;
+
+            const osc = ctx.createOscillator();
+            const gain = ctx.createGain();
+            osc.type = 'sine';
+            osc.frequency.setValueAtTime(freq, now);
+
+            gain.gain.setValueAtTime(0.0001, now);
+            gain.gain.exponentialRampToValueAtTime(0.16, now + 0.006);
+            gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.09);
+
+            osc.connect(gain);
+            gain.connect(this.masterGain);
+            osc.start(now);
+            osc.stop(now + 0.1);
+          }
+
+          playPathPulse(distanceRatio) {
+            if (!this.enabled) return;
+            const nowMs = performance.now();
+            if (nowMs - this.lastPathToneTime < 34) return;
+            this.lastPathToneTime = nowMs;
+
+            const ctx = this.ensureContext();
+            if (!ctx || !this.masterGain) return;
+            if (ctx.state === 'suspended') ctx.resume().catch(() => {});
+
+            const clamped = Math.max(0, Math.min(1, distanceRatio));
+            const freq = 240 + clamped * 440;
+            const now = ctx.currentTime;
+
+            const osc = ctx.createOscillator();
+            const gain = ctx.createGain();
+            osc.type = 'sine';
+            osc.frequency.setValueAtTime(freq, now);
+
+            gain.gain.setValueAtTime(0.0001, now);
+            gain.gain.exponentialRampToValueAtTime(0.11, now + 0.01);
+            gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.08);
+
+            osc.connect(gain);
+            gain.connect(this.masterGain);
+            osc.start(now);
+            osc.stop(now + 0.09);
+          }
+
+          playGoalChime() {
+            if (!this.enabled) return;
+            const ctx = this.ensureContext();
+            if (!ctx || !this.masterGain) return;
+            if (ctx.state === 'suspended') ctx.resume().catch(() => {});
+
+            const notes = [523.25, 659.25, 783.99, 1046.5];
+            const now = ctx.currentTime;
+            notes.forEach((freq, idx) => {
+              const start = now + idx * 0.07;
+              const osc = ctx.createOscillator();
+              const gain = ctx.createGain();
+              osc.type = 'triangle';
+              osc.frequency.setValueAtTime(freq, start);
+
+              gain.gain.setValueAtTime(0.0001, start);
+              gain.gain.exponentialRampToValueAtTime(0.18, start + 0.015);
+              gain.gain.exponentialRampToValueAtTime(0.0001, start + 0.35);
+
+              osc.connect(gain);
+              gain.connect(this.masterGain);
+              osc.start(start);
+              osc.stop(start + 0.38);
+            });
+          }
+        }
+
+        const soundEngine = new SoundEngine();
+
+        // =========================================================================
+        // 2. Sorting Algorithms & Data Generators
+        // =========================================================================
+        const SORT_ALGORITHMS = [
+          {
+            id: 'bubble',
+            name: 'バブルソート',
+            complexity: 'O(n²)',
+            stability: '安定ソート',
+            summary: '隣り合う要素を比較して大きい方を右へ押し出す基本手法。',
+          },
+          {
+            id: 'selection',
+            name: '選択ソート',
+            complexity: 'O(n²)',
+            stability: '不安定ソート',
+            summary: '未整列部分から最小値を探して左端と交換する手法。',
+          },
+          {
+            id: 'insertion',
+            name: '挿入ソート',
+            complexity: 'O(n²)',
+            stability: '安定ソート',
+            summary: 'トランプの手札を並べるように適切な位置へ差し込む手法。ほぼ整列済みのデータに非常に強い。',
+          },
+          {
+            id: 'merge',
+            name: 'マージソート',
+            complexity: 'O(n log n)',
+            stability: '安定ソート',
+            summary: '配列を半分ずつ分割し、整列しながら併合（マージ）する安定ソート。',
+          },
+          {
+            id: 'quick',
+            name: 'クイックソート',
+            complexity: 'O(n log n)',
+            stability: '不安定ソート',
+            summary: '基準値（ピボット）より小・大に振り分けて高速に再帰処理する実務で定番の高速アルゴリズム。',
+          },
+          {
+            id: 'heap',
+            name: 'ヒープソート',
+            complexity: 'O(n log n)',
+            stability: '不安定ソート',
+            summary: '二分ヒープ木構造を構築し、最大値を順に取り出して整列するインプレース手法。',
+          },
+        ];
+
+        const PATTERN_META = {
+          random: { label: 'ランダム', note: '一様乱数シャッフル' },
+          'nearly-sorted': { label: 'ほぼ整列済み', note: '挿入ソートの強み検証用' },
+          reversed: { label: '逆順', note: 'ワーストケース検証用' },
+          pyramid: { label: '山型', note: 'ピラミッド配列' },
+        };
+
+        function generateInitialArray(count, pattern) {
+          const arr = Array.from({ length: count }, (_, i) => i + 1);
+          if (pattern === 'random') {
+            for (let i = arr.length - 1; i > 0; i--) {
+              const j = Math.floor(Math.random() * (i + 1));
+              [arr[i], arr[j]] = [arr[j], arr[i]];
+            }
+            return arr;
+          }
+          if (pattern === 'reversed') {
+            return arr.reverse();
+          }
+          if (pattern === 'nearly-sorted') {
+            const swapCount = Math.max(2, Math.floor(count * 0.14));
+            for (let s = 0; s < swapCount; s++) {
+              const idx = Math.floor(Math.random() * (count - 2));
+              const offset = 1 + Math.floor(Math.random() * Math.min(3, count - 1 - idx));
+              [arr[idx], arr[idx + offset]] = [arr[idx + offset], arr[idx]];
+            }
+            return arr;
+          }
+          const pyramid = new Array(count);
+          let left = 0;
+          let right = count - 1;
+          for (let i = 0; i < count; i++) {
+            if (i % 2 === 0) pyramid[left++] = i + 1;
+            else pyramid[right--] = i + 1;
+          }
+          return pyramid;
+        }
+
+        function buildRange(start, end) {
+          const res = [];
+          for (let i = start; i <= end; i++) res.push(i);
+          return res;
+        }
+
+        function generateSortTrace(algorithm, initialArray) {
+          const arr = [...initialArray];
+          const n = arr.length;
+          const steps = [];
+          let comparisons = 0;
+          let writes = 0;
+          const sortedSet = new Set();
+
+          let currentSnapshot = [...arr];
+          const pushStep = (comparing, swapping, pivotIndices, toneValue, snapshot) => {
+            steps.push({
+              array: snapshot,
+              comparing,
+              swapping,
+              pivotIndices,
+              sortedIndices: Array.from(sortedSet),
+              comparisons,
+              writes,
+              toneValue,
+              phase: 'running',
+            });
+          };
+
+          pushStep([], [], [], null, currentSnapshot);
+
+          if (algorithm === 'bubble') {
+            for (let i = 0; i < n - 1; i++) {
+              let swapped = false;
+              for (let j = 0; j < n - 1 - i; j++) {
+                comparisons++;
+                pushStep([j, j + 1], [], [], arr[j + 1], currentSnapshot);
+                if (arr[j] > arr[j + 1]) {
+                  [arr[j], arr[j + 1]] = [arr[j + 1], arr[j]];
+                  writes += 2;
+                  swapped = true;
+                  currentSnapshot = [...arr];
+                  pushStep([], [j, j + 1], [], arr[j + 1], currentSnapshot);
+                }
+              }
+              sortedSet.add(n - 1 - i);
+              if (!swapped) {
+                for (let k = 0; k < n - 1 - i; k++) sortedSet.add(k);
+                break;
+              }
+            }
+            sortedSet.add(0);
+          } else if (algorithm === 'selection') {
+            for (let i = 0; i < n - 1; i++) {
+              let minIdx = i;
+              for (let j = i + 1; j < n; j++) {
+                comparisons++;
+                pushStep([j], [], [minIdx], arr[j], currentSnapshot);
+                if (arr[j] < arr[minIdx]) {
+                  minIdx = j;
+                  pushStep([], [], [minIdx], arr[minIdx], currentSnapshot);
+                }
+              }
+              if (minIdx !== i) {
+                [arr[i], arr[minIdx]] = [arr[minIdx], arr[i]];
+                writes += 2;
+                currentSnapshot = [...arr];
+                pushStep([], [i, minIdx], [], arr[i], currentSnapshot);
+              }
+              sortedSet.add(i);
+            }
+            sortedSet.add(n - 1);
+          } else if (algorithm === 'insertion') {
+            for (let i = 1; i < n; i++) {
+              const key = arr[i];
+              let j = i - 1;
+              pushStep([], [], [i], key, currentSnapshot);
+              while (j >= 0) {
+                comparisons++;
+                pushStep([j, j + 1], [], [i], arr[j], currentSnapshot);
+                if (arr[j] > key) {
+                  arr[j + 1] = arr[j];
+                  writes++;
+                  currentSnapshot = [...arr];
+                  pushStep([], [j + 1], [i], arr[j + 1], currentSnapshot);
+                  j--;
+                } else {
+                  break;
+                }
+              }
+              if (j + 1 !== i) {
+                arr[j + 1] = key;
+                writes++;
+                currentSnapshot = [...arr];
+                pushStep([], [j + 1], [], key, currentSnapshot);
+              }
+            }
+            for (let i = 0; i < n; i++) sortedSet.add(i);
+          } else if (algorithm === 'merge') {
+            const mergeSort = (left, right) => {
+              if (left >= right) return;
+              const mid = Math.floor((left + right) / 2);
+              mergeSort(left, mid);
+              mergeSort(mid + 1, right);
+
+              const leftArr = arr.slice(left, mid + 1);
+              const rightArr = arr.slice(mid + 1, right + 1);
+              const activeRange = buildRange(left, right);
+
+              let i = 0;
+              let j = 0;
+              let k = left;
+              while (i < leftArr.length && j < rightArr.length) {
+                comparisons++;
+                pushStep([left + i, mid + 1 + j], [], activeRange, Math.max(leftArr[i], rightArr[j]), currentSnapshot);
+                if (leftArr[i] <= rightArr[j]) {
+                  arr[k] = leftArr[i++];
+                } else {
+                  arr[k] = rightArr[j++];
+                }
+                writes++;
+                currentSnapshot = [...arr];
+                pushStep([], [k], activeRange, arr[k], currentSnapshot);
+                k++;
+              }
+              while (i < leftArr.length) {
+                arr[k] = leftArr[i++];
+                writes++;
+                currentSnapshot = [...arr];
+                pushStep([], [k], activeRange, arr[k], currentSnapshot);
+                k++;
+              }
+              while (j < rightArr.length) {
+                arr[k] = rightArr[j++];
+                writes++;
+                currentSnapshot = [...arr];
+                pushStep([], [k], activeRange, arr[k], currentSnapshot);
+                k++;
+              }
+            };
+            mergeSort(0, n - 1);
+            for (let i = 0; i < n; i++) sortedSet.add(i);
+          } else if (algorithm === 'quick') {
+            const partition = (low, high) => {
+              const pivotValue = arr[high];
+              let i = low - 1;
+              pushStep([], [], [high], pivotValue, currentSnapshot);
+              for (let j = low; j < high; j++) {
+                comparisons++;
+                pushStep([j], [], [high], arr[j], currentSnapshot);
+                if (arr[j] < pivotValue) {
+                  i++;
+                  if (i !== j) {
+                    [arr[i], arr[j]] = [arr[j], arr[i]];
+                    writes += 2;
+                    currentSnapshot = [...arr];
+                    pushStep([], [i, j], [high], arr[j], currentSnapshot);
+                  }
+                }
+              }
+              if (i + 1 !== high) {
+                [arr[i + 1], arr[high]] = [arr[high], arr[i + 1]];
+                writes += 2;
+                currentSnapshot = [...arr];
+                pushStep([], [i + 1, high], [], arr[i + 1], currentSnapshot);
+              }
+              sortedSet.add(i + 1);
+              return i + 1;
+            };
+            const quickSort = (low, high) => {
+              if (low < high) {
+                const pi = partition(low, high);
+                quickSort(low, pi - 1);
+                quickSort(pi + 1, high);
+              } else if (low === high) {
+                sortedSet.add(low);
+              }
+            };
+            quickSort(0, n - 1);
+            for (let i = 0; i < n; i++) sortedSet.add(i);
+          } else if (algorithm === 'heap') {
+            const heapify = (size, root) => {
+              let largest = root;
+              const left = 2 * root + 1;
+              const right = 2 * root + 2;
+              if (left < size) {
+                comparisons++;
+                pushStep([left, largest], [], [root], arr[left], currentSnapshot);
+                if (arr[left] > arr[largest]) largest = left;
+              }
+              if (right < size) {
+                comparisons++;
+                pushStep([right, largest], [], [root], arr[right], currentSnapshot);
+                if (arr[right] > arr[largest]) largest = right;
+              }
+              if (largest !== root) {
+                [arr[root], arr[largest]] = [arr[largest], arr[root]];
+                writes += 2;
+                currentSnapshot = [...arr];
+                pushStep([], [root, largest], [], arr[root], currentSnapshot);
+                heapify(size, largest);
+              }
+            };
+            for (let i = Math.floor(n / 2) - 1; i >= 0; i--) heapify(n, i);
+            for (let i = n - 1; i > 0; i--) {
+              [arr[0], arr[i]] = [arr[i], arr[0]];
+              writes += 2;
+              sortedSet.add(i);
+              currentSnapshot = [...arr];
+              pushStep([], [0, i], [], arr[i], currentSnapshot);
+              heapify(i, 0);
+            }
+            sortedSet.add(0);
+          }
+
+          const sortFinishStepIndex = steps.length - 1;
+          const allSorted = Array.from({ length: n }, (_, i) => i);
+          for (let i = 0; i < n; i++) {
+            steps.push({
+              array: currentSnapshot,
+              comparing: [],
+              swapping: [],
+              pivotIndices: [],
+              sortedIndices: allSorted,
+              comparisons,
+              writes,
+              toneValue: currentSnapshot[i],
+              phase: 'sweep',
+              sweepIndex: i,
+            });
+          }
+          steps.push({
+            array: currentSnapshot,
+            comparing: [],
+            swapping: [],
+            pivotIndices: [],
+            sortedIndices: allSorted,
+            comparisons,
+            writes,
+            toneValue: null,
+            phase: 'done',
+          });
+          return { steps, sortFinishStepIndex };
+        }
+
+        // =========================================================================
+        // 3. Pathfinding Algorithms & Maze Generators
+        // =========================================================================
+        const PATH_ALGORITHMS = [
+          {
+            id: 'bfs',
+            name: '幅優先探索 (BFS)',
+            shortestPathGuarantee: 'あり（重みなし時）',
+            weightAware: 'なし',
+            summary: 'スタートから同心円状に均等な波紋を広げて探索する基本手法。重み付き地形は考慮しません。',
+          },
+          {
+            id: 'dijkstra',
+            name: 'ダイクストラ法 (Dijkstra)',
+            shortestPathGuarantee: 'あり',
+            weightAware: 'あり',
+            summary: 'コスト（重み）の小さいマスを優先して広がる、カーナビ経路探索の基本手法。',
+          },
+          {
+            id: 'astar',
+            name: 'A*（エースター）探索',
+            shortestPathGuarantee: 'あり',
+            weightAware: 'あり',
+            summary: 'ゴールまでの推定距離（マンハッタン距離）をヒントに最短方向へ鋭く探索します。',
+          },
+          {
+            id: 'dfs',
+            name: '深さ優先探索 (DFS)',
+            shortestPathGuarantee: 'なし',
+            weightAware: 'なし',
+            summary: '突き当たりまで一直線に進み、行き止まりで引き返す探索。最短経路は保証されません。',
+          },
+        ];
+
+        const WEIGHT_COST = 5;
+        const DIRS = [
+          { r: -1, c: 0 },
+          { r: 0, c: 1 },
+          { r: 1, c: 0 },
+          { r: 0, c: -1 },
+        ];
+
+        const coordKey = (r, c) => r * 1000 + c;
+        const manhattan = (a, b) => Math.abs(a.r - b.r) + Math.abs(a.c - b.c);
+
+        function runPathfinding(algorithm, grid, start, goal) {
+          const t0 = performance.now();
+          const rows = grid.length;
+          const cols = grid[0] ? grid[0].length : 0;
+          const steps = [];
+          const parent = new Map();
+          const closedSet = new Set();
+          const openKnown = new Set();
+          const maxDistEstimate = Math.max(1, manhattan(start, goal) * 1.4);
+          const cellCost = (r, c) => (grid[r][c] === 'weight' ? WEIGHT_COST : 1);
+
+          let found = false;
+          let visitedCount = 0;
+
+          if (algorithm === 'bfs') {
+            const queue = [start];
+            const sk = coordKey(start.r, start.c);
+            parent.set(sk, null);
+            openKnown.add(sk);
+
+            while (queue.length > 0) {
+              const curr = queue.shift();
+              const ck = coordKey(curr.r, curr.c);
+              if (closedSet.has(ck)) continue;
+              closedSet.add(ck);
+              visitedCount++;
+
+              if (curr.r === goal.r && curr.c === goal.c) {
+                steps.push({ current: curr, newlyOpened: [], newlyClosed: curr, visitedCount, distanceRatio: 1 });
+                found = true;
+                break;
+              }
+              const newlyOpened = [];
+              for (const d of DIRS) {
+                const nr = curr.r + d.r;
+                const nc = curr.c + d.c;
+                if (nr < 0 || nr >= rows || nc < 0 || nc >= cols) continue;
+                if (grid[nr][nc] === 'wall') continue;
+                const nk = coordKey(nr, nc);
+                if (!openKnown.has(nk)) {
+                  openKnown.add(nk);
+                  parent.set(nk, curr);
+                  queue.push({ r: nr, c: nc });
+                  newlyOpened.push({ r: nr, c: nc });
+                }
+              }
+              steps.push({
+                current: curr,
+                newlyOpened,
+                newlyClosed: curr,
+                visitedCount,
+                distanceRatio: Math.min(1, manhattan(start, curr) / maxDistEstimate),
+              });
+            }
+          } else if (algorithm === 'dfs') {
+            const stack = [start];
+            const sk = coordKey(start.r, start.c);
+            parent.set(sk, null);
+            openKnown.add(sk);
+
+            while (stack.length > 0) {
+              const curr = stack.pop();
+              const ck = coordKey(curr.r, curr.c);
+              if (closedSet.has(ck)) continue;
+              closedSet.add(ck);
+              visitedCount++;
+
+              if (curr.r === goal.r && curr.c === goal.c) {
+                steps.push({ current: curr, newlyOpened: [], newlyClosed: curr, visitedCount, distanceRatio: 1 });
+                found = true;
+                break;
+              }
+              const newlyOpened = [];
+              for (let idx = DIRS.length - 1; idx >= 0; idx--) {
+                const d = DIRS[idx];
+                const nr = curr.r + d.r;
+                const nc = curr.c + d.c;
+                if (nr < 0 || nr >= rows || nc < 0 || nc >= cols) continue;
+                if (grid[nr][nc] === 'wall') continue;
+                const nk = coordKey(nr, nc);
+                if (!closedSet.has(nk)) {
+                  if (!openKnown.has(nk)) newlyOpened.push({ r: nr, c: nc });
+                  openKnown.add(nk);
+                  parent.set(nk, curr);
+                  stack.push({ r: nr, c: nc });
+                }
+              }
+              steps.push({
+                current: curr,
+                newlyOpened,
+                newlyClosed: curr,
+                visitedCount,
+                distanceRatio: Math.min(1, manhattan(start, curr) / maxDistEstimate),
+              });
+            }
+          } else {
+            const gScore = new Map();
+            const sk = coordKey(start.r, start.c);
+            gScore.set(sk, 0);
+            parent.set(sk, null);
+            openKnown.add(sk);
+            const h0 = algorithm === 'astar' ? manhattan(start, goal) : 0;
+            const pq = [{ coord: start, g: 0, f: h0, h: h0 }];
+
+            const popMin = () => {
+              let best = 0;
+              for (let i = 1; i < pq.length; i++) {
+                if (pq[i].f < pq[best].f || (pq[i].f === pq[best].f && pq[i].h < pq[best].h)) {
+                  best = i;
+                }
+              }
+              const picked = pq[best];
+              pq[best] = pq[pq.length - 1];
+              pq.pop();
+              return picked;
+            };
+
+            while (pq.length > 0) {
+              const { coord: curr, g } = popMin();
+              const ck = coordKey(curr.r, curr.c);
+              if (closedSet.has(ck)) continue;
+              if (g > (gScore.get(ck) ?? Infinity)) continue;
+              closedSet.add(ck);
+              visitedCount++;
+
+              if (curr.r === goal.r && curr.c === goal.c) {
+                steps.push({ current: curr, newlyOpened: [], newlyClosed: curr, visitedCount, distanceRatio: 1 });
+                found = true;
+                break;
+              }
+              const newlyOpened = [];
+              for (const d of DIRS) {
+                const nr = curr.r + d.r;
+                const nc = curr.c + d.c;
+                if (nr < 0 || nr >= rows || nc < 0 || nc >= cols) continue;
+                if (grid[nr][nc] === 'wall') continue;
+                const nk = coordKey(nr, nc);
+                if (closedSet.has(nk)) continue;
+
+                const tentativeG = g + cellCost(nr, nc);
+                if (tentativeG < (gScore.get(nk) ?? Infinity)) {
+                  gScore.set(nk, tentativeG);
+                  parent.set(nk, curr);
+                  const h = algorithm === 'astar' ? manhattan({ r: nr, c: nc }, goal) : 0;
+                  pq.push({ coord: { r: nr, c: nc }, g: tentativeG, f: tentativeG + h, h });
+                  if (!openKnown.has(nk)) {
+                    openKnown.add(nk);
+                    newlyOpened.push({ r: nr, c: nc });
+                  }
+                }
+              }
+              steps.push({
+                current: curr,
+                newlyOpened,
+                newlyClosed: curr,
+                visitedCount,
+                distanceRatio: Math.min(1, manhattan(start, curr) / maxDistEstimate),
+              });
+            }
+          }
+
+          const path = [];
+          let totalCost = 0;
+          if (found) {
+            let trace = goal;
+            while (trace) {
+              path.push(trace);
+              if (trace.r !== start.r || trace.c !== start.c) {
+                totalCost += cellCost(trace.r, trace.c);
+              }
+              trace = parent.get(coordKey(trace.r, trace.c)) ?? null;
+            }
+            path.reverse();
+          }
+          const computeTimeMs = Math.max(0.01, performance.now() - t0);
+          return { steps, path, totalCost, visitedCount, computeTimeMs, found };
+        }
+
+        function createEmptyGrid(rows, cols) {
+          return Array.from({ length: rows }, () => Array(cols).fill('empty'));
+        }
+
+        function generateDiggingMaze(rows, cols, start, goal) {
+          const grid = Array.from({ length: rows }, () => Array(cols).fill('wall'));
+          const startR = start.r % 2 === 1 ? start.r : Math.min(rows - 2, Math.max(1, start.r + 1));
+          const startC = start.c % 2 === 1 ? start.c : Math.min(cols - 2, Math.max(1, start.c + 1));
+          const stack = [{ r: startR, c: startC }];
+          grid[startR][startC] = 'empty';
+          const jumpDirs = [{ r: -2, c: 0 }, { r: 0, c: 2 }, { r: 2, c: 0 }, { r: 0, c: -2 }];
+
+          while (stack.length > 0) {
+            const curr = stack[stack.length - 1];
+            const candidates = [];
+            for (const d of jumpDirs) {
+              const nr = curr.r + d.r;
+              const nc = curr.c + d.c;
+              if (nr > 0 && nr < rows - 1 && nc > 0 && nc < cols - 1 && grid[nr][nc] === 'wall') {
+                candidates.push({ nr, nc, mr: curr.r + d.r / 2, mc: curr.c + d.c / 2 });
+              }
+            }
+            if (candidates.length === 0) {
+              stack.pop();
+            } else {
+              const picked = candidates[Math.floor(Math.random() * candidates.length)];
+              grid[picked.mr][picked.mc] = 'empty';
+              grid[picked.nr][picked.nc] = 'empty';
+              stack.push({ r: picked.nr, c: picked.nc });
+            }
+          }
+
+          const ensureClear = (pt) => {
+            grid[pt.r][pt.c] = 'empty';
+            const hasOpen = DIRS.some((d) => {
+              const nr = pt.r + d.r;
+              const nc = pt.c + d.c;
+              return nr >= 0 && nr < rows && nc >= 0 && nc < cols && grid[nr][nc] !== 'wall';
+            });
+            if (!hasOpen) {
+              for (const d of DIRS) {
+                const nr = pt.r + d.r;
+                const nc = pt.c + d.c;
+                if (nr > 0 && nr < rows - 1 && nc > 0 && nc < cols - 1) {
+                  grid[nr][nc] = 'empty';
+                  break;
+                }
+              }
+            }
+          };
+          ensureClear(start);
+          ensureClear(goal);
+          return grid;
+        }
+
+        function generatePillarMaze(rows, cols, start, goal) {
+          const grid = createEmptyGrid(rows, cols);
+          for (let r = 0; r < rows; r++) {
+            grid[r][0] = 'wall';
+            grid[r][cols - 1] = 'wall';
+          }
+          for (let c = 0; c < cols; c++) {
+            grid[0][c] = 'wall';
+            grid[rows - 1][c] = 'wall';
+          }
+          for (let r = 2; r < rows - 1; r += 2) {
+            for (let c = 2; c < cols - 1; c += 2) {
+              grid[r][c] = 'wall';
+              const allowed = r === 2 ? DIRS : DIRS.slice(1);
+              const shuffled = [...allowed].sort(() => Math.random() - 0.5);
+              for (const d of shuffled) {
+                const nr = r + d.r;
+                const nc = c + d.c;
+                if (grid[nr][nc] !== 'wall') {
+                  grid[nr][nc] = 'wall';
+                  break;
+                }
+              }
+            }
+          }
+          grid[start.r][start.c] = 'empty';
+          grid[goal.r][goal.c] = 'empty';
+          return grid;
+        }
+
+        function generateRandomObstacles(rows, cols, start, goal, density = 0.25) {
+          const grid = createEmptyGrid(rows, cols);
+          for (let r = 0; r < rows; r++) {
+            for (let c = 0; c < cols; c++) {
+              if ((r === start.r && c === start.c) || (r === goal.r && c === goal.c)) continue;
+              if (Math.random() < density) grid[r][c] = 'wall';
+            }
+          }
+          return grid;
+        }
+
+        function generateWeightedSwampMap(rows, cols, start, goal) {
+          const grid = createEmptyGrid(rows, cols);
+          const midR = Math.floor(rows / 2);
+          const midC = Math.floor(cols / 2);
+          const halfH = Math.max(3, Math.floor(rows * 0.24));
+          const halfW = Math.max(3, Math.floor(cols * 0.19));
+
+          for (let r = midR - halfH; r <= midR + halfH; r++) {
+            for (let c = midC - halfW; c <= midC + halfW; c++) {
+              if (r <= 0 || r >= rows - 1 || c <= 0 || c >= cols - 1) continue;
+              const dr = Math.abs(r - midR) / halfH;
+              const dc = Math.abs(c - midC) / halfW;
+              if (dr * 0.8 + dc * 0.8 <= 1.15) grid[r][c] = 'weight';
+            }
+          }
+          for (let r = 1; r < Math.floor(rows * 0.25); r++) {
+            if (midC - halfW - 2 > 1) grid[r][midC - halfW - 2] = 'wall';
+          }
+          for (let r = Math.floor(rows * 0.75); r < rows - 1; r++) {
+            if (midC + halfW + 2 < cols - 2) grid[r][midC + halfW + 2] = 'wall';
+          }
+          grid[start.r][start.c] = 'empty';
+          grid[goal.r][goal.c] = 'empty';
+          return grid;
+        }
+
+        function validateMazePayload(raw) {
+          if (!raw || typeof raw !== 'object') return null;
+          if (typeof raw.rows !== 'number' || typeof raw.cols !== 'number' || !Array.isArray(raw.grid) || !raw.start || !raw.goal) return null;
+          if (raw.rows < 5 || raw.rows > 60 || raw.cols < 5 || raw.cols > 80) return null;
+          if (raw.grid.length !== raw.rows) return null;
+          for (const row of raw.grid) {
+            if (!Array.isArray(row) || row.length !== raw.cols) return null;
+            for (const cell of row) {
+              if (cell !== 'empty' && cell !== 'wall' && cell !== 'weight') return null;
+            }
+          }
+          const { start, goal } = raw;
+          if (typeof start.r !== 'number' || typeof start.c !== 'number' || typeof goal.r !== 'number' || typeof goal.c !== 'number') return null;
+          if (start.r < 0 || start.r >= raw.rows || start.c < 0 || start.c >= raw.cols || goal.r < 0 || goal.r >= raw.rows || goal.c < 0 || goal.c >= raw.cols) return null;
+          if (start.r === goal.r && start.c === goal.c) return null;
+          return { version: 1, rows: raw.rows, cols: raw.cols, start, goal, grid: raw.grid };
+        }
+
+        // =========================================================================
+        // 4. App Navigation & Reference Tables
+        // =========================================================================
+        let activeMode = 'sort';
+        let soundEnabled = true;
+
+        const elNavSort = document.getElementById('nav-sort-btn');
+        const elNavPath = document.getElementById('nav-path-btn');
+        const elTabSort = document.getElementById('tab-sort-btn');
+        const elTabPath = document.getElementById('tab-path-btn');
+        const elModeSort = document.getElementById('mode-sort-section');
+        const elModePath = document.getElementById('mode-path-section');
+
+        const elSoundBtn = document.getElementById('sound-toggle-btn');
+        const elSoundIconOn = document.getElementById('sound-icon-on');
+        const elSoundIconOff = document.getElementById('sound-icon-off');
+        const elSoundLabel = document.getElementById('sound-toggle-label');
+
+        function setMode(mode) {
+          activeMode = mode;
+          const isSort = mode === 'sort';
+          elModeSort.classList.toggle('hidden', !isSort);
+          elModePath.classList.toggle('hidden', isSort);
+
+          elNavSort.className = isSort
+            ? 'py-1 transition-colors whitespace-nowrap shrink-0 border-b-2 border-indigo-600 text-slate-900 font-semibold'
+            : 'py-1 transition-colors whitespace-nowrap shrink-0 border-b-2 border-transparent hover:text-slate-900 hover:border-slate-300';
+          elNavPath.className = !isSort
+            ? 'py-1 transition-colors whitespace-nowrap shrink-0 border-b-2 border-indigo-600 text-slate-900 font-semibold'
+            : 'py-1 transition-colors whitespace-nowrap shrink-0 border-b-2 border-transparent hover:text-slate-900 hover:border-slate-300';
+
+          elTabSort.setAttribute('aria-selected', String(isSort));
+          elTabPath.setAttribute('aria-selected', String(!isSort));
+          elTabSort.className = isSort
+            ? 'inline-flex items-center gap-2 rounded-xl bg-slate-900 px-4 py-2 text-xs font-semibold text-white transition-colors whitespace-nowrap shrink-0'
+            : 'inline-flex items-center gap-2 rounded-xl px-4 py-2 text-xs font-semibold text-slate-600 transition-colors hover:bg-slate-50 hover:text-slate-900 whitespace-nowrap shrink-0';
+          elTabPath.className = !isSort
+            ? 'inline-flex items-center gap-2 rounded-xl bg-slate-900 px-4 py-2 text-xs font-semibold text-white transition-colors whitespace-nowrap shrink-0'
+            : 'inline-flex items-center gap-2 rounded-xl px-4 py-2 text-xs font-semibold text-slate-600 transition-colors hover:bg-slate-50 hover:text-slate-900 whitespace-nowrap shrink-0';
+
+          if (isSort) {
+            pathState.pause();
+            requestAnimationFrame(() => sortController.renderAll());
+          } else {
+            sortController.pause();
+            requestAnimationFrame(() => pathState.render());
+          }
+        }
+
+        document.getElementById('brand-home-btn').addEventListener('click', () => setMode('sort'));
+        elNavSort.addEventListener('click', () => setMode('sort'));
+        elNavPath.addEventListener('click', () => setMode('path'));
+        elTabSort.addEventListener('click', () => setMode('sort'));
+        elTabPath.addEventListener('click', () => setMode('path'));
+        document.getElementById('nav-guide-btn').addEventListener('click', () => {
+          document.getElementById('algorithm-guide')?.scrollIntoView({ behavior: 'smooth' });
+        });
+
+        elSoundBtn.addEventListener('click', () => {
+          soundEnabled = !soundEnabled;
+          soundEngine.setEnabled(soundEnabled);
+          elSoundBtn.setAttribute('aria-pressed', String(soundEnabled));
+          elSoundIconOn.classList.toggle('hidden', !soundEnabled);
+          elSoundIconOff.classList.toggle('hidden', soundEnabled);
+          elSoundLabel.textContent = soundEnabled ? '音声: ON' : '音声: OFF';
+          elSoundBtn.className = soundEnabled
+            ? 'inline-flex items-center gap-2 rounded-xl border border-slate-900 bg-slate-900 px-3.5 py-2 text-xs font-semibold text-white transition-colors hover:bg-slate-800 whitespace-nowrap shrink-0'
+            : 'inline-flex items-center gap-2 rounded-xl border border-slate-300 bg-white px-3.5 py-2 text-xs font-semibold text-slate-700 transition-colors hover:bg-slate-100 whitespace-nowrap shrink-0';
+        });
+
+        // Populate Reference Tables
+        const guideSortTbody = document.getElementById('guide-sort-tbody');
+        SORT_ALGORITHMS.forEach((a) => {
+          const tr = document.createElement('tr');
+          tr.className = 'hover:bg-slate-50/50';
+          tr.innerHTML = `
+            <td class="px-4 py-3 font-semibold text-slate-900 whitespace-nowrap">${a.name}</td>
+            <td class="px-4 py-3 font-mono text-slate-700 whitespace-nowrap">${a.complexity}</td>
+            <td class="px-4 py-3 text-slate-600 leading-relaxed">${a.summary}</td>
+          `;
+          guideSortTbody.appendChild(tr);
+        });
+
+        const guidePathTbody = document.getElementById('guide-path-tbody');
+        PATH_ALGORITHMS.forEach((a) => {
+          const tr = document.createElement('tr');
+          tr.className = 'hover:bg-slate-50/50';
+          tr.innerHTML = `
+            <td class="px-4 py-3 font-semibold text-slate-900 whitespace-nowrap">${a.name}</td>
+            <td class="px-4 py-3 text-slate-700 whitespace-nowrap">${a.shortestPathGuarantee}</td>
+            <td class="px-4 py-3 text-slate-700 whitespace-nowrap">${a.weightAware}</td>
+            <td class="px-4 py-3 text-slate-600 leading-relaxed">${a.summary}</td>
+          `;
+          guidePathTbody.appendChild(tr);
+        });
+
+        // =========================================================================
+        // 5. Mode A Controller: Sort Race Board
+        // =========================================================================
+        const SORT_COLORS = {
+          normal: '#94a3b8',
+          compare: '#f59e0b',
+          swap: '#f43f5e',
+          pivot: '#6366f1',
+          sorted: '#10b981',
+          sweepHead: '#059669',
+        };
+
+        function drawSortCanvas(canvas, wrap, step, maxValue) {
+          if (!canvas || !wrap) return;
+          const rect = wrap.getBoundingClientRect();
+          const width = Math.floor(rect.width);
+          const height = Math.floor(rect.height);
+          if (width <= 0 || height <= 0) return;
+
+          const dpr = window.devicePixelRatio || 1;
+          canvas.width = Math.floor(width * dpr);
+          canvas.height = Math.floor(height * dpr);
+
+          const ctx = canvas.getContext('2d');
+          if (!ctx) return;
+          ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+          ctx.clearRect(0, 0, width, height);
+
+          const arr = step.array;
+          const n = arr.length;
+          if (n === 0) return;
+
+          const padTop = 18;
+          const padBottom = n <= 30 ? 24 : 12;
+          const padX = 14;
+          const plotW = Math.max(10, width - padX * 2);
+          const plotH = Math.max(10, height - padTop - padBottom);
+
+          ctx.strokeStyle = '#e2e8f0';
+          ctx.lineWidth = 1;
+          for (let i = 0; i <= 4; i++) {
+            const y = Math.round(padTop + (plotH * i) / 4) + 0.5;
+            ctx.beginPath();
+            ctx.moveTo(padX, y);
+            ctx.lineTo(width - padX, y);
+            ctx.stroke();
+          }
+
+          const comparingSet = new Set(step.comparing);
+          const swappingSet = new Set(step.swapping);
+          const pivotSet = new Set(step.pivotIndices);
+          const sortedSet = new Set(step.sortedIndices);
+
+          const slotW = plotW / n;
+          const gap = n > 60 ? 1 : n > 30 ? 2 : 3;
+          const barW = Math.max(2, slotW - gap);
+
+          for (let i = 0; i < n; i++) {
+            const val = arr[i];
+            const barH = Math.max(4, (val / maxValue) * plotH);
+            const x = padX + i * slotW + gap / 2;
+            const y = padTop + plotH - barH;
+
+            let fill = SORT_COLORS.normal;
+            if (step.phase === 'done') {
+              fill = SORT_COLORS.sorted;
+            } else if (step.phase === 'sweep') {
+              fill = step.sweepIndex === i ? SORT_COLORS.sweepHead : SORT_COLORS.sorted;
+            } else if (swappingSet.has(i)) {
+              fill = SORT_COLORS.swap;
+            } else if (comparingSet.has(i)) {
+              fill = SORT_COLORS.compare;
+            } else if (pivotSet.has(i)) {
+              fill = SORT_COLORS.pivot;
+            } else if (sortedSet.has(i)) {
+              fill = SORT_COLORS.sorted;
+            }
+
+            ctx.fillStyle = fill;
+            if (barW >= 6 && typeof ctx.roundRect === 'function') {
+              ctx.beginPath();
+              ctx.roundRect(x, y, barW, barH, [2, 2, 0, 0]);
+              ctx.fill();
+            } else {
+              ctx.fillRect(x, y, barW, barH);
+            }
+
+            if (step.phase === 'running' && (swappingSet.has(i) || comparingSet.has(i) || pivotSet.has(i))) {
+              ctx.fillStyle = '#0f172a';
+              ctx.fillRect(x, Math.max(padTop - 6, y - 4), barW, 2);
+            } else if (step.phase === 'sweep' && step.sweepIndex === i) {
+              ctx.fillStyle = '#0f172a';
+              ctx.fillRect(x, Math.max(padTop - 6, y - 5), barW, 3);
+            }
+
+            if (n <= 30 && slotW >= 18) {
+              ctx.fillStyle = '#475569';
+              ctx.font = '500 10px "JetBrains Mono", monospace';
+              ctx.textAlign = 'center';
+              ctx.fillText(String(val), x + barW / 2, padTop + plotH + 15);
+            }
+          }
+        }
+
+        const sortController = (() => {
+          let viewMode = 'single';
+          let elementCount = 40;
+          let speed = 18;
+          let pattern = 'random';
+          let primaryAlgo = 'quick';
+          let secondaryAlgo = 'bubble';
+          let baseArray = generateInitialArray(elementCount, pattern);
+          let primaryTrace = generateSortTrace(primaryAlgo, baseArray);
+          let secondaryTrace = generateSortTrace(secondaryAlgo, baseArray);
+          let primaryIdx = 0;
+          let secondaryIdx = 0;
+          let isPlaying = false;
+          let rafId = 0;
+
+          const elCountSlider = document.getElementById('sort-count-slider');
+          const elCountVal = document.getElementById('sort-count-val');
+          const elSpeedSlider = document.getElementById('sort-speed-slider');
+          const elSpeedVal = document.getElementById('sort-speed-val');
+          const elToolbarMeta = document.getElementById('sort-toolbar-meta');
+          const elViewSingleBtn = document.getElementById('sort-view-single-btn');
+          const elViewVsBtn = document.getElementById('sort-view-vs-btn');
+          const elSingleContainer = document.getElementById('sort-single-container');
+          const elVsContainer = document.getElementById('sort-vs-container');
+          const elPlayBtn = document.getElementById('sort-play-btn');
+          const elPlayLabel = document.getElementById('sort-play-label');
+          const elStepBtn = document.getElementById('sort-step-btn');
+          const elRewindBtn = document.getElementById('sort-rewind-btn');
+          const elResetBtn = document.getElementById('sort-reset-btn');
+          const elAlgoList = document.getElementById('sort-algo-list');
+
+          const elSingleTitle = document.getElementById('sort-single-title');
+          const elSingleMeta = document.getElementById('sort-single-meta');
+          const elSingleComp = document.getElementById('sort-single-comp');
+          const elSingleWrites = document.getElementById('sort-single-writes');
+          const elSingleSteps = document.getElementById('sort-single-steps');
+          const elSingleSummary = document.getElementById('sort-single-summary');
+          const elSinglePatternNote = document.getElementById('sort-single-pattern-note');
+          const elSingleCanvas = document.getElementById('sort-single-canvas');
+          const elSingleWrap = document.getElementById('sort-single-canvas-wrap');
+
+          const elVsSelectA = document.getElementById('sort-vs-select-a');
+          const elVsSelectB = document.getElementById('sort-vs-select-b');
+          const elVsStatusA = document.getElementById('sort-vs-status-a');
+          const elVsStatusB = document.getElementById('sort-vs-status-b');
+          const elVsCompA = document.getElementById('sort-vs-comp-a');
+          const elVsWritesA = document.getElementById('sort-vs-writes-a');
+          const elVsStepsA = document.getElementById('sort-vs-steps-a');
+          const elVsCompB = document.getElementById('sort-vs-comp-b');
+          const elVsWritesB = document.getElementById('sort-vs-writes-b');
+          const elVsStepsB = document.getElementById('sort-vs-steps-b');
+          const elVsSummaryA = document.getElementById('sort-vs-summary-a');
+          const elVsSummaryB = document.getElementById('sort-vs-summary-b');
+          const elVsCanvasA = document.getElementById('sort-vs-canvas-a');
+          const elVsWrapA = document.getElementById('sort-vs-wrap-a');
+          const elVsCanvasB = document.getElementById('sort-vs-canvas-b');
+          const elVsWrapB = document.getElementById('sort-vs-wrap-b');
+
+          SORT_ALGORITHMS.forEach((algo) => {
+            const btn = document.createElement('button');
+            btn.type = 'button';
+            btn.dataset.algoId = algo.id;
+            btn.className = 'sort-algo-btn flex items-center justify-between rounded-xl border px-3.5 py-2.5 text-left transition-colors';
+            btn.innerHTML = `<span class="text-sm font-semibold">${algo.name}</span><span class="font-mono text-xs text-slate-500">${algo.complexity}</span>`;
+            btn.addEventListener('click', () => {
+              pause();
+              primaryIdx = 0;
+              secondaryIdx = 0;
+              primaryAlgo = algo.id;
+              elVsSelectA.value = algo.id;
+              rebuildTraces();
+              renderAll();
+            });
+            elAlgoList.appendChild(btn);
+
+            const optA = new Option(`${algo.name} (${algo.complexity})`, algo.id);
+            const optB = new Option(`${algo.name} (${algo.complexity})`, algo.id);
+            elVsSelectA.add(optA);
+            elVsSelectB.add(optB);
+          });
+          elVsSelectA.value = primaryAlgo;
+          elVsSelectB.value = secondaryAlgo;
+
+          function rebuildTraces() {
+            primaryTrace = generateSortTrace(primaryAlgo, baseArray);
+            secondaryTrace = generateSortTrace(secondaryAlgo, baseArray);
+          }
+
+          function pause() {
+            isPlaying = false;
+            if (rafId) cancelAnimationFrame(rafId);
+            rafId = 0;
+            updatePlayButton();
+          }
+
+          function updatePlayButton() {
+            elPlayLabel.textContent = isPlaying ? '一時停止' : 'スタート';
+            elPlayBtn.className = isPlaying
+              ? 'inline-flex min-h-[40px] flex-1 sm:flex-initial items-center justify-center gap-1.5 rounded-xl bg-amber-600 px-4 py-2 text-xs font-semibold text-white transition-colors hover:bg-amber-700 whitespace-nowrap shrink-0'
+              : 'inline-flex min-h-[40px] flex-1 sm:flex-initial items-center justify-center gap-1.5 rounded-xl bg-indigo-600 px-4 py-2 text-xs font-semibold text-white transition-colors hover:bg-indigo-700 whitespace-nowrap shrink-0';
+          }
+
+          function renderAll() {
+            elCountVal.textContent = `${elementCount} 本`;
+            elSpeedVal.textContent = `${speed}x ${speed <= 3 ? '（低速）' : speed >= 35 ? '（高速）' : ''}`;
+            elToolbarMeta.textContent = `配列要素数 ${elementCount} · 再生速度 ${speed}x`;
+
+            document.querySelectorAll('.sort-pattern-btn').forEach((btn) => {
+              const active = btn.dataset.pattern === pattern;
+              btn.className = active
+                ? 'sort-pattern-btn rounded-xl border border-indigo-600 bg-indigo-50 px-2.5 py-2 text-xs font-semibold text-indigo-900 transition-colors whitespace-nowrap truncate'
+                : 'sort-pattern-btn rounded-xl border border-slate-200 bg-white px-2.5 py-2 text-xs font-medium text-slate-700 hover:bg-slate-50 transition-colors whitespace-nowrap truncate';
+            });
+
+            document.querySelectorAll('.sort-algo-btn').forEach((btn) => {
+              const active = btn.dataset.algoId === primaryAlgo;
+              btn.className = active
+                ? 'sort-algo-btn flex items-center justify-between rounded-xl border border-indigo-600 bg-indigo-50 px-3.5 py-2.5 text-left text-slate-900 transition-colors'
+                : 'sort-algo-btn flex items-center justify-between rounded-xl border border-slate-200 bg-white px-3.5 py-2.5 text-left text-slate-700 hover:bg-slate-50 transition-colors';
+            });
+
+            const pStep = primaryTrace.steps[Math.min(primaryIdx, primaryTrace.steps.length - 1)];
+            const sStep = secondaryTrace.steps[Math.min(secondaryIdx, secondaryTrace.steps.length - 1)];
+            const pMeta = SORT_ALGORITHMS.find((a) => a.id === primaryAlgo);
+            const sMeta = SORT_ALGORITHMS.find((a) => a.id === secondaryAlgo);
+            const pDoneSorting = primaryIdx >= primaryTrace.sortFinishStepIndex;
+            const sDoneSorting = secondaryIdx >= secondaryTrace.sortFinishStepIndex;
+
+            const pMax = primaryTrace.steps.length - 1;
+            const sMax = secondaryTrace.steps.length - 1;
+            elStepBtn.disabled = primaryIdx >= pMax && (viewMode === 'single' || secondaryIdx >= sMax);
+
+            if (viewMode === 'single') {
+              elSingleTitle.textContent = pMeta.name;
+              elSingleMeta.innerHTML = `平均計算量 <span class="font-mono text-slate-700">${pMeta.complexity}</span> · ${pMeta.stability} · ${pDoneSorting ? '整列完了' : isPlaying ? '実行中' : '待機中'}`;
+              elSingleComp.textContent = pStep.comparisons.toLocaleString();
+              elSingleWrites.textContent = pStep.writes.toLocaleString();
+              elSingleSteps.innerHTML = `${Math.min(primaryIdx, primaryTrace.sortFinishStepIndex).toLocaleString()} <span class="text-xs font-normal text-slate-400">/ ${primaryTrace.sortFinishStepIndex.toLocaleString()}</span>`;
+              elSingleSummary.textContent = pMeta.summary;
+              elSinglePatternNote.textContent = `選択データ：${PATTERN_META[pattern].label}（${PATTERN_META[pattern].note}）`;
+              drawSortCanvas(elSingleCanvas, elSingleWrap, pStep, elementCount);
+            } else {
+              elVsCompA.textContent = pStep.comparisons.toLocaleString();
+              elVsWritesA.textContent = pStep.writes.toLocaleString();
+              elVsStepsA.textContent = Math.min(primaryIdx, primaryTrace.sortFinishStepIndex).toLocaleString();
+              elVsSummaryA.textContent = pMeta.summary;
+
+              elVsCompB.textContent = sStep.comparisons.toLocaleString();
+              elVsWritesB.textContent = sStep.writes.toLocaleString();
+              elVsStepsB.textContent = Math.min(secondaryIdx, secondaryTrace.sortFinishStepIndex).toLocaleString();
+              elVsSummaryB.textContent = sMeta.summary;
+
+              let winner = null;
+              if (pDoneSorting || sDoneSorting) {
+                if (primaryTrace.sortFinishStepIndex < secondaryTrace.sortFinishStepIndex) winner = 'primary';
+                else if (secondaryTrace.sortFinishStepIndex < primaryTrace.sortFinishStepIndex) winner = 'secondary';
+                else winner = 'tie';
+              }
+
+              if (pDoneSorting) {
+                elVsStatusA.classList.remove('hidden');
+                elVsStatusA.classList.add('inline-flex');
+                elVsStatusA.innerHTML = `${winner === 'primary' ? '🏆 先着完了' : '完了'}（<span class="font-mono">${primaryTrace.sortFinishStepIndex}</span> 手）`;
+              } else {
+                elVsStatusA.classList.add('hidden');
+                elVsStatusA.classList.remove('inline-flex');
+              }
+
+              if (sDoneSorting) {
+                elVsStatusB.classList.remove('hidden');
+                elVsStatusB.classList.add('inline-flex');
+                elVsStatusB.innerHTML = `${winner === 'secondary' ? '🏆 先着完了' : '完了'}（<span class="font-mono">${secondaryTrace.sortFinishStepIndex}</span> 手）`;
+              } else {
+                elVsStatusB.classList.add('hidden');
+                elVsStatusB.classList.remove('inline-flex');
+              }
+
+              drawSortCanvas(elVsCanvasA, elVsWrapA, pStep, elementCount);
+              drawSortCanvas(elVsCanvasB, elVsWrapB, sStep, elementCount);
+            }
+            updatePlayButton();
+          }
+
+          function playStepAudio(step, pan = 0) {
+            if (!step || step.toneValue == null) return;
+            if (step.phase === 'sweep') soundEngine.playSweepTone(step.toneValue, elementCount);
+            else if (step.phase === 'running') soundEngine.playSortTone(step.toneValue, elementCount, pan);
+          }
+
+          function startLoop() {
+            let lastTime = performance.now();
+            let budget = 0;
+            const tick = (now) => {
+              if (!isPlaying) return;
+              const dt = Math.min(0.1, (now - lastTime) / 1000);
+              lastTime = now;
+              const stepsPerSec = 2.5 * Math.pow(speed, 1.55);
+              budget += dt * stepsPerSec;
+              const advance = Math.floor(budget);
+
+              if (advance >= 1) {
+                budget -= advance;
+                const pMax = primaryTrace.steps.length - 1;
+                const sMax = secondaryTrace.steps.length - 1;
+                const nextP = Math.min(pMax, primaryIdx + advance);
+                const nextS = viewMode === 'vs' ? Math.min(sMax, secondaryIdx + advance) : sMax;
+
+                if (nextP !== primaryIdx) {
+                  primaryIdx = nextP;
+                  playStepAudio(primaryTrace.steps[nextP], viewMode === 'vs' ? -0.35 : 0);
+                }
+                if (viewMode === 'vs' && nextS !== secondaryIdx) {
+                  secondaryIdx = nextS;
+                  if (nextP >= pMax) {
+                    playStepAudio(secondaryTrace.steps[nextS], 0.35);
+                  }
+                }
+                renderAll();
+                if (nextP >= pMax && (viewMode === 'single' || nextS >= sMax)) {
+                  pause();
+                  return;
+                }
+              }
+              rafId = requestAnimationFrame(tick);
+            };
+            rafId = requestAnimationFrame(tick);
+          }
+
+          elViewSingleBtn.addEventListener('click', () => {
+            pause();
+            viewMode = 'single';
+            primaryIdx = 0;
+            secondaryIdx = 0;
+            elSingleContainer.classList.remove('hidden');
+            elVsContainer.classList.add('hidden');
+            elViewSingleBtn.className = 'inline-flex items-center gap-1.5 rounded-lg bg-white px-3 py-1.5 text-xs font-semibold text-slate-900 shadow-xs transition-colors whitespace-nowrap shrink-0';
+            elViewVsBtn.className = 'inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-semibold text-slate-600 hover:text-slate-900 transition-colors whitespace-nowrap shrink-0';
+            renderAll();
+          });
+
+          elViewVsBtn.addEventListener('click', () => {
+            pause();
+            viewMode = 'vs';
+            primaryIdx = 0;
+            secondaryIdx = 0;
+            elSingleContainer.classList.add('hidden');
+            elVsContainer.classList.remove('hidden');
+            elViewVsBtn.className = 'inline-flex items-center gap-1.5 rounded-lg bg-white px-3 py-1.5 text-xs font-semibold text-slate-900 shadow-xs transition-colors whitespace-nowrap shrink-0';
+            elViewSingleBtn.className = 'inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-semibold text-slate-600 hover:text-slate-900 transition-colors whitespace-nowrap shrink-0';
+            renderAll();
+          });
+
+          elCountSlider.addEventListener('input', (e) => {
+            pause();
+            elementCount = Number(e.target.value);
+            primaryIdx = 0;
+            secondaryIdx = 0;
+            baseArray = generateInitialArray(elementCount, pattern);
+            rebuildTraces();
+            renderAll();
+          });
+
+          elSpeedSlider.addEventListener('input', (e) => {
+            speed = Number(e.target.value);
+            renderAll();
+          });
+
+          document.querySelectorAll('.sort-pattern-btn').forEach((btn) => {
+            btn.addEventListener('click', () => {
+              pause();
+              pattern = btn.dataset.pattern;
+              primaryIdx = 0;
+              secondaryIdx = 0;
+              baseArray = generateInitialArray(elementCount, pattern);
+              rebuildTraces();
+              renderAll();
+            });
+          });
+
+          elVsSelectA.addEventListener('change', (e) => {
+            pause();
+            primaryAlgo = e.target.value;
+            primaryIdx = 0;
+            secondaryIdx = 0;
+            rebuildTraces();
+            renderAll();
+          });
+
+          elVsSelectB.addEventListener('change', (e) => {
+            pause();
+            secondaryAlgo = e.target.value;
+            primaryIdx = 0;
+            secondaryIdx = 0;
+            rebuildTraces();
+            renderAll();
+          });
+
+          elPlayBtn.addEventListener('click', () => {
+            soundEngine.unlock();
+            if (isPlaying) {
+              pause();
+              return;
+            }
+            const pDone = primaryIdx >= primaryTrace.steps.length - 1;
+            const sDone = viewMode === 'single' || secondaryIdx >= secondaryTrace.steps.length - 1;
+            if (pDone && sDone) {
+              primaryIdx = 0;
+              secondaryIdx = 0;
+            }
+            isPlaying = true;
+            updatePlayButton();
+            startLoop();
+          });
+
+          elStepBtn.addEventListener('click', () => {
+            soundEngine.unlock();
+            pause();
+            const pMax = primaryTrace.steps.length - 1;
+            const sMax = secondaryTrace.steps.length - 1;
+            if (primaryIdx < pMax) {
+              primaryIdx++;
+              playStepAudio(primaryTrace.steps[primaryIdx], viewMode === 'vs' ? -0.35 : 0);
+            }
+            if (viewMode === 'vs' && secondaryIdx < sMax) {
+              secondaryIdx++;
+              if (primaryIdx >= pMax) playStepAudio(secondaryTrace.steps[secondaryIdx], 0.35);
+            }
+            renderAll();
+          });
+
+          elRewindBtn.addEventListener('click', () => {
+            pause();
+            primaryIdx = 0;
+            secondaryIdx = 0;
+            renderAll();
+          });
+
+          elResetBtn.addEventListener('click', () => {
+            pause();
+            primaryIdx = 0;
+            secondaryIdx = 0;
+            baseArray = generateInitialArray(elementCount, pattern);
+            rebuildTraces();
+            renderAll();
+          });
+
+          const ro = new ResizeObserver(() => {
+            if (activeMode === 'sort') renderAll();
+          });
+          ro.observe(elSingleWrap);
+          ro.observe(elVsWrapA);
+          ro.observe(elVsWrapB);
+
+          renderAll();
+          return { pause, renderAll };
+        })();
+
+        // =========================================================================
+        // 6. Mode B Controller: Pathfinding Maze Lab
+        // =========================================================================
+        const pathState = (() => {
+          const STORAGE_KEY = 'algolab_maze_layout_v1';
+          const getDefaultDims = (mobile) => (mobile ? { rows: 17, cols: 21 } : { rows: 19, cols: 31 });
+          const getDefaultEndpoints = (rows, cols) => {
+            const midR = Math.floor(rows / 2);
+            return {
+              start: { r: midR, c: Math.max(1, Math.floor(cols * 0.14)) },
+              goal: { r: midR, c: Math.min(cols - 2, Math.floor(cols * 0.86)) },
+            };
+          };
+
+          let isMobile = window.innerWidth < 768;
+          let initPayload = null;
+          try {
+            const saved = localStorage.getItem(STORAGE_KEY);
+            if (saved) initPayload = validateMazePayload(JSON.parse(saved));
+          } catch (_) {}
+
+          if (!initPayload) {
+            const dims = getDefaultDims(isMobile);
+            const eps = getDefaultEndpoints(dims.rows, dims.cols);
+            initPayload = {
+              version: 1,
+              rows: dims.rows,
+              cols: dims.cols,
+              start: eps.start,
+              goal: eps.goal,
+              grid: createEmptyGrid(dims.rows, dims.cols),
+            };
+          }
+
+          let rows = initPayload.rows;
+          let cols = initPayload.cols;
+          let start = initPayload.start;
+          let goal = initPayload.goal;
+          let grid = initPayload.grid;
+
+          let algorithm = 'astar';
+          let tool = 'wall';
+          let speed = 20;
+          let isPlaying = false;
+          let hasStarted = false;
+          let stepCursor = 0;
+          let pathProgress = 0;
+          let pathResult = runPathfinding(algorithm, grid, start, goal);
+          let rafId = 0;
+          let dragAction = null;
+          let lastCell = null;
+
+          const elCanvasWrap = document.getElementById('path-canvas-wrap');
+          const elCanvas = document.getElementById('path-canvas');
+          const elBoardMeta = document.getElementById('path-board-meta');
+          const elFitBtn = document.getElementById('path-fit-btn');
+          const elExportBtn = document.getElementById('path-export-btn');
+          const elImportBtn = document.getElementById('path-import-btn');
+          const elImportInput = document.getElementById('path-import-input');
+          const elSpeedSlider = document.getElementById('path-speed-slider');
+          const elSpeedVal = document.getElementById('path-speed-val');
+          const elPlayBtn = document.getElementById('path-play-btn');
+          const elPlayLabel = document.getElementById('path-play-label');
+          const elStepBtn = document.getElementById('path-step-btn');
+          const elClearHistoryBtn = document.getElementById('path-clear-history-btn');
+          const elFeedbackMsg = document.getElementById('path-feedback-msg');
+          const elAlgoTitle = document.getElementById('path-algo-title');
+          const elAlgoMeta = document.getElementById('path-algo-meta');
+          const elStatVisited = document.getElementById('path-stat-visited');
+          const elStatSteps = document.getElementById('path-stat-steps');
+          const elStatCost = document.getElementById('path-stat-cost');
+          const elStatTime = document.getElementById('path-stat-time');
+          const elUnreachable = document.getElementById('path-unreachable-alert');
+          const elAlgoList = document.getElementById('path-algo-list');
+          const elAlgoSummary = document.getElementById('path-algo-summary');
+
+          PATH_ALGORITHMS.forEach((a) => {
+            const btn = document.createElement('button');
+            btn.type = 'button';
+            btn.dataset.algoId = a.id;
+            btn.className = 'path-algo-btn rounded-xl border px-3.5 py-2.5 text-left transition-colors';
+            btn.innerHTML = `<div class="flex items-center justify-between gap-2"><span class="text-sm font-semibold">${a.name}</span><span class="text-[11px] text-slate-500">重み：${a.weightAware}</span></div>`;
+            btn.addEventListener('click', () => {
+              clearExplorationOnly();
+              algorithm = a.id;
+              recomputePath();
+              render();
+            });
+            elAlgoList.appendChild(btn);
+          });
+
+          function saveToStorage() {
+            try {
+              localStorage.setItem(STORAGE_KEY, JSON.stringify({ version: 1, rows, cols, start, goal, grid }));
+            } catch (_) {}
+          }
+
+          function recomputePath() {
+            pathResult = runPathfinding(algorithm, grid, start, goal);
+          }
+
+          function pause() {
+            isPlaying = false;
+            if (rafId) cancelAnimationFrame(rafId);
+            rafId = 0;
+            updatePlayButton();
+          }
+
+          function clearExplorationOnly() {
+            pause();
+            hasStarted = false;
+            stepCursor = 0;
+            pathProgress = 0;
+          }
+
+          function updatePlayButton() {
+            elPlayLabel.textContent = isPlaying ? '一時停止' : '探索スタート';
+            elPlayBtn.className = isPlaying
+              ? 'inline-flex min-h-[40px] flex-1 sm:flex-initial items-center justify-center gap-1.5 rounded-xl bg-amber-600 px-4 py-2 text-xs font-semibold text-white transition-colors hover:bg-amber-700 whitespace-nowrap shrink-0'
+              : 'inline-flex min-h-[40px] flex-1 sm:flex-initial items-center justify-center gap-1.5 rounded-xl bg-indigo-600 px-4 py-2 text-xs font-semibold text-white transition-colors hover:bg-indigo-700 whitespace-nowrap shrink-0';
+          }
+
+          function interpolateHex(hex1, hex2, t) {
+            const c1 = parseInt(hex1.slice(1), 16);
+            const c2 = parseInt(hex2.slice(1), 16);
+            const r = Math.round(((c1 >> 16) & 255) + (((c2 >> 16) & 255) - ((c1 >> 16) & 255)) * t);
+            const g = Math.round(((c1 >> 8) & 255) + (((c2 >> 8) & 255) - ((c1 >> 8) & 255)) * t);
+            const b = Math.round((c1 & 255) + ((c2 & 255) - (c1 & 255)) * t);
+            return `rgb(${r}, ${g}, ${b})`;
+          }
+
+          function getCellSize() {
+            const rect = elCanvasWrap.getBoundingClientRect();
+            const boxW = rect.width > 0 ? rect.width : 800;
+            return Math.max(14, Math.min(34, Math.floor(boxW / cols)));
+          }
+
+          function render() {
+            elBoardMeta.innerHTML = `盤面 <span class="font-mono text-slate-700">${cols} × ${rows}</span> マス · 重み地形コスト <span class="font-mono text-slate-700">${WEIGHT_COST}</span>`;
+            elSpeedVal.textContent = `${speed}x`;
+            elFitBtn.classList.toggle('hidden', isMobile ? cols === 21 : cols === 31);
+
+            document.querySelectorAll('.path-tool-btn').forEach((btn) => {
+              const active = btn.dataset.tool === tool;
+              btn.className = active
+                ? 'path-tool-btn inline-flex min-h-[38px] items-center gap-1.5 rounded-xl border border-indigo-600 bg-indigo-50 px-3 py-1.5 text-xs font-semibold text-indigo-900 transition-colors whitespace-nowrap'
+                : 'path-tool-btn inline-flex min-h-[38px] items-center gap-1.5 rounded-xl border border-slate-200 bg-white px-3 py-1.5 text-xs font-semibold text-slate-700 hover:bg-slate-50 transition-colors whitespace-nowrap';
+            });
+
+            document.querySelectorAll('.path-algo-btn').forEach((btn) => {
+              const active = btn.dataset.algoId === algorithm;
+              btn.className = active
+                ? 'path-algo-btn rounded-xl border border-indigo-600 bg-indigo-50 px-3.5 py-2.5 text-left text-slate-900 transition-colors'
+                : 'path-algo-btn rounded-xl border border-slate-200 bg-white px-3.5 py-2.5 text-left text-slate-700 hover:bg-slate-50 transition-colors';
+            });
+
+            const meta = PATH_ALGORITHMS.find((a) => a.id === algorithm);
+            elAlgoTitle.textContent = meta.name;
+            elAlgoMeta.textContent = `最短経路保証：${meta.shortestPathGuarantee} · 重み考慮：${meta.weightAware}`;
+            elAlgoSummary.textContent = meta.summary;
+
+            const openSet = new Set();
+            const closedOrder = new Map();
+            const maxSteps = Math.min(stepCursor, pathResult.steps.length);
+            let currentCell = null;
+            for (let i = 0; i < maxSteps; i++) {
+              const st = pathResult.steps[i];
+              currentCell = st.current;
+              for (const o of st.newlyOpened) openSet.add(coordKey(o.r, o.c));
+              if (st.newlyClosed) {
+                const k = coordKey(st.newlyClosed.r, st.newlyClosed.c);
+                openSet.delete(k);
+                if (!closedOrder.has(k)) closedOrder.set(k, i);
+              }
+            }
+            const visitedNow = maxSteps > 0 ? pathResult.steps[maxSteps - 1].visitedCount : 0;
+            const exploreCompleted = hasStarted && stepCursor >= pathResult.steps.length;
+
+            elStatVisited.textContent = visitedNow.toLocaleString();
+            elStatSteps.textContent = exploreCompleted && pathResult.found ? (pathResult.path.length - 1).toLocaleString() : '—';
+            elStatCost.textContent = exploreCompleted && pathResult.found ? pathResult.totalCost.toLocaleString() : '—';
+            elStatTime.textContent = hasStarted ? `${pathResult.computeTimeMs.toFixed(2)} ms` : '—';
+            elUnreachable.classList.toggle('hidden', !(exploreCompleted && !pathResult.found));
+            updatePlayButton();
+
+            const cellSize = getCellSize();
+            const logicalW = cellSize * cols;
+            const logicalH = cellSize * rows;
+            elCanvas.style.width = `${logicalW}px`;
+            elCanvas.style.height = `${logicalH}px`;
+
+            const dpr = window.devicePixelRatio || 1;
+            elCanvas.width = Math.floor(logicalW * dpr);
+            elCanvas.height = Math.floor(logicalH * dpr);
+            const ctx = elCanvas.getContext('2d');
+            if (!ctx) return;
+            ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+
+            ctx.fillStyle = '#ffffff';
+            ctx.fillRect(0, 0, logicalW, logicalH);
+
+            const totalClosedSteps = Math.max(1, pathResult.steps.length);
+            const closedCount = closedOrder.size;
+
+            for (let r = 0; r < rows; r++) {
+              for (let c = 0; c < cols; c++) {
+                const x = c * cellSize;
+                const y = r * cellSize;
+                const ct = grid[r][c];
+                const k = coordKey(r, c);
+
+                if (ct === 'wall') {
+                  ctx.fillStyle = '#1e293b';
+                  ctx.fillRect(x, y, cellSize, cellSize);
+                  continue;
+                }
+                if (ct === 'weight') {
+                  ctx.fillStyle = '#fef3c7';
+                  ctx.fillRect(x, y, cellSize, cellSize);
+                }
+
+                if (closedOrder.has(k)) {
+                  const orderIdx = closedOrder.get(k) ?? 0;
+                  const ratio = closedCount > 1 ? orderIdx / Math.max(1, totalClosedSteps - 1) : 0;
+                  ctx.fillStyle = interpolateHex('#38bdf8', '#6366f1', Math.min(1, ratio));
+                  if (ct === 'weight') {
+                    ctx.globalAlpha = 0.68;
+                    ctx.fillRect(x, y, cellSize, cellSize);
+                    ctx.globalAlpha = 1;
+                  } else {
+                    ctx.fillRect(x + 0.5, y + 0.5, cellSize - 1, cellSize - 1);
+                  }
+                } else if (openSet.has(k)) {
+                  ctx.fillStyle = '#bae6fd';
+                  if (ct === 'weight') {
+                    ctx.globalAlpha = 0.72;
+                    ctx.fillRect(x, y, cellSize, cellSize);
+                    ctx.globalAlpha = 1;
+                  } else {
+                    ctx.fillRect(x + 0.5, y + 0.5, cellSize - 1, cellSize - 1);
+                  }
+                }
+
+                if (ct === 'weight') {
+                  ctx.strokeStyle = 'rgba(180, 83, 9, 0.45)';
+                  ctx.lineWidth = 1.2;
+                  ctx.beginPath();
+                  const midY = y + cellSize * 0.55;
+                  ctx.moveTo(x + cellSize * 0.18, midY);
+                  ctx.quadraticCurveTo(x + cellSize * 0.35, midY - cellSize * 0.15, x + cellSize * 0.5, midY);
+                  ctx.quadraticCurveTo(x + cellSize * 0.65, midY + cellSize * 0.15, x + cellSize * 0.82, midY);
+                  ctx.stroke();
+
+                  if (cellSize >= 18) {
+                    ctx.fillStyle = closedOrder.has(k) ? 'rgba(255,255,255,0.9)' : 'rgba(146, 64, 14, 0.85)';
+                    ctx.font = `600 ${Math.max(8, Math.floor(cellSize * 0.34))}px "JetBrains Mono", monospace`;
+                    ctx.textAlign = 'right';
+                    ctx.textBaseline = 'top';
+                    ctx.fillText('5', x + cellSize - 2, y + 2);
+                  }
+                }
+              }
+            }
+
+            if (currentCell && stepCursor < pathResult.steps.length && hasStarted) {
+              ctx.fillStyle = '#4f46e5';
+              ctx.fillRect(currentCell.c * cellSize + 2, currentCell.r * cellSize + 2, cellSize - 4, cellSize - 4);
+            }
+
+            ctx.strokeStyle = '#e2e8f0';
+            ctx.lineWidth = 1;
+            ctx.beginPath();
+            for (let c = 0; c <= cols; c++) {
+              const x = c * cellSize + 0.5;
+              ctx.moveTo(x, 0);
+              ctx.lineTo(x, logicalH);
+            }
+            for (let r = 0; r <= rows; r++) {
+              const y = r * cellSize + 0.5;
+              ctx.moveTo(0, y);
+              ctx.lineTo(logicalW, y);
+            }
+            ctx.stroke();
+
+            if (stepCursor >= pathResult.steps.length && pathResult.found && pathProgress > 0) {
+              const count = Math.min(pathProgress, pathResult.path.length);
+              for (let i = 0; i < count; i++) {
+                const p = pathResult.path[i];
+                ctx.fillStyle = 'rgba(250, 204, 21, 0.32)';
+                ctx.fillRect(p.c * cellSize + 1, p.r * cellSize + 1, cellSize - 2, cellSize - 2);
+              }
+              if (count >= 2) {
+                ctx.strokeStyle = '#facc15';
+                ctx.lineWidth = Math.max(4, cellSize * 0.28);
+                ctx.lineCap = 'round';
+                ctx.lineJoin = 'round';
+                ctx.beginPath();
+                for (let i = 0; i < count; i++) {
+                  const p = pathResult.path[i];
+                  const px = p.c * cellSize + cellSize / 2;
+                  const py = p.r * cellSize + cellSize / 2;
+                  if (i === 0) ctx.moveTo(px, py);
+                  else ctx.lineTo(px, py);
+                }
+                ctx.stroke();
+                ctx.strokeStyle = '#ca8a04';
+                ctx.lineWidth = 1;
+                ctx.stroke();
+              }
+              if (count < pathResult.path.length) {
+                const tip = pathResult.path[count - 1];
+                ctx.fillStyle = '#facc15';
+                ctx.beginPath();
+                ctx.arc(tip.c * cellSize + cellSize / 2, tip.r * cellSize + cellSize / 2, cellSize * 0.28, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.strokeStyle = '#0f172a';
+                ctx.lineWidth = 1.5;
+                ctx.stroke();
+              }
+            }
+
+            // Start Icon
+            {
+              const sx = start.c * cellSize + cellSize / 2;
+              const sy = start.r * cellSize + cellSize / 2;
+              const rad = cellSize * 0.36;
+              ctx.fillStyle = '#10b981';
+              ctx.beginPath();
+              ctx.arc(sx, sy, rad, 0, Math.PI * 2);
+              ctx.fill();
+              ctx.strokeStyle = '#065f46';
+              ctx.lineWidth = 1.5;
+              ctx.stroke();
+              ctx.fillStyle = '#ffffff';
+              ctx.beginPath();
+              ctx.moveTo(sx - rad * 0.28, sy - rad * 0.4);
+              ctx.lineTo(sx + rad * 0.45, sy);
+              ctx.lineTo(sx - rad * 0.28, sy + rad * 0.4);
+              ctx.closePath();
+              ctx.fill();
+            }
+
+            // Goal Icon (Red Flag)
+            {
+              const gx = goal.c * cellSize + cellSize / 2;
+              const gy = goal.r * cellSize + cellSize / 2;
+              const s = cellSize * 0.38;
+              ctx.fillStyle = '#ffe4e6';
+              ctx.beginPath();
+              ctx.arc(gx, gy, s * 1.05, 0, Math.PI * 2);
+              ctx.fill();
+              ctx.strokeStyle = '#0f172a';
+              ctx.lineWidth = 2;
+              ctx.beginPath();
+              ctx.moveTo(gx - s * 0.35, gy + s * 0.72);
+              ctx.lineTo(gx - s * 0.35, gy - s * 0.72);
+              ctx.stroke();
+              ctx.fillStyle = '#f43f5e';
+              ctx.beginPath();
+              ctx.moveTo(gx - s * 0.3, gy - s * 0.72);
+              ctx.lineTo(gx + s * 0.7, gy - s * 0.25);
+              ctx.lineTo(gx - s * 0.3, gy + s * 0.2);
+              ctx.closePath();
+              ctx.fill();
+            }
+          }
+
+          function startLoop() {
+            let lastTime = performance.now();
+            let budget = 0;
+            const tick = (now) => {
+              if (!isPlaying) return;
+              const dt = Math.min(0.1, (now - lastTime) / 1000);
+              lastTime = now;
+
+              const totalExplore = pathResult.steps.length;
+              const totalPath = pathResult.found ? pathResult.path.length : 0;
+
+              if (stepCursor < totalExplore) {
+                const stepsPerSec = 4 + Math.pow(speed, 1.45) * 3.2;
+                budget += dt * stepsPerSec;
+                const advance = Math.floor(budget);
+                if (advance >= 1) {
+                  budget -= advance;
+                  stepCursor = Math.min(totalExplore, stepCursor + advance);
+                  const stepObj = pathResult.steps[stepCursor - 1];
+                  if (stepObj) soundEngine.playPathPulse(stepObj.distanceRatio);
+                  render();
+                  if (stepCursor >= totalExplore) {
+                    if (pathResult.found) {
+                      soundEngine.playGoalChime();
+                    } else {
+                      pause();
+                      return;
+                    }
+                  }
+                }
+              } else if (pathResult.found && pathProgress < totalPath) {
+                const pathSpeed = Math.max(18, totalPath * 2.2);
+                budget += dt * pathSpeed;
+                const advance = Math.floor(budget);
+                if (advance >= 1) {
+                  budget -= advance;
+                  pathProgress = Math.min(totalPath, pathProgress + advance);
+                  render();
+                  if (pathProgress >= totalPath) {
+                    pause();
+                    return;
+                  }
+                }
+              } else {
+                pause();
+                return;
+              }
+              rafId = requestAnimationFrame(tick);
+            };
+            rafId = requestAnimationFrame(tick);
+          }
+
+          function getCellFromPointer(clientX, clientY) {
+            const rect = elCanvas.getBoundingClientRect();
+            const cellSize = getCellSize();
+            const logicalW = cellSize * cols;
+            const logicalH = cellSize * rows;
+            const x = (clientX - rect.left) * (logicalW / rect.width);
+            const y = (clientY - rect.top) * (logicalH / rect.height);
+            const c = Math.floor(x / cellSize);
+            const r = Math.floor(y / cellSize);
+            if (r < 0 || r >= rows || c < 0 || c >= cols) return null;
+            return { r, c };
+          }
+
+          function paintCell(r, c, val) {
+            if ((r === start.r && c === start.c) || (r === goal.r && c === goal.c)) return;
+            if (grid[r][c] === val) return;
+            grid[r][c] = val;
+            saveToStorage();
+            recomputePath();
+            render();
+          }
+
+          elCanvas.addEventListener('pointerdown', (e) => {
+            elCanvas.setPointerCapture(e.pointerId);
+            const cell = getCellFromPointer(e.clientX, e.clientY);
+            if (!cell) return;
+            clearExplorationOnly();
+            lastCell = cell;
+
+            if (cell.r === start.r && cell.c === start.c) {
+              dragAction = { type: 'drag-start' };
+              render();
+              return;
+            }
+            if (cell.r === goal.r && cell.c === goal.c) {
+              dragAction = { type: 'drag-goal' };
+              render();
+              return;
+            }
+            if (tool === 'move-start') {
+              if (cell.r !== goal.r || cell.c !== goal.c) {
+                start = cell;
+                if (grid[cell.r][cell.c] === 'wall') grid[cell.r][cell.c] = 'empty';
+                saveToStorage();
+                recomputePath();
+              }
+              dragAction = { type: 'drag-start' };
+              render();
+              return;
+            }
+            if (tool === 'move-goal') {
+              if (cell.r !== start.r || cell.c !== start.c) {
+                goal = cell;
+                if (grid[cell.r][cell.c] === 'wall') grid[cell.r][cell.c] = 'empty';
+                saveToStorage();
+                recomputePath();
+              }
+              dragAction = { type: 'drag-goal' };
+              render();
+              return;
+            }
+            if (tool === 'wall') {
+              const paintVal = grid[cell.r][cell.c] === 'wall' ? 'empty' : 'wall';
+              dragAction = { type: 'paint', paintVal };
+              paintCell(cell.r, cell.c, paintVal);
+            } else if (tool === 'weight') {
+              const paintVal = grid[cell.r][cell.c] === 'weight' ? 'empty' : 'weight';
+              dragAction = { type: 'paint', paintVal };
+              paintCell(cell.r, cell.c, paintVal);
+            } else {
+              dragAction = { type: 'paint', paintVal: 'empty' };
+              paintCell(cell.r, cell.c, 'empty');
+            }
+          });
+
+          elCanvas.addEventListener('pointermove', (e) => {
+            if (!dragAction) return;
+            const cell = getCellFromPointer(e.clientX, e.clientY);
+            if (!cell) return;
+            if (lastCell && lastCell.r === cell.r && lastCell.c === cell.c) return;
+            lastCell = cell;
+
+            if (dragAction.type === 'drag-start') {
+              if (cell.r === goal.r && cell.c === goal.c) return;
+              if (grid[cell.r][cell.c] === 'wall') grid[cell.r][cell.c] = 'empty';
+              start = cell;
+              saveToStorage();
+              recomputePath();
+              render();
+            } else if (dragAction.type === 'drag-goal') {
+              if (cell.r === start.r && cell.c === start.c) return;
+              if (grid[cell.r][cell.c] === 'wall') grid[cell.r][cell.c] = 'empty';
+              goal = cell;
+              saveToStorage();
+              recomputePath();
+              render();
+            } else if (dragAction.type === 'paint') {
+              paintCell(cell.r, cell.c, dragAction.paintVal);
+            }
+          });
+
+          const endDrag = () => {
+            dragAction = null;
+            lastCell = null;
+          };
+          elCanvas.addEventListener('pointerup', endDrag);
+          elCanvas.addEventListener('pointercancel', endDrag);
+
+          document.querySelectorAll('.path-tool-btn').forEach((btn) => {
+            btn.addEventListener('click', () => {
+              tool = btn.dataset.tool;
+              render();
+            });
+          });
+
+          elSpeedSlider.addEventListener('input', (e) => {
+            speed = Number(e.target.value);
+            render();
+          });
+
+          elPlayBtn.addEventListener('click', () => {
+            soundEngine.unlock();
+            if (isPlaying) {
+              pause();
+              return;
+            }
+            const totalExplore = pathResult.steps.length;
+            const totalPath = pathResult.found ? pathResult.path.length : 0;
+            const isFinished = hasStarted && stepCursor >= totalExplore && (!pathResult.found || pathProgress >= totalPath);
+            if (isFinished) {
+              stepCursor = 0;
+              pathProgress = 0;
+            }
+            hasStarted = true;
+            isPlaying = true;
+            updatePlayButton();
+            startLoop();
+          });
+
+          elStepBtn.addEventListener('click', () => {
+            soundEngine.unlock();
+            pause();
+            hasStarted = true;
+            if (stepCursor < pathResult.steps.length) {
+              stepCursor++;
+              const stepObj = pathResult.steps[stepCursor - 1];
+              if (stepObj) soundEngine.playPathPulse(stepObj.distanceRatio);
+              if (stepCursor >= pathResult.steps.length && pathResult.found) {
+                soundEngine.playGoalChime();
+              }
+            } else if (pathResult.found && pathProgress < pathResult.path.length) {
+              pathProgress = Math.min(pathResult.path.length, pathProgress + 1);
+            }
+            render();
+          });
+
+          elClearHistoryBtn.addEventListener('click', () => {
+            clearExplorationOnly();
+            render();
+          });
+
+          document.querySelectorAll('.path-preset-btn').forEach((btn) => {
+            btn.addEventListener('click', () => {
+              clearExplorationOnly();
+              elFeedbackMsg.classList.add('hidden');
+              const type = btn.dataset.preset;
+              if (type === 'digging') grid = generateDiggingMaze(rows, cols, start, goal);
+              else if (type === 'pillar') grid = generatePillarMaze(rows, cols, start, goal);
+              else if (type === 'random25') grid = generateRandomObstacles(rows, cols, start, goal, 0.25);
+              else if (type === 'swamp') {
+                const eps = getDefaultEndpoints(rows, cols);
+                start = eps.start;
+                goal = eps.goal;
+                grid = generateWeightedSwampMap(rows, cols, start, goal);
+              } else {
+                grid = createEmptyGrid(rows, cols);
+              }
+              saveToStorage();
+              recomputePath();
+              render();
+            });
+          });
+
+          elFitBtn.addEventListener('click', () => {
+            clearExplorationOnly();
+            const dims = getDefaultDims(isMobile);
+            const eps = getDefaultEndpoints(dims.rows, dims.cols);
+            rows = dims.rows;
+            cols = dims.cols;
+            start = eps.start;
+            goal = eps.goal;
+            grid = createEmptyGrid(rows, cols);
+            saveToStorage();
+            recomputePath();
+            render();
+          });
+
+          function showFeedback(msg) {
+            elFeedbackMsg.textContent = msg;
+            elFeedbackMsg.classList.remove('hidden');
+          }
+
+          elExportBtn.addEventListener('click', () => {
+            const payload = { version: 1, rows, cols, start, goal, grid };
+            const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = `maze-${cols}x${rows}.json`;
+            link.click();
+            URL.revokeObjectURL(url);
+            showFeedback('迷路レイアウトをJSONファイルとして書き出しました。');
+          });
+
+          elImportBtn.addEventListener('click', () => elImportInput.click());
+          elImportInput.addEventListener('change', (e) => {
+            const file = e.target.files?.[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = () => {
+              try {
+                const parsed = validateMazePayload(JSON.parse(String(reader.result)));
+                if (!parsed) {
+                  showFeedback('JSONの形式が迷路レイアウトと一致しません。');
+                  return;
+                }
+                clearExplorationOnly();
+                rows = parsed.rows;
+                cols = parsed.cols;
+                start = parsed.start;
+                goal = parsed.goal;
+                grid = parsed.grid;
+                saveToStorage();
+                recomputePath();
+                render();
+                showFeedback(`迷路レイアウト（${parsed.cols}×${parsed.rows}）を読み込みました。`);
+              } catch (_) {
+                showFeedback('JSONファイルの解析に失敗しました。');
+              }
+            };
+            reader.readAsText(file);
+            e.target.value = '';
+          });
+
+          window.addEventListener('resize', () => {
+            isMobile = window.innerWidth < 768;
+            if (activeMode === 'path') render();
+          });
+
+          const ro = new ResizeObserver(() => {
+            if (activeMode === 'path') render();
+          });
+          ro.observe(elCanvasWrap);
+
+          render();
+          return { pause, render };
+        })();
+      })();
+    </script>
+  </body>
+</html>

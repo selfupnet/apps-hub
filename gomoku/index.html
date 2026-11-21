@@ -1,0 +1,849 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>五目並べ (Gomoku)</title>
+  <style>
+    :root {
+      --bg-color: #1e293b;
+      --card-bg: #334155;
+      --text-color: #f8fafc;
+      --accent: #38bdf8;
+      --accent-hover: #0ea5e9;
+      --board-color: #d99f57;
+      --board-line: #422507;
+    }
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      user-select: none;
+      -webkit-user-select: none;
+    }
+    body {
+      background-color: var(--bg-color);
+      color: var(--text-color);
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: flex-start;
+      padding: 10px;
+    }
+    header {
+      width: 100%;
+      max-width: 580px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 6px;
+    }
+    h1 {
+      font-size: 1.15rem;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .header-info {
+      font-size: 0.8rem;
+      color: #94a3b8;
+      font-weight: 600;
+    }
+
+    /* メイン設定バー（画面上部に常時配置） */
+    .controls-panel {
+      width: 100%;
+      max-width: 580px;
+      background: var(--card-bg);
+      border-radius: 12px;
+      padding: 8px 10px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      margin-bottom: 8px;
+      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.25);
+    }
+    .control-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 6px;
+    }
+    .btn-group {
+      display: flex;
+      background: #1e293b;
+      border-radius: 8px;
+      padding: 2px;
+      gap: 2px;
+    }
+    .pill-btn {
+      background: transparent;
+      color: #94a3b8;
+      border: none;
+      padding: 5px 11px;
+      border-radius: 6px;
+      font-size: 0.78rem;
+      font-weight: 700;
+      cursor: pointer;
+      transition: all 0.15s ease;
+    }
+    .pill-btn.active {
+      background: var(--accent);
+      color: #0f172a;
+    }
+    .select-dropdown {
+      background: #1e293b;
+      color: #f8fafc;
+      border: 1px solid #475569;
+      padding: 4px 8px;
+      border-radius: 6px;
+      font-size: 0.78rem;
+      font-weight: 600;
+      outline: none;
+      cursor: pointer;
+    }
+
+    /* 対局アクションバー */
+    .action-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 6px;
+      border-top: 1px solid #475569;
+      padding-top: 8px;
+    }
+    .status-badge {
+      display: flex;
+      align-items: center;
+      gap: 7px;
+      font-size: 0.82rem;
+      font-weight: 700;
+    }
+    .turn-indicator {
+      width: 14px;
+      height: 14px;
+      border-radius: 50%;
+      border: 1px solid rgba(255, 255, 255, 0.4);
+      box-shadow: 0 1px 3px rgba(0,0,0,0.5);
+    }
+    .action-buttons {
+      display: flex;
+      gap: 5px;
+    }
+    .icon-btn {
+      background: #1e293b;
+      color: #e2e8f0;
+      border: 1px solid #475569;
+      padding: 5px 9px;
+      border-radius: 6px;
+      font-size: 0.75rem;
+      font-weight: 600;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      transition: background 0.15s;
+    }
+    .icon-btn:hover:not(:disabled) {
+      background: #475569;
+    }
+    .icon-btn:disabled {
+      opacity: 0.35;
+      cursor: not-allowed;
+    }
+
+    /* Canvas 碁盤コンテナ */
+    #board-container {
+      width: 100%;
+      max-width: 580px;
+      aspect-ratio: 1 / 1;
+      position: relative;
+      background: var(--board-color);
+      border-radius: 10px;
+      overflow: hidden;
+      box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.6), inset 0 0 12px rgba(0,0,0,0.25);
+      border: 3px solid #8c5825;
+      touch-action: none;
+    }
+    canvas {
+      width: 100%;
+      height: 100%;
+      display: block;
+      cursor: pointer;
+    }
+
+    /* 終局モーダルオーバーレイ */
+    #modal-overlay {
+      position: absolute;
+      inset: 0;
+      background: rgba(15, 23, 42, 0.8);
+      backdrop-filter: blur(3px);
+      display: none;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 12px;
+      border-radius: 10px;
+    }
+    .modal-card {
+      background: var(--card-bg);
+      border: 1px solid #64748b;
+      padding: 20px 28px;
+      border-radius: 14px;
+      text-align: center;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+    }
+    .modal-winner {
+      font-size: 1.35rem;
+      font-weight: 800;
+      margin-bottom: 8px;
+    }
+    .primary-btn {
+      background: var(--accent);
+      color: #0f172a;
+      border: none;
+      padding: 8px 18px;
+      font-size: 0.85rem;
+      font-weight: 700;
+      border-radius: 8px;
+      cursor: pointer;
+      box-shadow: 0 4px 10px rgba(56, 189, 248, 0.3);
+    }
+    .primary-btn:hover {
+      background: var(--accent-hover);
+    }
+  </style>
+</head>
+<body>
+
+  <header>
+    <h1>⚪⚫ 五目並べ</h1>
+    <span class="header-info" id="move-count">手数: 0手</span>
+  </header>
+
+  <!-- 上部インライン設定＆コントロールパネル -->
+  <div class="controls-panel">
+    <div class="control-row">
+      <!-- モード選択 -->
+      <div style="display: flex; align-items: center; gap: 5px;">
+        <span style="font-size: 0.72rem; color: #94a3b8;">対戦:</span>
+        <div class="btn-group">
+          <button class="pill-btn active" id="mode-cpu" onclick="setGameMode('cpu')">vs CPU</button>
+          <button class="pill-btn" id="mode-human" onclick="setGameMode('human')">2人対局</button>
+        </div>
+      </div>
+
+      <!-- CPU難易度 -->
+      <div id="ai-level-group" style="display: flex; align-items: center; gap: 5px;">
+        <span style="font-size: 0.72rem; color: #94a3b8;">強さ:</span>
+        <select class="select-dropdown" id="ai-level" onchange="changeDifficulty(this.value)">
+          <option value="easy">初級</option>
+          <option value="medium" selected>中級</option>
+          <option value="hard">上級</option>
+        </select>
+      </div>
+
+      <!-- 音声 ON/OFF -->
+      <button class="icon-btn" id="sound-btn" onclick="toggleSound()">
+        <span id="sound-icon">🔊</span>
+      </button>
+    </div>
+
+    <!-- アクション＆手番表示バー -->
+    <div class="action-row">
+      <div class="status-badge">
+        <div class="turn-indicator" id="turn-dot" style="background: #0f172a;"></div>
+        <span id="turn-text">黒の手番 (あなた)</span>
+      </div>
+
+      <div class="action-buttons">
+        <!-- 手番交代 (先手/後手) -->
+        <button class="icon-btn" id="color-swap-btn" onclick="swapPlayerColor()" title="先手/後手を交代">
+          ⇄ 手番変更
+        </button>
+        <!-- 待った -->
+        <button class="icon-btn" id="undo-btn" onclick="undoMove()" disabled>
+          ↩ 待った
+        </button>
+        <!-- やり直し -->
+        <button class="icon-btn" onclick="restartGame()">
+          🔄 最初から
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 盤面 Canvas -->
+  <div id="board-container">
+    <canvas id="board-canvas"></canvas>
+
+    <div id="modal-overlay">
+      <div class="modal-card">
+        <div class="modal-winner" id="modal-text">黒の勝利！</div>
+        <button class="primary-btn" onclick="restartGame()">もう一度遊ぶ</button>
+      </div>
+    </div>
+  </div>
+
+<script>
+  const BOARD_SIZE = 15;
+  const EMPTY = 0;
+  const BLACK = 1;
+  const WHITE = 2;
+
+  let board = [];
+  let history = [];
+  let currentTurn = BLACK;
+  let isGameOver = false;
+  let gameMode = 'cpu'; // 'cpu' or 'human'
+  let playerColor = BLACK; // CPU戦での操作石色
+  let aiLevel = 'medium';
+  let soundEnabled = true;
+  let winningLine = null;
+  let hoverCell = null;
+
+  const canvas = document.getElementById('board-canvas');
+  const ctx = canvas.getContext('2d');
+  const container = document.getElementById('board-container');
+
+  // Web Audio API シンセ音（外部音声ファイル不要）
+  let audioCtx = null;
+  function getAudioCtx() {
+    if (!audioCtx) {
+      audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    }
+    if (audioCtx.state === 'suspended') {
+      audioCtx.resume();
+    }
+    return audioCtx;
+  }
+
+  function playSound(type) {
+    if (!soundEnabled) return;
+    try {
+      const actx = getAudioCtx();
+      const now = actx.currentTime;
+
+      if (type === 'place') {
+        const osc = actx.createOscillator();
+        const gain = actx.createGain();
+        osc.type = 'triangle';
+        osc.frequency.setValueAtTime(800, now);
+        osc.frequency.exponentialRampToValueAtTime(140, now + 0.05);
+
+        gain.gain.setValueAtTime(0.7, now);
+        gain.gain.exponentialRampToValueAtTime(0.001, now + 0.05);
+
+        osc.connect(gain);
+        gain.connect(actx.destination);
+        osc.start(now);
+        osc.stop(now + 0.05);
+      } else if (type === 'win') {
+        const freqs = [523.25, 659.25, 783.99, 1046.5];
+        freqs.forEach((f, i) => {
+          const osc = actx.createOscillator();
+          const gain = actx.createGain();
+          osc.type = 'sine';
+          osc.frequency.value = f;
+          gain.gain.setValueAtTime(0, now + i * 0.1);
+          gain.gain.linearRampToValueAtTime(0.2, now + i * 0.1 + 0.02);
+          gain.gain.exponentialRampToValueAtTime(0.001, now + i * 0.1 + 0.4);
+          osc.connect(gain);
+          gain.connect(actx.destination);
+          osc.start(now + i * 0.1);
+          osc.stop(now + i * 0.1 + 0.4);
+        });
+      }
+    } catch (e) {}
+  }
+
+  function initBoard() {
+    board = Array(BOARD_SIZE).fill(null).map(() => Array(BOARD_SIZE).fill(EMPTY));
+    history = [];
+    currentTurn = BLACK;
+    isGameOver = false;
+    winningLine = null;
+    hoverCell = null;
+    document.getElementById('modal-overlay').style.display = 'none';
+    updateUI();
+    render();
+
+    if (gameMode === 'cpu' && playerColor === WHITE) {
+      setTimeout(cpuTurn, 400);
+    }
+  }
+
+  function resizeCanvas() {
+    const rect = container.getBoundingClientRect();
+    if (!rect.width || !rect.height) return;
+    const dpr = window.devicePixelRatio || 1;
+    canvas.width = rect.width * dpr;
+    canvas.height = rect.height * dpr;
+    ctx.setTransform(1, 0, 0, 1, 0, 0);
+    ctx.scale(dpr, dpr);
+    render();
+  }
+
+  window.addEventListener('resize', resizeCanvas);
+
+  function getMetrics() {
+    const rect = container.getBoundingClientRect();
+    const width = rect.width || 400;
+    const padding = width * 0.06;
+    const gridSpan = (width - padding * 2) / (BOARD_SIZE - 1);
+    return { padding, gridSpan, width };
+  }
+
+  function render() {
+    // 盤面配列がまだ初期化されていない場合は処理をスキップ
+    if (!board || board.length !== BOARD_SIZE || !board[0]) return;
+
+    const { padding, gridSpan, width } = getMetrics();
+    ctx.clearRect(0, 0, width, width);
+
+    // 1. 木目テクスチャ背景
+    const grad = ctx.createLinearGradient(0, 0, width, width);
+    grad.addColorStop(0, '#ebb56c');
+    grad.addColorStop(1, '#c98a3e');
+    ctx.fillStyle = grad;
+    ctx.fillRect(0, 0, width, width);
+
+    // 木目ライン
+    ctx.strokeStyle = 'rgba(90, 45, 10, 0.07)';
+    ctx.lineWidth = 1;
+    for (let i = 0; i < width; i += 7) {
+      ctx.beginPath();
+      ctx.moveTo(0, i);
+      ctx.lineTo(width, i);
+      ctx.stroke();
+    }
+
+    // 2. 格子線
+    ctx.strokeStyle = '#422507';
+    ctx.lineWidth = 1.2;
+    for (let i = 0; i < BOARD_SIZE; i++) {
+      const pos = padding + i * gridSpan;
+      ctx.beginPath();
+      ctx.moveTo(padding, pos);
+      ctx.lineTo(width - padding, pos);
+      ctx.stroke();
+
+      ctx.beginPath();
+      ctx.moveTo(pos, padding);
+      ctx.lineTo(pos, width - padding);
+      ctx.stroke();
+    }
+
+    // 3. 星（天元など5箇所）
+    const stars = [3, 7, 11];
+    ctx.fillStyle = '#422507';
+    for (let x of stars) {
+      for (let y of stars) {
+        if ((x === 7 && y === 7) || (x !== 7 && y !== 7)) {
+          ctx.beginPath();
+          ctx.arc(padding + x * gridSpan, padding + y * gridSpan, 3.5, 0, Math.PI * 2);
+          ctx.fill();
+        }
+      }
+    }
+
+    // 4. 着手プレビュー（半透明ホバー）
+    if (!isGameOver && hoverCell && board[hoverCell.y] && board[hoverCell.y][hoverCell.x] === EMPTY) {
+      const isPlayerTurn = gameMode === 'human' || currentTurn === playerColor;
+      if (isPlayerTurn) {
+        const cx = padding + hoverCell.x * gridSpan;
+        const cy = padding + hoverCell.y * gridSpan;
+        ctx.beginPath();
+        ctx.arc(cx, cy, gridSpan * 0.42, 0, Math.PI * 2);
+        ctx.fillStyle = currentTurn === BLACK ? 'rgba(0,0,0,0.28)' : 'rgba(255,255,255,0.45)';
+        ctx.fill();
+      }
+    }
+
+    // 5. 碁石の描画
+    for (let y = 0; y < BOARD_SIZE; y++) {
+      if (!board[y]) continue;
+      for (let x = 0; x < BOARD_SIZE; x++) {
+        const val = board[y][x];
+        if (val !== EMPTY) {
+          drawStone(x, y, val, padding, gridSpan);
+        }
+      }
+    }
+
+    // 6. 直前の着手ハイライト
+    if (history.length > 0) {
+      const last = history[history.length - 1];
+      const cx = padding + last.x * gridSpan;
+      const cy = padding + last.y * gridSpan;
+      ctx.beginPath();
+      ctx.arc(cx, cy, gridSpan * 0.16, 0, Math.PI * 2);
+      ctx.fillStyle = last.color === BLACK ? '#ef4444' : '#dc2626';
+      ctx.fill();
+    }
+
+    // 7. 勝利5連ラインのハイライト
+    if (winningLine && winningLine.length > 0) {
+      ctx.beginPath();
+      const p1 = winningLine[0];
+      const p2 = winningLine[winningLine.length - 1];
+      ctx.moveTo(padding + p1.x * gridSpan, padding + p1.y * gridSpan);
+      ctx.lineTo(padding + p2.x * gridSpan, padding + p2.y * gridSpan);
+      ctx.strokeStyle = '#ef4444';
+      ctx.lineWidth = 4;
+      ctx.lineCap = 'round';
+      ctx.stroke();
+    }
+  }
+
+  function drawStone(x, y, color, padding, gridSpan) {
+    const cx = padding + x * gridSpan;
+    const cy = padding + y * gridSpan;
+    const r = gridSpan * 0.43;
+
+    // ドロップシャドウ
+    ctx.save();
+    ctx.beginPath();
+    ctx.arc(cx + 2, cy + 3, r, 0, Math.PI * 2);
+    ctx.fillStyle = 'rgba(0, 0, 0, 0.35)';
+    ctx.fill();
+    ctx.restore();
+
+    ctx.beginPath();
+    ctx.arc(cx, cy, r, 0, Math.PI * 2);
+
+    const grad = ctx.createRadialGradient(cx - r * 0.3, cy - r * 0.3, r * 0.1, cx, cy, r);
+    if (color === BLACK) {
+      grad.addColorStop(0, '#555555');
+      grad.addColorStop(0.6, '#18181b');
+      grad.addColorStop(1, '#09090b');
+    } else {
+      grad.addColorStop(0, '#ffffff');
+      grad.addColorStop(0.7, '#f4f4f5');
+      grad.addColorStop(1, '#cbd5e1');
+    }
+    ctx.fillStyle = grad;
+    ctx.fill();
+  }
+
+  function getCellFromCoords(clientX, clientY) {
+    const rect = container.getBoundingClientRect();
+    const { padding, gridSpan } = getMetrics();
+    const x = clientX - rect.left - padding;
+    const y = clientY - rect.top - padding;
+
+    const cellX = Math.round(x / gridSpan);
+    const cellY = Math.round(y / gridSpan);
+
+    if (cellX >= 0 && cellX < BOARD_SIZE && cellY >= 0 && cellY < BOARD_SIZE) {
+      return { x: cellX, y: cellY };
+    }
+    return null;
+  }
+
+  container.addEventListener('pointerdown', (e) => {
+    if (isGameOver) return;
+    if (gameMode === 'cpu' && currentTurn !== playerColor) return;
+
+    const cell = getCellFromCoords(e.clientX, e.clientY);
+    if (cell && board[cell.y][cell.x] === EMPTY) {
+      placeStone(cell.x, cell.y);
+    }
+  });
+
+  container.addEventListener('pointermove', (e) => {
+    const cell = getCellFromCoords(e.clientX, e.clientY);
+    hoverCell = cell;
+    render();
+  });
+
+  container.addEventListener('pointerleave', () => {
+    hoverCell = null;
+    render();
+  });
+
+  function placeStone(x, y) {
+    board[y][x] = currentTurn;
+    history.push({ x, y, color: currentTurn });
+    playSound('place');
+
+    const winData = checkWin(x, y, currentTurn);
+    if (winData) {
+      isGameOver = true;
+      winningLine = winData;
+      playSound('win');
+      render();
+      showWinner(currentTurn);
+      return;
+    }
+
+    if (history.length === BOARD_SIZE * BOARD_SIZE) {
+      isGameOver = true;
+      render();
+      showDraw();
+      return;
+    }
+
+    currentTurn = currentTurn === BLACK ? WHITE : BLACK;
+    updateUI();
+    render();
+
+    if (!isGameOver && gameMode === 'cpu' && currentTurn !== playerColor) {
+      setTimeout(cpuTurn, 300);
+    }
+  }
+
+  function checkWin(x, y, color) {
+    const directions = [
+      [{ dx: 1, dy: 0 }, { dx: -1, dy: 0 }],
+      [{ dx: 0, dy: 1 }, { dx: 0, dy: -1 }],
+      [{ dx: 1, dy: 1 }, { dx: -1, dy: -1 }],
+      [{ dx: 1, dy: -1 }, { dx: -1, dy: 1 }]
+    ];
+
+    for (let dir of directions) {
+      let line = [{ x, y }];
+      for (let side of dir) {
+        let step = 1;
+        while (true) {
+          const nx = x + side.dx * step;
+          const ny = y + side.dy * step;
+          if (nx >= 0 && nx < BOARD_SIZE && ny >= 0 && ny < BOARD_SIZE && board[ny][nx] === color) {
+            line.push({ x: nx, y: ny });
+            step++;
+          } else {
+            break;
+          }
+        }
+      }
+      if (line.length >= 5) {
+        return line;
+      }
+    }
+    return null;
+  }
+
+  function cpuTurn() {
+    if (isGameOver) return;
+    const move = chooseAiMove();
+    if (move) {
+      placeStone(move.x, move.y);
+    }
+  }
+
+  function chooseAiMove() {
+    if (history.length === 0) {
+      return { x: 7, y: 7 };
+    }
+
+    const cpuColor = currentTurn;
+    const humanColor = cpuColor === BLACK ? WHITE : BLACK;
+
+    const myWinningMove = findWinningMove(cpuColor);
+    if (myWinningMove) return myWinningMove;
+
+    if (aiLevel !== 'easy') {
+      const opponentWinningMove = findWinningMove(humanColor);
+      if (opponentWinningMove) return opponentWinningMove;
+    }
+
+    let bestScore = -Infinity;
+    let bestMoves = [];
+
+    for (let y = 0; y < BOARD_SIZE; y++) {
+      for (let x = 0; x < BOARD_SIZE; x++) {
+        if (board[y][x] === EMPTY) {
+          if (!hasNeighbor(x, y, 2)) continue;
+
+          let score = evaluateCell(x, y, cpuColor, humanColor);
+
+          if (aiLevel === 'easy') {
+            score += Math.random() * 80;
+          } else if (aiLevel === 'medium') {
+            score += Math.random() * 20;
+          }
+
+          if (score > bestScore) {
+            bestScore = score;
+            bestMoves = [{ x, y }];
+          } else if (score === bestScore) {
+            bestMoves.push({ x, y });
+          }
+        }
+      }
+    }
+
+    if (bestMoves.length > 0) {
+      return bestMoves[Math.floor(Math.random() * bestMoves.length)];
+    }
+    return { x: 7, y: 7 };
+  }
+
+  function hasNeighbor(x, y, distance) {
+    for (let dy = -distance; dy <= distance; dy++) {
+      for (let dx = -distance; dx <= distance; dx++) {
+        const nx = x + dx;
+        const ny = y + dy;
+        if (nx >= 0 && nx < BOARD_SIZE && ny >= 0 && ny < BOARD_SIZE) {
+          if (board[ny][nx] !== EMPTY) return true;
+        }
+      }
+    }
+    return false;
+  }
+
+  function findWinningMove(color) {
+    for (let y = 0; y < BOARD_SIZE; y++) {
+      for (let x = 0; x < BOARD_SIZE; x++) {
+        if (board[y][x] === EMPTY) {
+          board[y][x] = color;
+          const isWin = checkWin(x, y, color);
+          board[y][x] = EMPTY;
+          if (isWin) return { x, y };
+        }
+      }
+    }
+    return null;
+  }
+
+  function evaluateCell(x, y, myColor, oppColor) {
+    let score = 0;
+    const distFromCenter = Math.abs(x - 7) + Math.abs(y - 7);
+    score += (14 - distFromCenter);
+
+    const dirs = [[1, 0], [0, 1], [1, 1], [1, -1]];
+    for (let [dx, dy] of dirs) {
+      const myCount = countConsecutive(x, y, dx, dy, myColor);
+      const oppCount = countConsecutive(x, y, dx, dy, oppColor);
+
+      if (myCount >= 4) score += 100000;
+      else if (oppCount >= 4) score += 40000;
+      else if (myCount === 3) score += 5000;
+      else if (oppCount === 3) score += 2000;
+      else if (myCount === 2) score += 300;
+    }
+    return score;
+  }
+
+  function countConsecutive(x, y, dx, dy, color) {
+    let count = 0;
+    for (let step = 1; step <= 4; step++) {
+      const nx = x + dx * step;
+      const ny = y + dy * step;
+      if (nx >= 0 && nx < BOARD_SIZE && ny >= 0 && ny < BOARD_SIZE && board[ny][nx] === color) {
+        count++;
+      } else break;
+    }
+    for (let step = 1; step <= 4; step++) {
+      const nx = x - dx * step;
+      const ny = y - dy * step;
+      if (nx >= 0 && nx < BOARD_SIZE && ny >= 0 && ny < BOARD_SIZE && board[ny][nx] === color) {
+        count++;
+      } else break;
+    }
+    return count;
+  }
+
+  function updateUI() {
+    document.getElementById('move-count').textContent = `手数: ${history.length}手`;
+    const turnDot = document.getElementById('turn-dot');
+    const turnText = document.getElementById('turn-text');
+
+    turnDot.style.background = currentTurn === BLACK ? '#0f172a' : '#f8fafc';
+
+    if (gameMode === 'human') {
+      turnText.textContent = currentTurn === BLACK ? '黒の手番 (P1)' : '白の手番 (P2)';
+    } else {
+      if (currentTurn === playerColor) {
+        turnText.textContent = `${currentTurn === BLACK ? '黒' : '白'}の手番 (あなた)`;
+      } else {
+        turnText.textContent = `${currentTurn === BLACK ? '黒' : '白'}の手番 (CPU思考中...)`;
+      }
+    }
+
+    document.getElementById('undo-btn').disabled = history.length === 0 || isGameOver;
+  }
+
+  function setGameMode(mode) {
+    gameMode = mode;
+    document.getElementById('mode-cpu').classList.toggle('active', mode === 'cpu');
+    document.getElementById('mode-human').classList.toggle('active', mode === 'human');
+    document.getElementById('ai-level-group').style.display = mode === 'cpu' ? 'flex' : 'none';
+    document.getElementById('color-swap-btn').style.display = mode === 'cpu' ? 'inline-flex' : 'none';
+    restartGame();
+  }
+
+  function changeDifficulty(val) {
+    aiLevel = val;
+  }
+
+  function swapPlayerColor() {
+    playerColor = playerColor === BLACK ? WHITE : BLACK;
+    restartGame();
+  }
+
+  function undoMove() {
+    if (history.length === 0 || isGameOver) return;
+
+    if (gameMode === 'cpu') {
+      const steps = currentTurn === playerColor ? 2 : 1;
+      for (let i = 0; i < steps; i++) {
+        if (history.length > 0) {
+          const last = history.pop();
+          board[last.y][last.x] = EMPTY;
+        }
+      }
+      currentTurn = playerColor;
+    } else {
+      const last = history.pop();
+      board[last.y][last.x] = EMPTY;
+      currentTurn = last.color;
+    }
+
+    winningLine = null;
+    isGameOver = false;
+    document.getElementById('modal-overlay').style.display = 'none';
+    updateUI();
+    render();
+  }
+
+  function toggleSound() {
+    soundEnabled = !soundEnabled;
+    document.getElementById('sound-icon').textContent = soundEnabled ? '🔊' : '🔇';
+  }
+
+  function showWinner(winner) {
+    const modal = document.getElementById('modal-overlay');
+    const text = document.getElementById('modal-text');
+    const colorStr = winner === BLACK ? '黒' : '白';
+
+    if (gameMode === 'human') {
+      text.textContent = `${colorStr}の勝利！🎉`;
+    } else {
+      text.textContent = winner === playerColor ? 'あなたの勝利！🎊' : 'CPUの勝利！🤖';
+    }
+    modal.style.display = 'flex';
+  }
+
+  function showDraw() {
+    const modal = document.getElementById('modal-overlay');
+    const text = document.getElementById('modal-text');
+    text.textContent = '引き分けです！';
+    modal.style.display = 'flex';
+  }
+
+  function restartGame() {
+    initBoard();
+  }
+
+  window.onload = () => {
+    initBoard();
+    resizeCanvas();
+  };
+</script>
+</body>
+</html>

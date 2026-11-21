@@ -1,0 +1,1514 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <meta name="theme-color" content="#eef2f3">
+  <title>Anger Calm｜怒り振り返りシート</title>
+  <style>
+    :root {
+      --bg: #eef2f3;
+      --surface: #fbfcfc;
+      --ink: #1d2b34;
+      --sub: #5d6f79;
+      --line: #d5dee2;
+      --accent: #2f7f86;
+      --accent-soft: #e2f0f1;
+      --accent-ink: #ffffff;
+      --cool: #4f9e98;
+      --warm: #d99b36;
+      --hot: #c8442f;
+      --chip: #e3ecee;
+      --shadow: 0 4px 18px rgba(29, 43, 52, 0.05);
+    }
+
+    @media (prefers-color-scheme: dark) {
+      :root:not([data-theme="light"]) {
+        color-scheme: dark;
+        --bg: #11181c;
+        --surface: #192227;
+        --ink: #e6eef1;
+        --sub: #93a6af;
+        --line: #2c3a41;
+        --accent: #5bb5bc;
+        --accent-soft: #1f353a;
+        --accent-ink: #0d1a1d;
+        --chip: #243238;
+        --shadow: 0 4px 20px rgba(0, 0, 0, 0.25);
+      }
+    }
+
+    :root[data-theme="dark"] {
+      color-scheme: dark;
+      --bg: #11181c;
+      --surface: #192227;
+      --ink: #e6eef1;
+      --sub: #93a6af;
+      --line: #2c3a41;
+      --accent: #5bb5bc;
+      --accent-soft: #1f353a;
+      --accent-ink: #0d1a1d;
+      --chip: #243238;
+      --shadow: 0 4px 20px rgba(0, 0, 0, 0.25);
+    }
+
+    *, *::before, *::after {
+      box-sizing: border-box;
+    }
+
+    html {
+      scroll-padding-top: env(safe-area-inset-top, 0px);
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      min-height: 100dvh;
+      display: flex;
+      flex-direction: column;
+      background: var(--bg);
+      color: var(--ink);
+      font-family: system-ui, -apple-system, "Hiragino Sans", "Yu Gothic", Meiryo, sans-serif;
+      font-size: 16px;
+      line-height: 1.75;
+      padding-top: env(safe-area-inset-top, 0px);
+      padding-bottom: env(safe-area-inset-bottom, 0px);
+      padding-left: env(safe-area-inset-left, 0px);
+      padding-right: env(safe-area-inset-right, 0px);
+      -webkit-tap-highlight-color: transparent;
+      -webkit-text-size-adjust: 100%;
+    }
+
+    /* 統一ヘッダー */
+    header.app-header {
+      position: sticky;
+      top: 0;
+      z-index: 40;
+      background: var(--surface);
+      border-bottom: 1px solid var(--line);
+    }
+
+    .header-inner {
+      max-width: 820px;
+      margin: 0 auto;
+      padding: 0 16px;
+      height: 54px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+    }
+
+    .back-link {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 0.78rem;
+      font-weight: 700;
+      color: var(--sub);
+      text-decoration: none;
+      padding: 6px 10px;
+      border-radius: 8px;
+      border: 1px solid var(--line);
+      background: var(--bg);
+      transition: background 0.15s, color 0.15s;
+    }
+
+    .back-link:hover {
+      color: var(--accent);
+      border-color: var(--accent);
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .brand-icon {
+      width: 28px;
+      height: 28px;
+      border-radius: 8px;
+      background: var(--accent-soft);
+      color: var(--accent);
+      border: 1px solid var(--line);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.95rem;
+    }
+
+    .brand-title {
+      font-size: 0.95rem;
+      font-weight: 800;
+      letter-spacing: 0.02em;
+    }
+
+    .header-tools {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .local-badge {
+      font-size: 0.7rem;
+      font-weight: 700;
+      padding: 3px 9px;
+      border-radius: 999px;
+      background: var(--accent-soft);
+      color: var(--accent);
+      border: 1px solid var(--line);
+    }
+
+    .theme-btn {
+      width: 32px;
+      height: 32px;
+      border-radius: 8px;
+      border: 1px solid var(--line);
+      background: var(--bg);
+      color: var(--ink);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.9rem;
+    }
+
+    /* メインコンテナ */
+    .wrap {
+      flex: 1;
+      width: 100%;
+      max-width: 820px;
+      margin: 0 auto;
+      padding: 20px 16px 40px;
+    }
+
+    .hero-lead {
+      color: var(--sub);
+      font-size: 0.9rem;
+      margin: 0 0 16px;
+    }
+
+    /* タブナビゲーション */
+    nav.tabs {
+      display: flex;
+      gap: 6px;
+      border-bottom: 1px solid var(--line);
+      margin-bottom: 20px;
+    }
+
+    nav.tabs button {
+      flex: 1;
+      background: none;
+      border: 0;
+      border-bottom: 3px solid transparent;
+      padding: 10px 6px;
+      font: inherit;
+      font-size: 0.92rem;
+      font-weight: 700;
+      color: var(--sub);
+      cursor: pointer;
+      transition: color 0.15s, border-color 0.15s;
+    }
+
+    nav.tabs button[aria-selected="true"] {
+      color: var(--accent);
+      border-bottom-color: var(--accent);
+    }
+
+    :focus-visible {
+      outline: 3px solid var(--accent);
+      outline-offset: 2px;
+    }
+
+    section.panel {
+      display: none;
+    }
+
+    section.panel.on {
+      display: block;
+    }
+
+    /* カードUI */
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      padding: 18px;
+      margin-bottom: 16px;
+      box-shadow: var(--shadow);
+    }
+
+    .step-badge {
+      display: inline-block;
+      font-size: 0.72rem;
+      font-weight: 800;
+      letter-spacing: 0.05em;
+      color: var(--accent);
+      background: var(--accent-soft);
+      padding: 2px 9px;
+      border-radius: 999px;
+      margin-bottom: 6px;
+    }
+
+    .card h2 {
+      font-size: 1.05rem;
+      margin: 0 0 4px;
+    }
+
+    .help {
+      color: var(--sub);
+      font-size: 0.85rem;
+      margin: 0 0 12px;
+    }
+
+    label.t {
+      display: block;
+      font-weight: 700;
+      font-size: 0.92rem;
+      margin: 12px 0 4px;
+    }
+
+    label.t:first-of-type {
+      margin-top: 0;
+    }
+
+    input[type="text"], textarea {
+      width: 100%;
+      font: inherit;
+      font-size: 0.95rem;
+      color: var(--ink);
+      background: var(--bg);
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      padding: 10px 12px;
+    }
+
+    textarea {
+      min-height: 82px;
+      resize: vertical;
+    }
+
+    /* 怒り温度計 */
+    .thermo {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      margin: 6px 0 4px;
+    }
+
+    .tube {
+      flex: 1;
+      height: 22px;
+      border-radius: 11px;
+      background: var(--chip);
+      overflow: hidden;
+      border: 1px solid var(--line);
+    }
+
+    .fill {
+      height: 100%;
+      width: 50%;
+      border-radius: 11px;
+      transition: width 0.2s ease, background 0.2s ease;
+    }
+
+    .num {
+      min-width: 2.5rem;
+      text-align: right;
+      font-size: 1.9rem;
+      font-weight: 800;
+      line-height: 1;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .lvl {
+      font-size: 0.88rem;
+      font-weight: 700;
+      color: var(--sub);
+      min-height: 1.5em;
+    }
+
+    input[type="range"] {
+      width: 100%;
+      accent-color: var(--accent);
+      height: 30px;
+      cursor: pointer;
+    }
+
+    .scale {
+      display: flex;
+      justify-content: space-between;
+      font-size: 0.76rem;
+      color: var(--sub);
+      margin-top: -4px;
+    }
+
+    /* 選択チップ */
+    .chips {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 7px;
+      margin-bottom: 6px;
+    }
+
+    .chip {
+      border: 1px solid var(--line);
+      background: var(--chip);
+      color: var(--ink);
+      border-radius: 999px;
+      padding: 5px 13px;
+      font: inherit;
+      font-size: 0.85rem;
+      cursor: pointer;
+      transition: background 0.15s, color 0.15s, border-color 0.15s;
+    }
+
+    .chip[aria-pressed="true"] {
+      background: var(--accent);
+      border-color: var(--accent);
+      color: var(--accent-ink);
+      font-weight: 700;
+    }
+
+    /* 主観ワード検知警告 */
+    .warn {
+      margin-top: 8px;
+      padding: 9px 12px;
+      border-radius: 8px;
+      background: rgba(200, 68, 47, 0.08);
+      border: 1px solid rgba(200, 68, 47, 0.25);
+      font-size: 0.84rem;
+      color: var(--hot);
+      display: none;
+    }
+
+    .warn.on {
+      display: block;
+    }
+
+    /* 2カラムグリッド（事実と解釈・コントロール境界線） */
+    .split {
+      display: grid;
+      gap: 14px;
+    }
+
+    @media (min-width: 660px) {
+      .split {
+        grid-template-columns: 1fr 1fr;
+      }
+    }
+
+    .fact-box {
+      border-top: 4px solid var(--accent);
+    }
+
+    .interp-box {
+      border-top: 4px solid var(--warm);
+    }
+
+    .ctrl-yes {
+      border-top: 4px solid var(--cool);
+    }
+
+    .ctrl-no {
+      border-top: 4px solid var(--sub);
+    }
+
+    /* 呼吸ガイド */
+    .breath-box {
+      margin-top: 10px;
+      padding-top: 10px;
+      border-top: 1px dashed var(--line);
+    }
+
+    .breath {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      margin-top: 10px;
+    }
+
+    .orb {
+      width: 44px;
+      height: 44px;
+      border-radius: 50%;
+      background: var(--cool);
+      flex: none;
+      transition: transform 4s ease-in-out;
+    }
+
+    .orb.in {
+      transform: scale(1.45);
+    }
+
+    /* ボタン */
+    .btn {
+      font: inherit;
+      font-size: 0.92rem;
+      font-weight: 700;
+      background: var(--accent);
+      color: var(--accent-ink);
+      border: 0;
+      border-radius: 10px;
+      padding: 11px 20px;
+      cursor: pointer;
+      transition: opacity 0.15s;
+    }
+
+    .btn:hover {
+      opacity: 0.92;
+    }
+
+    .btn.ghost {
+      background: var(--bg);
+      color: var(--ink);
+      border: 1px solid var(--line);
+      font-weight: 600;
+      padding: 9px 15px;
+      font-size: 0.86rem;
+    }
+
+    .btn.danger {
+      color: var(--hot);
+      border-color: rgba(200, 68, 47, 0.3);
+    }
+
+    .row {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      align-items: center;
+    }
+
+    /* 履歴・分析 */
+    .stats {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 10px;
+      text-align: center;
+    }
+
+    .stat-item {
+      background: var(--bg);
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      padding: 10px 6px;
+    }
+
+    .stats b {
+      display: block;
+      font-size: 1.5rem;
+      line-height: 1.25;
+      color: var(--accent);
+    }
+
+    .stats span {
+      font-size: 0.78rem;
+      color: var(--sub);
+    }
+
+    .insight {
+      background: var(--accent-soft);
+      border-radius: 10px;
+      padding: 12px 14px;
+      margin-top: 12px;
+      font-size: 0.88rem;
+    }
+
+    .trend {
+      display: flex;
+      align-items: flex-end;
+      gap: 6px;
+      height: 115px;
+      padding-top: 12px;
+      border-bottom: 1px solid var(--line);
+    }
+
+    .trend div {
+      flex: 1;
+      border-radius: 4px 4px 0 0;
+      min-width: 8px;
+      transition: height 0.25s;
+    }
+
+    .bar {
+      display: grid;
+      grid-template-columns: 7.5rem 1fr 2.2rem;
+      gap: 8px;
+      align-items: center;
+      font-size: 0.86rem;
+      margin: 6px 0;
+    }
+
+    .bar-track {
+      background: var(--bg);
+      border-radius: 6px;
+      height: 12px;
+      overflow: hidden;
+    }
+
+    .bar i {
+      display: block;
+      height: 100%;
+      border-radius: 6px;
+      background: var(--accent);
+    }
+
+    .entry summary {
+      cursor: pointer;
+      display: flex;
+      gap: 10px;
+      align-items: center;
+      list-style: none;
+    }
+
+    .entry summary::-webkit-details-marker {
+      display: none;
+    }
+
+    .badge {
+      font-size: 0.82rem;
+      font-weight: 800;
+      font-variant-numeric: tabular-nums;
+      border-radius: 6px;
+      padding: 2px 8px;
+      color: #fff;
+      flex: none;
+    }
+
+    .entry-title {
+      flex: 1;
+      font-weight: 700;
+      font-size: 0.92rem;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .meta {
+      color: var(--sub);
+      font-size: 0.8rem;
+      flex: none;
+    }
+
+    .entry dl {
+      margin: 12px 0 0;
+      padding-top: 10px;
+      border-top: 1px solid var(--line);
+    }
+
+    .entry dt {
+      font-weight: 700;
+      font-size: 0.82rem;
+      color: var(--sub);
+      margin-top: 10px;
+    }
+
+    .entry dd {
+      margin: 2px 0 0;
+      white-space: pre-wrap;
+      font-size: 0.92rem;
+    }
+
+    .safety-box {
+      background: var(--bg);
+      border-left: 4px solid var(--accent);
+      border-radius: 8px;
+      padding: 14px 16px;
+      font-size: 0.88rem;
+      margin-top: 14px;
+    }
+
+    .empty {
+      color: var(--sub);
+      text-align: center;
+      padding: 28px 12px;
+      font-size: 0.92rem;
+    }
+
+    /* トースト＆確認モーダル */
+    .toast {
+      position: fixed;
+      left: 50%;
+      bottom: calc(20px + env(safe-area-inset-bottom, 0px));
+      transform: translateX(-50%);
+      background: var(--ink);
+      color: var(--bg);
+      padding: 10px 18px;
+      border-radius: 999px;
+      font-size: 0.86rem;
+      font-weight: 700;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.2s;
+      z-index: 60;
+    }
+
+    .toast.on {
+      opacity: 1;
+    }
+
+    .modal-backdrop {
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.45);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: 16px;
+      z-index: 70;
+    }
+
+    .modal-backdrop.on {
+      display: flex;
+    }
+
+    .modal-card {
+      background: var(--surface);
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      padding: 20px;
+      max-width: 400px;
+      width: 100%;
+      box-shadow: var(--shadow);
+    }
+
+    /* 統一フッター（正式免責文のみ・コピーライトなし） */
+    footer.app-footer {
+      width: 100%;
+      border-top: 1px solid var(--line);
+      background: var(--surface);
+      padding: 18px 16px;
+      text-align: center;
+      margin-top: auto;
+    }
+
+    footer.app-footer p {
+      max-width: 820px;
+      margin: 0 auto;
+      font-size: 0.72rem;
+      color: var(--sub);
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      * {
+        transition: none !important;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- ================= 統一ヘッダー ================= -->
+  <header class="app-header">
+    <div class="header-inner">
+      <a href="../" class="back-link">← Apps Hub</a>
+      <div class="brand">
+        <div class="brand-icon" aria-hidden="true">🌿</div>
+        <span class="brand-title">Anger Calm</span>
+      </div>
+      <div class="header-tools">
+        <span class="local-badge">Local完結</span>
+        <button id="themeBtn" class="theme-btn" type="button" aria-label="外観テーマ切替" title="外観切替">🌓</button>
+      </div>
+    </div>
+  </header>
+
+  <!-- ================= メインコンテンツ ================= -->
+  <main class="wrap">
+    <p class="hero-lead">怒りを責めずに受け止め、「背景 ➔ 事実 ➔ 解釈」の順にほどいて一次感情と次の行動を整理する振り返りシートです。</p>
+
+    <nav class="tabs" role="tablist" aria-label="メインメニュー">
+      <button role="tab" data-tab="rec" aria-selected="true">記録する</button>
+      <button role="tab" data-tab="his" aria-selected="false">履歴・分析</button>
+      <button role="tab" data-tab="guide" aria-selected="false">使い方・安心ガイド</button>
+    </nav>
+
+    <!-- ==================== TAB 1: 記録する ==================== -->
+    <section class="panel on" id="rec">
+
+      <!-- STEP 1 -->
+      <div class="card">
+        <span class="step-badge">STEP 1</span>
+        <h2>いまの怒りの温度を測る</h2>
+        <p class="help">0はおだやか、10は爆発寸前。まずは直感で選んでみましょう。</p>
+        <div class="thermo">
+          <div class="tube"><div class="fill" id="fill1"></div></div>
+          <div class="num" id="num1">5</div>
+        </div>
+        <input type="range" id="t1" min="0" max="10" step="1" value="5" aria-label="記録時の怒り温度">
+        <div class="scale"><span>0：落ち着いている</span><span>5：イライラする</span><span>10：爆発寸前</span></div>
+        <div class="lvl" id="lvl1"></div>
+
+        <details class="breath-box">
+          <summary class="meta" style="cursor:pointer;font-weight:700;">🫁 まず落ち着きたいとき（6秒深呼吸ガイド）</summary>
+          <div class="breath">
+            <div class="orb" id="orb"></div>
+            <div>
+              <div id="breathTxt" style="font-size:0.88rem;">開始ボタンを押すと、4秒吸って6秒かけて吐くリズムを案内します。</div>
+              <button class="btn ghost" id="breathBtn" type="button" style="margin-top:8px;">呼吸ガイドを開始</button>
+            </div>
+          </div>
+        </details>
+      </div>
+
+      <!-- STEP 2 -->
+      <div class="card">
+        <span class="step-badge">STEP 2</span>
+        <h2>背景と状況の整理（前段）</h2>
+        <p class="help">いきなり事実を書く前に、「いつ・どこで・誰と・どんなコンディションだったか」の引きの構図を確認します。</p>
+
+        <label class="t">1. どこで・どんな場面？（選択＋補足）</label>
+        <div class="chips" id="placeChips"></div>
+        <input type="text" id="timeNote" placeholder="例：火曜14時すぎ・定例会議中">
+
+        <label class="t">2. 誰とのやり取り？</label>
+        <div class="chips" id="whoChips"></div>
+
+        <label class="t" for="flow">3. その直前、何をしていた最中？</label>
+        <input type="text" id="flow" placeholder="例：急ぎの企画資料を提出しようとしていた／ゆっくり休もうとしていた">
+
+        <label class="t">4. そのときの自分のコンディション（複数選択可）</label>
+        <div class="chips" id="condChips"></div>
+      </div>
+
+      <!-- STEP 3 -->
+      <div class="split">
+        <div class="card fact-box">
+          <span class="step-badge">STEP 3-A</span>
+          <label class="t" for="fact">客観的な「事実」</label>
+          <p class="help">録画していたら映ること・発言そのまま（評価や推測を入れない）。</p>
+          <textarea id="fact" placeholder="例：会議でAさんが私の資料の2ページ目を見て『前提がずれているから今日中にやり直して』と言った。"></textarea>
+          <div class="warn" id="warn"></div>
+        </div>
+
+        <div class="card interp-box">
+          <span class="step-badge">STEP 3-B</span>
+          <label class="t" for="interp">主観的な「解釈・思い込み」</label>
+          <p class="help">そこから自分が感じ取った意味・決めつけ・マイルール（「〜すべき」）。</p>
+          <textarea id="interp" placeholder="例：自分の努力を軽く見ている。いつも自分だけ雑に扱われると感じた。"></textarea>
+        </div>
+      </div>
+
+      <!-- STEP 4 -->
+      <div class="card">
+        <span class="step-badge">STEP 4</span>
+        <h2>怒りの奥にある「一次感情」と願い</h2>
+        <p class="help">怒りは身を守るための「二次感情」と言われます。その下にある本音を探してみましょう。</p>
+        <div class="chips" id="emoChips"></div>
+        <label class="t" for="need">本当はどうしてほしかった？／何を守りたかった？</label>
+        <textarea id="need" placeholder="例：頑張りを認めたうえで、修正の意図を丁寧に伝えてほしかった。"></textarea>
+      </div>
+
+      <!-- STEP 5 -->
+      <div class="split">
+        <div class="card ctrl-yes">
+          <span class="step-badge">STEP 5-A</span>
+          <label class="t" for="ctrlYes">自分でコントロールできること</label>
+          <p class="help">自分の言葉・確認行動・休息など、これから選べる小さな行動。</p>
+          <textarea id="ctrlYes" placeholder="例：深呼吸してから『どの方向性に直せばよいか1分だけ確認させてください』と聞く。"></textarea>
+        </div>
+
+        <div class="card ctrl-no">
+          <span class="step-badge">STEP 5-B</span>
+          <label class="t" for="ctrlNo">自分ではコントロールできないこと</label>
+          <p class="help">相手の機嫌・過去の言動・他人の評価など、手放してよい領域。</p>
+          <textarea id="ctrlNo" placeholder="例：Aさんの言い方のきつさや、その場の忙しさ。"></textarea>
+        </div>
+      </div>
+
+      <!-- STEP 6 -->
+      <div class="card">
+        <span class="step-badge">STEP 6</span>
+        <h2>振り返ったあと、怒りは何度？</h2>
+        <p class="help">書き出して整理したあとの温度変化を確かめます。</p>
+        <div class="thermo">
+          <div class="tube"><div class="fill" id="fill2"></div></div>
+          <div class="num" id="num2">5</div>
+        </div>
+        <input type="range" id="t2" min="0" max="10" step="1" value="5" aria-label="振り返り後の怒り温度">
+        <div class="scale"><span>0：落ち着いた</span><span>5：まだ少し残る</span><span>10：変わらない</span></div>
+      </div>
+
+      <div class="row" style="margin-bottom:10px;">
+        <button class="btn" id="save" type="button">この振り返りを保存</button>
+        <button class="btn ghost" id="reset" type="button">入力をクリア</button>
+      </div>
+    </section>
+
+    <!-- ==================== TAB 2: 履歴・分析 ==================== -->
+    <section class="panel" id="his">
+      <div id="anaBody"></div>
+
+      <div class="card">
+        <div class="row" style="justify-content:space-between;margin-bottom:8px;">
+          <div>
+            <h2 style="margin:0;">振り返り履歴</h2>
+            <p class="help" style="margin:2px 0 0;">タップすると「背景・事実・解釈・コントロール境界線」の詳細が開きます。</p>
+          </div>
+          <div class="row">
+            <button class="btn ghost" id="seedBtn" type="button">サンプルデータを追加（8件）</button>
+            <button class="btn ghost danger" id="clearAllBtn" type="button">全件削除</button>
+          </div>
+        </div>
+        <div id="hisList"></div>
+      </div>
+
+      <div class="card">
+        <h2>データの書き出し・復元（JSON）</h2>
+        <p class="help">記録はこのブラウザ内（localStorage）にのみ保存されます。定期的なバックアップや別端末への移行にご活用ください。</p>
+        <div class="row">
+          <button class="btn ghost" id="exportFileBtn" type="button">JSONファイルを保存</button>
+          <button class="btn ghost" id="importFileBtn" type="button">JSONファイルから復元</button>
+          <input type="file" id="importFileInput" accept=".json,application/json" style="display:none;">
+        </div>
+      </div>
+    </section>
+
+    <!-- ==================== TAB 3: 使い方・安心ガイド ==================== -->
+    <section class="panel" id="guide">
+      <div class="card">
+        <h2>Anger Calm の使い方（5ステップ）</h2>
+        <ol style="padding-left:20px;margin:10px 0;">
+          <li><strong>怒りの温度を測る：</strong>まずは今の強さを0〜10で客観視し、必要なら6秒深呼吸で一拍おきます。</li>
+          <li><strong>背景・状況を整理する：</strong>「どこで・誰と・何をしていた最中か・体調や余裕」を先に書き出し、思考のカメラを引きます。</li>
+          <li><strong>「事実」と「解釈」を切り分ける：</strong>カメラに映る事実と、頭の中で浮かんだ意味づけを左右に並べて眺めます。</li>
+          <li><strong>一次感情と願いに気づく：</strong>怒りの下にある「悲しさ・不安・疲れ・認められたい気持ち」を言葉にします。</li>
+          <li><strong>コントロール境界線を引く：</strong>「自分で変えられる行動」と「変えられない他人の領域」を仕分けして手放します。</li>
+        </ol>
+
+        <div class="safety-box">
+          <h3 style="margin:0 0 6px;font-size:0.96rem;">大切にしてほしいこと・安全ガイド</h3>
+          <p style="margin:0 0 8px;">怒りを感じること自体は決して悪いことではありません。怒りは「大切なものが脅かされた」「心身が疲れている」と知らせてくれる自然なサインです。無理に押し込めず、落ち着けるタイミングで少しずつ振り返ってみてください。</p>
+          <p style="margin:0;color:var(--sub);">※このアプリはセルフリフレクションを支援するツールであり、医療・心理専門家による診断や治療の代わりではありません。自分や他者を傷つけそうなほど怒りが強い場合や、つらさが長く続く場合は、まずその場を離れて安全を確保し、信頼できる人や医療機関・専門相談窓口にご相談ください。</p>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <!-- ================= 統一フッター（正式免責文のみ） ================= -->
+  <footer class="app-footer">
+    <p>※個人開発プロトタイプにつき無保証・自己責任にてご利用ください（データは端末内完結・サポート対象外）</p>
+  </footer>
+
+  <!-- トースト通知 -->
+  <div class="toast" id="toast" role="status"></div>
+
+  <!-- 確認モーダル -->
+  <div class="modal-backdrop" id="confirmModal" role="dialog" aria-modal="true">
+    <div class="modal-card">
+      <h3 id="modalTitle" style="margin:0 0 8px;font-size:1.02rem;">確認</h3>
+      <p id="modalMsg" style="margin:0 0 16px;font-size:0.9rem;color:var(--sub);"></p>
+      <div class="row" style="justify-content:flex-end;">
+        <button class="btn ghost" id="modalCancel" type="button">キャンセル</button>
+        <button class="btn danger" id="modalOk" type="button" style="background:var(--hot);color:#fff;">実行する</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    (function() {
+      const KEY = 'angerCalm.v2';
+      const PLACES = ['仕事・職場', '自宅', '外出先・移動中', 'SNS・メッセージ', 'お店・窓口', 'その他'];
+      const WHOS = ['上司・先輩', '同僚・部下', '家族', 'パートナー', '友人・知人', '店員・見知らぬ人', '自分自身'];
+      const CONDS = ['寝不足・疲れ', '急いでいた', '空腹', '体調不良', '別のことでイライラ', '余裕があった'];
+      const EMOS = ['悲しい', '寂しい', '不安', '恥ずかしい', '悔しい', '傷ついた', '失望', '焦り', '疲れ', '無力感', '怖い', '認められたい'];
+      const LEVELS = [
+        '0：おだやか・平常心',
+        '1：ほぼ落ち着いている',
+        '2：少し引っかかる程度',
+        '3：ムッとする',
+        '4：モヤモヤ・ムカムカする',
+        '5：イライラしている',
+        '6：かなり腹が立っている',
+        '7：強い怒りを感じる',
+        '8：我慢の限界に近い',
+        '9：爆発寸前',
+        '10：制御が難しいほど強い怒り'
+      ];
+      const JUDGE = /(いつも|絶対|必ず|わざと|どうせ|普通|常識|ありえない|最低|ひどい|むかつく|ムカつく|べき|はず|バカ|馬鹿|決めつけ|舐め|なめて|軽く見)/g;
+
+      let mem = [];
+      let selPlace = [], selWho = [], selCond = [], selEmo = [];
+      const $ = id => document.getElementById(id);
+
+      // テーマ管理
+      function initTheme() {
+        const saved = localStorage.getItem('anger_theme');
+        if (saved === 'dark' || saved === 'light') {
+          document.documentElement.setAttribute('data-theme', saved);
+        }
+      }
+      $('themeBtn').onclick = () => {
+        const cur = document.documentElement.getAttribute('data-theme');
+        const sysDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+        const isDark = cur ? cur === 'dark' : sysDark;
+        const next = isDark ? 'light' : 'dark';
+        document.documentElement.setAttribute('data-theme', next);
+        localStorage.setItem('anger_theme', next);
+      };
+      initTheme();
+
+      // ストレージ操作
+      function load() {
+        try {
+          const raw = localStorage.getItem(KEY);
+          return raw ? JSON.parse(raw) : [];
+        } catch (e) {
+          return mem;
+        }
+      }
+      function store(arr) {
+        mem = arr;
+        try {
+          localStorage.setItem(KEY, JSON.stringify(arr));
+        } catch (e) {}
+      }
+
+      function color(n) {
+        return n <= 3 ? 'var(--cool)' : n <= 6 ? 'var(--warm)' : 'var(--hot)';
+      }
+
+      function toast(msg) {
+        const t = $('toast');
+        t.textContent = msg;
+        t.classList.add('on');
+        setTimeout(() => t.classList.remove('on'), 2200);
+      }
+
+      function fmt(iso) {
+        const d = new Date(iso);
+        if (isNaN(d)) return iso;
+        const pad = n => n < 10 ? '0' + n : '' + n;
+        return `${d.getMonth() + 1}/${d.getDate()} ${pad(d.getHours())}:${pad(d.getMinutes())}`;
+      }
+
+      // 確認モーダル
+      let modalCallback = null;
+      function askConfirm(title, msg, onOk) {
+        $('modalTitle').textContent = title;
+        $('modalMsg').textContent = msg;
+        modalCallback = onOk;
+        $('confirmModal').classList.add('on');
+      }
+      $('modalCancel').onclick = () => { $('confirmModal').classList.remove('on'); modalCallback = null; };
+      $('modalOk').onclick = () => {
+        $('confirmModal').classList.remove('on');
+        if (modalCallback) modalCallback();
+        modalCallback = null;
+      };
+
+      // チップ生成
+      function renderChips(boxId, list, targetArr) {
+        const box = $(boxId);
+        box.innerHTML = '';
+        list.forEach(label => {
+          const btn = document.createElement('button');
+          btn.type = 'button';
+          btn.className = 'chip';
+          btn.textContent = label;
+          btn.setAttribute('aria-pressed', 'false');
+          btn.onclick = () => {
+            const idx = targetArr.indexOf(label);
+            if (idx < 0) {
+              targetArr.push(label);
+              btn.setAttribute('aria-pressed', 'true');
+            } else {
+              targetArr.splice(idx, 1);
+              btn.setAttribute('aria-pressed', 'false');
+            }
+          };
+          box.appendChild(btn);
+        });
+      }
+
+      // 温度計更新
+      function updateThermo(rangeId, fillId, numId, lvlId) {
+        const v = Number($(rangeId).value);
+        $(numId).textContent = v;
+        $(fillId).style.width = (v * 10) + '%';
+        $(fillId).style.background = color(v);
+        if (lvlId) $(lvlId).textContent = LEVELS[v];
+      }
+      $('t1').oninput = () => updateThermo('t1', 'fill1', 'num1', 'lvl1');
+      $('t2').oninput = () => updateThermo('t2', 'fill2', 'num2');
+
+      // 主観ワード検知
+      $('fact').oninput = () => {
+        const m = $('fact').value.match(JUDGE);
+        const w = $('warn');
+        if (m) {
+          const uniq = m.filter((x, i) => m.indexOf(x) === i);
+          w.textContent = `解釈の言葉が含まれているかもしれません：「${uniq.join('」「')}」。評価や推測は右側の「解釈」欄へ移してみましょう。`;
+          w.classList.add('on');
+        } else {
+          w.classList.remove('on');
+        }
+      };
+
+      // フォームクリア
+      function clearForm() {
+        selPlace = []; selWho = []; selCond = []; selEmo = [];
+        renderChips('placeChips', PLACES, selPlace);
+        renderChips('whoChips', WHOS, selWho);
+        renderChips('condChips', CONDS, selCond);
+        renderChips('emoChips', EMOS, selEmo);
+        ['timeNote', 'flow', 'fact', 'interp', 'need', 'ctrlYes', 'ctrlNo'].forEach(id => $(id).value = '');
+        $('t1').value = 5;
+        $('t2').value = 5;
+        updateThermo('t1', 'fill1', 'num1', 'lvl1');
+        updateThermo('t2', 'fill2', 'num2');
+        $('warn').classList.remove('on');
+      }
+      $('reset').onclick = () => { clearForm(); toast('入力内容をクリアしました'); };
+
+      // 保存
+      $('save').onclick = () => {
+        if (!$('fact').value.trim() && !$('interp').value.trim()) {
+          toast('「事実」か「解釈」のどちらかを入力してください');
+          return;
+        }
+        const arr = load();
+        arr.push({
+          id: Date.now(),
+          at: new Date().toISOString(),
+          t1: Number($('t1').value),
+          t2: Number($('t2').value),
+          place: selPlace.slice(),
+          timeNote: $('timeNote').value.trim(),
+          who: selWho.slice(),
+          flow: $('flow').value.trim(),
+          cond: selCond.slice(),
+          fact: $('fact').value.trim(),
+          interp: $('interp').value.trim(),
+          emo: selEmo.slice(),
+          need: $('need').value.trim(),
+          ctrlYes: $('ctrlYes').value.trim(),
+          ctrlNo: $('ctrlNo').value.trim()
+        });
+        store(arr);
+        clearForm();
+        toast('振り返りを保存しました');
+        document.querySelector('[data-tab="his"]').click();
+      };
+
+      // タブ切替
+      const tabs = document.querySelectorAll('nav.tabs button');
+      tabs.forEach(btn => {
+        btn.onclick = () => {
+          tabs.forEach(b => b.setAttribute('aria-selected', b === btn ? 'true' : 'false'));
+          document.querySelectorAll('section.panel').forEach(p => p.classList.toggle('on', p.id === btn.dataset.tab));
+          if (btn.dataset.tab === 'his') renderAll();
+        };
+      });
+
+      // サンプルデータ（8件）
+      const SAMPLES = [
+        {
+          id: 9001,
+          at: new Date(Date.now() - 86400000 * 6).toISOString(),
+          t1: 8, t2: 4,
+          place: ['仕事・職場'],
+          timeNote: '火曜14時すぎ・定例会議中',
+          who: ['上司・先輩'],
+          flow: '前日から寝不足で急いで仕上げた企画資料を画面共有した直後',
+          cond: ['寝不足・疲れ', '急いでいた'],
+          fact: '会議でAさんが資料の2ページ目を見て「前提がずれているから今日中にやり直して」と言った。',
+          interp: '自分の努力を軽く見ている。いつも自分だけ雑に扱われると感じた。',
+          emo: ['悔しい', '悲しい', '疲れ', '認められたい'],
+          need: '方向性の認識合わせを事前にしたかった。努力した点も一言認めてほしかった。',
+          ctrlYes: '深呼吸してから「修正後のゴール認識を2分だけすり合わせさせてください」と確認する。',
+          ctrlNo: '相手の言い方のきつさや、会議のタイトなスケジュール。'
+        },
+        {
+          id: 9002,
+          at: new Date(Date.now() - 86400000 * 5).toISOString(),
+          t1: 7, t2: 3,
+          place: ['自宅'],
+          timeNote: '金曜21時ごろ・リビング',
+          who: ['パートナー'],
+          flow: '仕事から帰宅して夕食の片付けを終え、ようやく一息つこうとした瞬間',
+          cond: ['寝不足・疲れ', '空腹'],
+          fact: 'パートナーがスマホを見ながら「明日の予定、まだ決めてないの？」と言った。',
+          interp: '私ばかり家事や段取りを押し付けられている、感謝が足りないと思い込んだ。',
+          emo: ['疲れ', '寂しい', '無力感'],
+          need: '「いつもありがとう、一緒に考えようか」と歩み寄ってほしかった。',
+          ctrlYes: '「今日は疲れているから、明日の朝コーヒーを飲みながら一緒に決めよう」と伝える。',
+          ctrlNo: '相手のその瞬間の発言や表情。'
+        },
+        {
+          id: 9003,
+          at: new Date(Date.now() - 86400000 * 4).toISOString(),
+          t1: 6, t2: 2,
+          place: ['外出先・移動中'],
+          timeNote: '水曜朝8時30分・通勤電車内',
+          who: ['店員・見知らぬ人'],
+          flow: '乗り換えの時間がギリギリで急いでホームへ向かっていたとき',
+          cond: ['急いでいた', '寝不足・疲れ'],
+          fact: '前を歩いていた人が改札の手前で急に立ち止まり、肩がぶつかった。',
+          interp: '周りを見ていない、わざと進路を塞がれたとカッとなった。',
+          emo: ['焦り', '怖い'],
+          need: '時間に余裕を持って落ち着いて移動したかった。',
+          ctrlYes: '明日から5分早く家を出る。車間距離をとって歩く。',
+          ctrlNo: '駅の混雑具合や他人の歩き方。'
+        },
+        {
+          id: 9004,
+          at: new Date(Date.now() - 86400000 * 3.5).toISOString(),
+          t1: 7, t2: 3,
+          place: ['SNS・メッセージ'],
+          timeNote: '木曜23時ごろ・ベッドの中',
+          who: ['友人・知人'],
+          flow: 'グループチャットで週末の集まりの日程調整を送ったあと',
+          cond: ['寝不足・疲れ'],
+          fact: '既読が4人ついたまま、翌朝まで誰からも返信がなかった。',
+          interp: '自分の提案が迷惑だったのかもしれない、仲間外れにされていると不安になった。',
+          emo: ['不安', '寂しい', '恥ずかしい'],
+          need: '「確認したよ、明日返事するね」と一言リアクションがほしかった。',
+          ctrlYes: '23時以降は通知をオフにしてスマホを見ない。翌日昼に軽くリマインドする。',
+          ctrlNo: '相手が返信するタイミングや忙しさ。'
+        },
+        {
+          id: 9005,
+          at: new Date(Date.now() - 86400000 * 2.5).toISOString(),
+          t1: 8, t2: 4,
+          place: ['仕事・職場'],
+          timeNote: '月曜16時ごろ・自席',
+          who: ['同僚・部下'],
+          flow: '自分のタスクが山積みで締め切りに追われていたとき',
+          cond: ['急いでいた', '別のことでイライラ'],
+          fact: '同僚から「この件、以前共有したマニュアルのどこを見ればいいですか？」とチャットが来た。',
+          interp: '自分で調べずにすぐ人に頼る、私の時間を奪っていると感じた。',
+          emo: ['焦り', '疲れ', '無力感'],
+          need: '今は集中したいので、まず検索してから質問してほしかった。',
+          ctrlYes: '「17時まで集中作業中なので、マニュアルURLを貼っておきますね。17時以降にフォローします」と返信する。',
+          ctrlNo: '同僚の質問のタイミングや理解度。'
+        },
+        {
+          id: 9006,
+          at: new Date(Date.now() - 86400000 * 2).toISOString(),
+          t1: 6, t2: 2,
+          place: ['お店・窓口'],
+          timeNote: '土曜13時ごろ・カフェのレジ',
+          who: ['店員・見知らぬ人'],
+          flow: '午前中の用事が長引き、昼食をとれず空腹だったとき',
+          cond: ['空腹', '急いでいた'],
+          fact: '注文した商品と違うドリンクが渡され、作り直しに5分かかると言われた。',
+          interp: '店員の注意力がない、自分の休日の時間が無駄になったとイライラした。',
+          emo: ['失望', '焦り'],
+          need: 'スムーズに受け取ってすぐ休憩したかった。',
+          ctrlYes: '深呼吸して席に座り、温かい飲み物を待つ5分間をスマホを置いて目を閉じる休息時間にする。',
+          ctrlNo: '店舗の混雑やスタッフのミス。'
+        },
+        {
+          id: 9007,
+          at: new Date(Date.now() - 86400000 * 1).toISOString(),
+          t1: 7, t2: 3,
+          place: ['自宅'],
+          timeNote: '日曜19時ごろ・ダイニング',
+          who: ['家族'],
+          flow: '翌日の仕事の準備をしながら洗濯物を畳んでいたとき',
+          cond: ['寝不足・疲れ'],
+          fact: '家族が脱いだ服を洗濯カゴに入れずソファに置いたままテレビを見ていた。',
+          interp: '私を家政婦のように思っている、何度言っても聞く気がないと腹が立った。',
+          emo: ['悲しい', '疲れ', '認められたい'],
+          need: '協力し合って暮らしを回したい、労いの言葉がほしい。',
+          ctrlYes: '感情的に怒鳴る前に「今手が離せないから、洗濯カゴに入れてもらえると助かる」と具体的に頼む。',
+          ctrlNo: '家族の習慣やその場の気の緩み。'
+        },
+        {
+          id: 9008,
+          at: new Date(Date.now() - 3600000 * 5).toISOString(),
+          t1: 5, t2: 2,
+          place: ['仕事・職場'],
+          timeNote: '本日午前・オンライン商談後',
+          who: ['自分自身'],
+          flow: '準備していた提案の要点を時間内にうまく伝えきれなかったあと',
+          cond: ['寝不足・疲れ', '余裕があった'],
+          fact: '商談の最後の質問に対して言葉に詰まり、持ち帰り回答になった。',
+          interp: '自分はなんて要領が悪いんだ、評価が下がったに違いないと自己嫌悪になった。',
+          emo: ['悔しい', '恥ずかしい', '不安'],
+          need: '自信を持って堂々と受け答えしたかった。',
+          ctrlYes: '今日中に丁寧な補足メールを送る。次回用に想定Q&Aを3つメモしておく。',
+          ctrlNo: 'すでに終わった商談の場面や相手の頭の中。'
+        }
+      ];
+
+      $('seedBtn').onclick = () => {
+        const cur = load();
+        const existingIds = new Set(cur.map(x => x.id));
+        const toAdd = SAMPLES.filter(s => !existingIds.has(s.id));
+        if (!toAdd.length) {
+          toast('サンプルデータはすでに追加済みです');
+          return;
+        }
+        store(cur.concat(toAdd));
+        renderAll();
+        toast(`サンプルデータを${toAdd.length}件追加しました`);
+      };
+
+      $('clearAllBtn').onclick = () => {
+        const cur = load();
+        if (!cur.length) {
+          toast('削除する記録がありません');
+          return;
+        }
+        askConfirm('すべての記録を削除', '保存されているすべての振り返り履歴を削除します。この操作は取り消せません。', () => {
+          store([]);
+          renderAll();
+          toast('すべての記録を削除しました');
+        });
+      };
+
+      // JSONファイル保存・復元
+      $('exportFileBtn').onclick = () => {
+        const data = load();
+        if (!data.length) {
+          toast('書き出す記録がありません');
+          return;
+        }
+        const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `anger-calm-backup-${new Date().toISOString().slice(0, 10)}.json`;
+        a.click();
+        URL.revokeObjectURL(url);
+        toast('JSONファイルを保存しました');
+      };
+
+      $('importFileBtn').onclick = () => {
+        $('importFileInput').click();
+      };
+
+      $('importFileInput').onchange = e => {
+        const file = e.target.files[0];
+        if (!file) return;
+        const reader = new FileReader();
+        reader.onload = ev => {
+          try {
+            const parsed = JSON.parse(ev.target.result);
+            if (!Array.isArray(parsed)) throw new Error('Invalid format');
+            const cur = load();
+            const existingIds = new Set(cur.map(x => x.id));
+            let added = 0;
+            parsed.forEach(item => {
+              if (item && typeof item === 'object' && (item.fact || item.interp)) {
+                if (!item.id || existingIds.has(item.id)) {
+                  item.id = Date.now() + Math.floor(Math.random() * 10000);
+                }
+                cur.push(item);
+                added++;
+              }
+            });
+            store(cur);
+            renderAll();
+            toast(`${added}件の記録を復元しました`);
+          } catch (err) {
+            toast('JSONファイルの読み込みに失敗しました');
+          } finally {
+            $('importFileInput').value = '';
+          }
+        };
+        reader.readAsText(file);
+      };
+
+      // 描画ヘルパー
+      function el(tag, cls, txt) {
+        const e = document.createElement(tag);
+        if (cls) e.className = cls;
+        if (txt !== undefined) e.textContent = txt;
+        return e;
+      }
+
+      function tally(arr, key) {
+        const map = {};
+        arr.forEach(item => {
+          (item[key] || []).forEach(v => {
+            map[v] = (map[v] || 0) + 1;
+          });
+        });
+        return Object.keys(map).map(k => [k, map[k]]).sort((a, b) => b[1] - a[1]).slice(0, 5);
+      }
+
+      function renderBars(title, rows) {
+        const card = el('div', 'card');
+        card.appendChild(el('h2', '', title));
+        if (!rows.length) {
+          card.appendChild(el('p', 'help', 'まだデータがありません。'));
+          return card;
+        }
+        const max = rows[0][1];
+        rows.forEach(r => {
+          const row = el('div', 'bar');
+          row.appendChild(el('span', '', r[0]));
+          const track = el('div', 'bar-track');
+          const fill = el('i');
+          fill.style.width = (r[1] / max * 100) + '%';
+          track.appendChild(fill);
+          row.appendChild(track);
+          row.appendChild(el('span', '', r[1] + '回'));
+          card.appendChild(row);
+        });
+        return card;
+      }
+
+      function renderAll() {
+        renderAnalysis();
+        renderHistory();
+      }
+
+      function renderAnalysis() {
+        const box = $('anaBody');
+        box.innerHTML = '';
+        const a = load();
+        if (!a.length) return;
+
+        const avg = k => a.reduce((s, e) => s + (Number(e[k]) || 0), 0) / a.length;
+        const summaryCard = el('div', 'card');
+        summaryCard.appendChild(el('h2', '', '振り返りサマリー'));
+
+        const stats = el('div', 'stats');
+        [
+          [a.length + '件', '総記録数'],
+          [avg('t1').toFixed(1), '記録時の平均温度'],
+          ['-' + (avg('t1') - avg('t2')).toFixed(1), '振り返り後の平均低下']
+        ].forEach(p => {
+          const d = el('div', 'stat-item');
+          d.appendChild(el('b', '', p[0]));
+          d.appendChild(el('span', '', p[1]));
+          stats.appendChild(d);
+        });
+        summaryCard.appendChild(stats);
+
+        const topEmo = tally(a, 'emo');
+        const topCond = tally(a, 'cond');
+        if (topEmo.length || topCond.length) {
+          let msg = '';
+          if (topEmo.length) msg += `怒りの奥に最も多く隠れていた一次感情は「${topEmo[0][0]}」です。`;
+          if (topCond.length) msg += `また、コンディション面では「${topCond[0][0]}」のときに反応しやすくなる傾向が見られます。`;
+          summaryCard.appendChild(el('div', 'insight', msg));
+        }
+        box.appendChild(summaryCard);
+
+        const trendCard = el('div', 'card');
+        trendCard.appendChild(el('h2', '', '怒り温度の推移（直近14件・記録時）'));
+        const trend = el('div', 'trend');
+        a.slice(-14).forEach(e => {
+          const bar = el('div');
+          bar.style.height = Math.max((e.t1 || 0) * 10, 6) + '%';
+          bar.style.background = color(e.t1 || 0);
+          bar.title = `${fmt(e.at)}｜温度 ${e.t1}→${e.t2}`;
+          trend.appendChild(bar);
+        });
+        trendCard.appendChild(trend);
+        box.appendChild(trendCard);
+
+        const grid = el('div', 'split');
+        grid.appendChild(renderBars('よく出る一次感情（本音）', topEmo));
+        grid.appendChild(renderBars('反応しやすいコンディション', topCond));
+        box.appendChild(grid);
+      }
+
+      function renderHistory() {
+        const box = $('hisList');
+        box.innerHTML = '';
+        const a = load().slice().reverse();
+        if (!a.length) {
+          box.appendChild(el('div', 'empty', 'まだ記録がありません。「記録する」から書くか、右上の「サンプルデータを追加（8件）」で動作をお試しいただけます。'));
+          return;
+        }
+
+        a.forEach(e => {
+          const det = el('details', 'card entry');
+          det.style.marginBottom = '10px';
+          const sum = el('summary');
+          const bd = el('span', 'badge', `${e.t1}→${e.t2}`);
+          bd.style.background = color(e.t1);
+          sum.appendChild(bd);
+
+          const headline = e.fact || e.interp || '(内容なし)';
+          sum.appendChild(el('span', 'entry-title', headline));
+          sum.appendChild(el('span', 'meta', fmt(e.at)));
+          det.appendChild(sum);
+
+          const dl = el('dl');
+          const bgParts = [];
+          if (e.place && e.place.length) bgParts.push(`場所：${e.place.join('・')}`);
+          if (e.timeNote) bgParts.push(`場面：${e.timeNote}`);
+          if (e.who && e.who.length) bgParts.push(`相手：${e.who.join('・')}`);
+          if (e.flow) bgParts.push(`直前の流れ：${e.flow}`);
+          if (e.cond && e.cond.length) bgParts.push(`コンディション：${e.cond.join('・')}`);
+
+          [
+            ['背景・状況', bgParts.join(' ／ ')],
+            ['客観的な事実', e.fact],
+            ['主観的な解釈', e.interp],
+            ['奥にある一次感情', (e.emo || []).join('・')],
+            ['本当はどうしてほしかったか', e.need],
+            ['自分でコントロールできること', e.ctrlYes],
+            ['コントロールできないこと（手放す）', e.ctrlNo]
+          ].forEach(pair => {
+            if (pair[1]) {
+              dl.appendChild(el('dt', '', pair[0]));
+              dl.appendChild(el('dd', '', pair[1]));
+            }
+          });
+          det.appendChild(dl);
+
+          const delBtn = el('button', 'btn ghost danger', 'この記録を削除');
+          delBtn.type = 'button';
+          delBtn.style.marginTop = '12px';
+          delBtn.onclick = () => {
+            askConfirm('記録の削除', 'この振り返り記録を1件削除しますか？', () => {
+              store(load().filter(x => x.id !== e.id));
+              renderAll();
+              toast('削除しました');
+            });
+          };
+          det.appendChild(delBtn);
+          box.appendChild(det);
+        });
+      }
+
+      // 呼吸ガイド
+      let bt = null, breathing = false, phase = 0;
+      $('breathBtn').onclick = () => {
+        const orb = $('orb'), txt = $('breathTxt'), btn = $('breathBtn');
+        if (breathing) {
+          clearTimeout(bt);
+          breathing = false;
+          orb.classList.remove('in');
+          btn.textContent = '呼吸ガイドを開始';
+          txt.textContent = '開始ボタンを押すと、4秒吸って6秒かけて吐くリズムを案内します。';
+          return;
+        }
+        breathing = true;
+        btn.textContent = '停止する';
+        phase = 0;
+        function step() {
+          if (!breathing) return;
+          if (phase === 0) {
+            orb.style.transitionDuration = '4s';
+            orb.classList.add('in');
+            txt.textContent = '鼻からゆっくり吸って…（4秒）';
+            phase = 1;
+            bt = setTimeout(step, 4000);
+          } else {
+            orb.style.transitionDuration = '6s';
+            orb.classList.remove('in');
+            txt.textContent = '口から細く長く吐ききって…（6秒）';
+            phase = 0;
+            bt = setTimeout(step, 6000);
+          }
+        }
+        step();
+      };
+
+      clearForm();
+      renderAll();
+    })();
+  </script>
+</body>
+</html>

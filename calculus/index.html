@@ -1,0 +1,886 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>微分・積分 体感ラボ - Apps Hub</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@500;700&family=Plus+Jakarta+Sans:wght@500;700;800&family=Noto+Sans+JP:wght@400;500;700&display=swap');
+    body {
+      font-family: 'Plus Jakarta Sans', 'Noto Sans JP', sans-serif;
+    }
+    .mono {
+      font-family: 'JetBrains Mono', monospace;
+      font-variant-numeric: tabular-nums;
+    }
+    canvas {
+      touch-action: none;
+    }
+    input[type="range"] {
+      accent-color: #4f46e5;
+    }
+  </style>
+</head>
+<body class="bg-slate-50 text-slate-800 min-h-screen flex flex-col justify-between selection:bg-indigo-600 selection:text-white">
+
+  <!-- 統一ヘッダー -->
+  <header class="bg-white/90 backdrop-blur border-b border-slate-200/80 sticky top-0 z-30">
+    <div class="max-w-5xl mx-auto px-4 py-3 flex items-center justify-between gap-2">
+      <!-- 左：Apps Hub 戻りリンク -->
+      <a href="../" class="inline-flex items-center gap-1.5 text-xs font-bold text-slate-600 hover:text-slate-900 bg-slate-100 hover:bg-slate-200/80 px-3 py-1.5 rounded-xl transition shrink-0">
+        <i class="fa-solid fa-arrow-left text-[11px]"></i>
+        <span>Apps Hub</span>
+      </a>
+
+      <!-- 中央：タイトル -->
+      <div class="flex items-center gap-2.5 min-w-0">
+        <div class="w-8 h-8 rounded-xl bg-indigo-600 text-white flex items-center justify-center text-sm shadow-xs shrink-0">
+          <i class="fa-solid fa-wave-square"></i>
+        </div>
+        <div class="truncate">
+          <h1 class="text-sm sm:text-base font-extrabold text-slate-900 tracking-tight truncate">微分・積分 体感ラボ</h1>
+        </div>
+      </div>
+
+      <!-- 右：関連アプリ相互リンク -->
+      <div class="flex items-center gap-1.5 shrink-0">
+        <span class="text-[11px] text-slate-400 hidden md:inline">関連:</span>
+        <a href="../mathgrapher/" class="inline-flex items-center gap-1.5 text-xs font-bold text-indigo-600 bg-indigo-50 hover:bg-indigo-100 border border-indigo-200/60 px-2.5 py-1.5 rounded-xl transition">
+          <i class="fa-solid fa-chart-line text-[11px]"></i>
+          <span class="hidden sm:inline">MathGrapher</span>
+          <span class="sm:hidden">グラフ</span>
+        </a>
+      </div>
+    </div>
+  </header>
+
+  <!-- メインコンテンツ -->
+  <main class="max-w-5xl mx-auto px-4 py-6 space-y-5 flex-1 w-full">
+
+    <!-- 関数選択 & 自由数式入力カード -->
+    <section class="bg-white rounded-2xl border border-slate-200/80 shadow-xs p-4 sm:p-5 space-y-3.5">
+      <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+        <span class="text-xs font-bold text-slate-500 uppercase tracking-wider flex items-center gap-1.5">
+          <i class="fa-solid fa-function text-indigo-600"></i> 関数 f(x) を選ぶ・入力する
+        </span>
+        <span id="activeFuncBadge" class="mono text-xs font-bold text-indigo-700 bg-indigo-50 border border-indigo-200/70 px-2.5 py-1 rounded-lg self-start sm:self-auto">
+          f(x) = x³ − 3x
+        </span>
+      </div>
+
+      <!-- プリセットチップ -->
+      <div id="presetChips" class="flex flex-wrap gap-1.5"></div>
+
+      <!-- 自由数式入力 -->
+      <div class="flex flex-col sm:flex-row gap-2">
+        <div class="relative flex-1">
+          <span class="absolute left-3 top-1/2 -translate-y-1/2 mono text-xs font-bold text-slate-400">f(x) =</span>
+          <input type="text" id="customInput" placeholder="例: x^2 + 4x や x^3 - 2x + sin(x)"
+            class="w-full pl-14 pr-3 py-2 text-sm mono bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:bg-white focus:border-indigo-500 transition">
+        </div>
+        <div class="flex gap-2 shrink-0">
+          <button id="applyCustomBtn" type="button" class="flex-1 sm:flex-initial px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold rounded-xl shadow-xs transition cursor-pointer">
+            <i class="fa-solid fa-check mr-1"></i>数式を反映
+          </button>
+          <button id="toggleGuideBtn" type="button" class="px-3 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold rounded-xl transition cursor-pointer flex items-center gap-1.5" aria-expanded="false">
+            <i class="fa-solid fa-circle-question text-indigo-600"></i>
+            <span>入力ガイド</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- ステータスメッセージ -->
+      <p id="formulaMsg" class="text-[11px] text-slate-500">
+        指数は <span class="mono font-bold text-slate-700">^</span> で入力します（例: <span class="mono">x^2 + 4x</span>）。大文字の <span class="mono">X</span> や <span class="mono">*</span> 省略も自動補正されます。
+      </p>
+
+      <!-- 折りたたみ式：数式入力ガイド -->
+      <div id="formulaGuideBox" class="hidden bg-slate-50 border border-slate-200/80 rounded-xl p-3.5 sm:p-4 space-y-3 text-xs">
+        <div class="flex items-center justify-between">
+          <span class="font-extrabold text-slate-800 flex items-center gap-1.5">
+            <i class="fa-solid fa-book-open text-indigo-600"></i> 数式の書き方ガイド
+          </span>
+          <span class="text-[11px] text-slate-400">例題クリックでそのまま入力できます</span>
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5 text-[11px]">
+          <div class="bg-white p-2.5 rounded-lg border border-slate-200/70 space-y-1">
+            <div class="font-bold text-slate-700">1. 基本演算・累乗（指数）</div>
+            <ul class="text-slate-600 space-y-0.5">
+              <li>・累乗（べき乗）：<span class="mono font-bold text-indigo-600">x^2</span>（$x^2$）、<span class="mono font-bold text-indigo-600">x^3</span>（$x^3$）</li>
+              <li>・掛け算：<span class="mono font-bold text-indigo-600">4x</span> でも <span class="mono font-bold text-indigo-600">4*x</span> でもOK</li>
+              <li>・割り算・分数：<span class="mono font-bold text-indigo-600">(x+1)/2</span>、<span class="mono font-bold text-indigo-600">1/x</span></li>
+            </ul>
+          </div>
+
+          <div class="bg-white p-2.5 rounded-lg border border-slate-200/70 space-y-1">
+            <div class="font-bold text-slate-700">2. 使える関数・定数</div>
+            <ul class="text-slate-600 space-y-0.5">
+              <li>・三角関数：<span class="mono font-bold text-indigo-600">sin(x)</span>, <span class="mono font-bold text-indigo-600">cos(x)</span>, <span class="mono font-bold text-indigo-600">tan(x)</span></li>
+              <li>・指数・対数：<span class="mono font-bold text-indigo-600">exp(x)</span>（$e^x$）, <span class="mono font-bold text-indigo-600">log(x)</span>（$\ln x$）</li>
+              <li>・ルート・絶対値・円周率：<span class="mono font-bold text-indigo-600">sqrt(x)</span>, <span class="mono font-bold text-indigo-600">abs(x)</span>, <span class="mono font-bold text-indigo-600">pi</span></li>
+            </ul>
+          </div>
+        </div>
+
+        <!-- ワンクリック入力サンプル -->
+        <div class="pt-1 border-t border-slate-200/70 flex flex-wrap items-center gap-1.5">
+          <span class="text-[11px] font-bold text-slate-500 mr-1">試してみる:</span>
+          <button type="button" class="sample-formula mono text-[11px] bg-white hover:bg-indigo-50 text-slate-700 hover:text-indigo-700 border border-slate-200 hover:border-indigo-300 px-2.5 py-1 rounded-lg transition cursor-pointer" data-expr="x^2 + 4x">x^2 + 4x</button>
+          <button type="button" class="sample-formula mono text-[11px] bg-white hover:bg-indigo-50 text-slate-700 hover:text-indigo-700 border border-slate-200 hover:border-indigo-300 px-2.5 py-1 rounded-lg transition cursor-pointer" data-expr="0.2x^4 - x^2 + 1">0.2x^4 - x^2 + 1</button>
+          <button type="button" class="sample-formula mono text-[11px] bg-white hover:bg-indigo-50 text-slate-700 hover:text-indigo-700 border border-slate-200 hover:border-indigo-300 px-2.5 py-1 rounded-lg transition cursor-pointer" data-expr="sin(2x) + 0.5x">sin(2x) + 0.5x</button>
+          <button type="button" class="sample-formula mono text-[11px] bg-white hover:bg-indigo-50 text-slate-700 hover:text-indigo-700 border border-slate-200 hover:border-indigo-300 px-2.5 py-1 rounded-lg transition cursor-pointer" data-expr="exp(-0.5x^2) * 3">exp(-0.5x^2) * 3</button>
+          <button type="button" class="sample-formula mono text-[11px] bg-white hover:bg-indigo-50 text-slate-700 hover:text-indigo-700 border border-slate-200 hover:border-indigo-300 px-2.5 py-1 rounded-lg transition cursor-pointer" data-expr="abs(x^2 - 2)">abs(x^2 - 2)</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- モード切り替えタブ -->
+    <div class="grid grid-cols-2 gap-2 p-1.5 bg-slate-200/70 rounded-2xl">
+      <button id="tabDiff" class="py-2.5 px-4 rounded-xl text-xs sm:text-sm font-bold transition bg-white text-indigo-600 shadow-xs cursor-pointer flex items-center justify-center gap-2">
+        <i class="fa-solid fa-tangent"></i>
+        <span>① 微分｜接線の傾きと導関数</span>
+      </button>
+      <button id="tabInteg" class="py-2.5 px-4 rounded-xl text-xs sm:text-sm font-bold transition text-slate-600 hover:text-slate-900 cursor-pointer flex items-center justify-center gap-2">
+        <i class="fa-solid fa-chart-column"></i>
+        <span>② 積分｜短冊スライスと面積</span>
+      </button>
+    </div>
+
+    <!-- ========================================== -->
+    <!-- ① 微分パネル -->
+    <!-- ========================================== -->
+    <section id="panelDiff" class="grid grid-cols-1 lg:grid-cols-12 gap-5 items-start">
+      <!-- 左：2連グラフ -->
+      <div class="lg:col-span-8 space-y-4">
+        <div class="bg-white rounded-2xl border border-slate-200/80 shadow-xs p-3 sm:p-4">
+          <div class="flex items-center justify-between mb-2 px-1">
+            <h2 class="text-xs font-bold text-slate-700 flex items-center gap-1.5">
+              <span class="w-2.5 h-2.5 rounded-full bg-indigo-600 inline-block"></span>
+              元の関数 f(x) と接線 <span class="text-slate-400 font-normal">（グラフ上の赤い点をドラッグ可）</span>
+            </h2>
+            <span class="text-[11px] text-rose-600 font-bold">● 接点 / 接線</span>
+          </div>
+          <canvas id="canvasFunc" width="720" height="310" class="w-full h-auto rounded-xl bg-slate-50/60 border border-slate-100 cursor-grab active:cursor-grabbing"></canvas>
+        </div>
+
+        <div class="bg-white rounded-2xl border border-slate-200/80 shadow-xs p-3 sm:p-4">
+          <div class="flex items-center justify-between mb-2 px-1">
+            <h2 class="text-xs font-bold text-slate-700 flex items-center gap-1.5">
+              <span class="w-2.5 h-2.5 rounded-full bg-rose-500 inline-block"></span>
+              導関数 f′(x) <span class="text-slate-400 font-normal">（各点での傾きの軌跡）</span>
+            </h2>
+            <span id="derivFormulaBadge" class="mono text-[11px] font-bold text-rose-600 bg-rose-50 px-2 py-0.5 rounded-md">f′(x) = 3x² − 3</span>
+          </div>
+          <canvas id="canvasDeriv" width="720" height="230" class="w-full h-auto rounded-xl bg-slate-50/60 border border-slate-100"></canvas>
+        </div>
+      </div>
+
+      <!-- 右：操作・数値・解説 -->
+      <div class="lg:col-span-4 space-y-4">
+        <div class="bg-white rounded-2xl border border-slate-200/80 shadow-xs p-4 sm:p-5 space-y-4">
+          <div class="space-y-1.5">
+            <div class="flex justify-between text-xs font-bold">
+              <label for="sliderX" class="text-slate-600">接点の x 座標</label>
+              <span id="dispX" class="mono text-indigo-600">1.20</span>
+            </div>
+            <input type="range" id="sliderX" min="-3" max="3" step="0.02" value="1.2" class="w-full cursor-pointer">
+          </div>
+
+          <div class="flex gap-2">
+            <button id="btnAutoPlay" class="flex-1 py-2 px-3 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold rounded-xl transition cursor-pointer">
+              <i class="fa-solid fa-play mr-1"></i>自動で動かす
+            </button>
+            <button id="btnResetDiff" class="py-2 px-3 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold rounded-xl transition cursor-pointer" title="リセット">
+              <i class="fa-solid fa-rotate-left"></i>
+            </button>
+          </div>
+
+          <!-- メトリクス -->
+          <div class="grid grid-cols-3 lg:grid-cols-1 gap-2 pt-1">
+            <div class="bg-slate-50 border border-slate-200/60 rounded-xl p-2.5">
+              <div class="text-[11px] text-slate-500">位置 x</div>
+              <div id="valX" class="mono text-base sm:text-lg font-bold text-slate-900">1.200</div>
+            </div>
+            <div class="bg-slate-50 border border-slate-200/60 rounded-xl p-2.5">
+              <div class="text-[11px] text-slate-500">高さ f(x)</div>
+              <div id="valFx" class="mono text-base sm:text-lg font-bold text-indigo-600">-1.872</div>
+            </div>
+            <div class="bg-rose-50/70 border border-rose-200/70 rounded-xl p-2.5">
+              <div class="text-[11px] text-rose-700 font-bold">接線の傾き f′(x)</div>
+              <div id="valSlope" class="mono text-base sm:text-lg font-bold text-rose-600">1.320</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- リアルタイム学習ガイド -->
+        <div class="bg-indigo-50/80 border border-indigo-200/70 rounded-2xl p-4 space-y-2">
+          <h3 class="text-xs font-extrabold text-indigo-900 flex items-center gap-1.5">
+            <i class="fa-solid fa-lightbulb text-amber-500"></i> リアルタイム解説
+          </h3>
+          <p id="diffGuideText" class="text-xs text-indigo-950/90 leading-relaxed"></p>
+        </div>
+      </div>
+    </section>
+
+    <!-- ========================================== -->
+    <!-- ② 積分パネル -->
+    <!-- ========================================== -->
+    <section id="panelInteg" class="hidden grid grid-cols-1 lg:grid-cols-12 gap-5 items-start">
+      <!-- 左：積分キャンバス -->
+      <div class="lg:col-span-8 bg-white rounded-2xl border border-slate-200/80 shadow-xs p-3 sm:p-4">
+        <div class="flex items-center justify-between mb-2 px-1">
+          <h2 class="text-xs font-bold text-slate-700 flex items-center gap-1.5">
+            <span class="w-2.5 h-2.5 rounded-full bg-emerald-500 inline-block"></span>
+            区分求積法（短冊による面積近似）
+          </h2>
+          <div class="flex items-center gap-3 text-[11px]">
+            <span class="text-indigo-600 font-bold">■ 正の面積 (f(x)≧0)</span>
+            <span class="text-rose-500 font-bold">■ 負の面積 (f(x)＜0)</span>
+          </div>
+        </div>
+        <canvas id="canvasInteg" width="720" height="420" class="w-full h-auto rounded-xl bg-slate-50/60 border border-slate-100"></canvas>
+      </div>
+
+      <!-- 右：スライダー・分割設定・結果 -->
+      <div class="lg:col-span-4 space-y-4">
+        <div class="bg-white rounded-2xl border border-slate-200/80 shadow-xs p-4 sm:p-5 space-y-4">
+          <div class="space-y-1">
+            <div class="flex justify-between text-xs font-bold">
+              <label for="sliderA" class="text-slate-600">積分区間の始点 a</label>
+              <span id="dispA" class="mono text-emerald-600">-2.00</span>
+            </div>
+            <input type="range" id="sliderA" min="-3" max="3" step="0.05" value="-2" class="w-full cursor-pointer">
+          </div>
+
+          <div class="space-y-1">
+            <div class="flex justify-between text-xs font-bold">
+              <label for="sliderB" class="text-slate-600">積分区間の終点 b</label>
+              <span id="dispB" class="mono text-emerald-600">2.00</span>
+            </div>
+            <input type="range" id="sliderB" min="-3" max="3" step="0.05" value="2" class="w-full cursor-pointer">
+          </div>
+
+          <div class="space-y-1">
+            <div class="flex justify-between text-xs font-bold">
+              <label for="sliderN" class="text-slate-600">短冊の分割数 n</label>
+              <span id="dispN" class="mono text-indigo-600">6</span>
+            </div>
+            <input type="range" id="sliderN" min="1" max="120" step="1" value="6" class="w-full cursor-pointer">
+          </div>
+
+          <div class="space-y-1.5">
+            <label for="rectMode" class="block text-xs font-bold text-slate-600">短冊の高さの取り方</label>
+            <select id="rectMode" class="w-full px-3 py-2 text-xs font-bold bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:border-indigo-500">
+              <option value="m" selected>中点（中点公式・最も精度が高い）</option>
+              <option value="l">左端（左リーマン和）</option>
+              <option value="r">右端（右リーマン和）</option>
+            </select>
+          </div>
+
+          <div class="flex gap-2">
+            <button id="btnAnimN" class="flex-1 py-2 px-3 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold rounded-xl transition cursor-pointer">
+              <i class="fa-solid fa-play mr-1"></i>n = 1 → 120 収束アニメ
+            </button>
+            <button id="btnResetInteg" class="py-2 px-3 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold rounded-xl transition cursor-pointer" title="リセット">
+              <i class="fa-solid fa-rotate-left"></i>
+            </button>
+          </div>
+
+          <!-- 面積メトリクス -->
+          <div class="grid grid-cols-3 lg:grid-cols-1 gap-2 pt-1">
+            <div class="bg-slate-50 border border-slate-200/60 rounded-xl p-2.5">
+              <div class="text-[11px] text-slate-500">短冊の合計面積</div>
+              <div id="valRectSum" class="mono text-base sm:text-lg font-bold text-indigo-600">0.000</div>
+            </div>
+            <div class="bg-emerald-50/70 border border-emerald-200/70 rounded-xl p-2.5">
+              <div class="text-[11px] text-emerald-800 font-bold">真の定積分値 ∫f(x)dx</div>
+              <div id="valExactInt" class="mono text-base sm:text-lg font-bold text-emerald-600">0.000</div>
+            </div>
+            <div class="bg-slate-50 border border-slate-200/60 rounded-xl p-2.5">
+              <div class="text-[11px] text-slate-500">近似誤差 |合計 − 真値|</div>
+              <div id="valError" class="mono text-sm sm:text-base font-bold text-slate-700">0.000</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- リアルタイム学習ガイド -->
+        <div class="bg-emerald-50/80 border border-emerald-200/70 rounded-2xl p-4 space-y-2">
+          <h3 class="text-xs font-extrabold text-emerald-900 flex items-center gap-1.5">
+            <i class="fa-solid fa-lightbulb text-amber-500"></i> 積分のポイント解説
+          </h3>
+          <p id="integGuideText" class="text-xs text-emerald-950/90 leading-relaxed"></p>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- 統一ワンライナー免責フッター -->
+  <footer class="border-t border-slate-200/80 bg-white py-3 px-4 text-center text-[11px] text-slate-400">
+    ※個人開発プロトタイプにつき無保証・自己責任にてご利用ください（計算結果の正確性は保証外・データ外部送信ゼロの完全ローカル動作）
+  </footer>
+
+  <script>
+    (() => {
+      const $ = id => document.getElementById(id);
+
+      // プリセット関数定義
+      const PRESETS = {
+        "x³ − 3x": {
+          label: "f(x) = x³ − 3x",
+          dfLabel: "f′(x) = 3x² − 3",
+          f: x => x ** 3 - 3 * x,
+          d: x => 3 * x * x - 3,
+          I: x => (x ** 4) / 4 - 1.5 * x * x
+        },
+        "x²": {
+          label: "f(x) = x²",
+          dfLabel: "f′(x) = 2x",
+          f: x => x * x,
+          d: x => 2 * x,
+          I: x => (x ** 3) / 3
+        },
+        "sin(x)": {
+          label: "f(x) = sin(x)",
+          dfLabel: "f′(x) = cos(x)",
+          f: x => Math.sin(x),
+          d: x => Math.cos(x),
+          I: x => -Math.cos(x)
+        },
+        "cos(x) + 1": {
+          label: "f(x) = cos(x) + 1",
+          dfLabel: "f′(x) = −sin(x)",
+          f: x => Math.cos(x) + 1,
+          d: x => -Math.sin(x),
+          I: x => Math.sin(x) + x
+        },
+        "−x² + 4": {
+          label: "f(x) = −x² + 4",
+          dfLabel: "f′(x) = −2x",
+          f: x => -x * x + 4,
+          d: x => -2 * x,
+          I: x => -(x ** 3) / 3 + 4 * x
+        }
+      };
+
+      const XR = [-3, 3];
+      let currentKey = "x³ − 3x";
+      let cur = PRESETS[currentKey];
+      let x0 = 1.2;
+      let autoPlaying = false;
+      let autoDir = 1;
+      let animTimer = null;
+
+      const fmt = v => (Math.abs(v) < 5e-4 ? 0 : v).toFixed(3);
+
+      // 入力ガイド開閉
+      $("toggleGuideBtn").addEventListener("click", () => {
+        const box = $("formulaGuideBox");
+        const isHidden = box.classList.toggle("hidden");
+        $("toggleGuideBtn").setAttribute("aria-expanded", String(!isHidden));
+      });
+
+      // サンプル式ワンクリック反映
+      document.querySelectorAll(".sample-formula").forEach(btn => {
+        btn.addEventListener("click", () => {
+          $("customInput").value = btn.dataset.expr;
+          applyCustomFormula();
+        });
+      });
+
+      // プリセットボタン生成
+      const chipsWrap = $("presetChips");
+      Object.keys(PRESETS).forEach(key => {
+        const btn = document.createElement("button");
+        btn.type = "button";
+        btn.dataset.key = key;
+        btn.textContent = key;
+        btn.className = "preset-chip px-3 py-1.5 rounded-xl text-xs font-bold border transition cursor-pointer";
+        btn.addEventListener("click", () => {
+          currentKey = key;
+          cur = PRESETS[key];
+          $("activeFuncBadge").textContent = cur.label;
+          $("derivFormulaBadge").textContent = cur.dfLabel;
+          $("formulaMsg").innerHTML = `プリセット表示中: <span class="mono font-bold text-slate-700">${cur.label}</span>`;
+          updateChipStyles();
+          redrawAll();
+        });
+        chipsWrap.appendChild(btn);
+      });
+
+      function updateChipStyles() {
+        document.querySelectorAll(".preset-chip").forEach(btn => {
+          const active = btn.dataset.key === currentKey;
+          btn.className = active
+            ? "preset-chip px-3 py-1.5 rounded-xl text-xs font-bold border border-indigo-600 bg-indigo-600 text-white shadow-xs transition cursor-pointer"
+            : "preset-chip px-3 py-1.5 rounded-xl text-xs font-bold border border-slate-200 bg-slate-50 text-slate-700 hover:bg-slate-100 transition cursor-pointer";
+        });
+      }
+
+      // 賢い自動補正付き数式パーサー
+      function normalizeMathInput(raw) {
+        let s = raw
+          // 全角英数字を半角に変換
+          .replace(/[Ａ-Ｚａ-ｚ０-９]/g, ch => String.fromCharCode(ch.charCodeAt(0) - 0xFEE0))
+          // 全角記号・特殊記号の正規化
+          .replace(/＋/g, "+")
+          .replace(/[－−ー―]/g, "-")
+          .replace(/[＊×・]/g, "*")
+          .replace(/[／÷]/g, "/")
+          .replace(/＾/g, "^")
+          .replace(/（/g, "(")
+          .replace(/）/g, ")")
+          .replace(/．/g, ".")
+          // 上付き数字の変換
+          .replace(/²/g, "^2")
+          .replace(/³/g, "^3")
+          .replace(/⁴/g, "^4")
+          // 小文字統一（大文字のXやSINなどを許容）
+          .toLowerCase();
+
+        // 暗黙の掛け算補完: 4x -> 4*x, 2(x+1) -> 2*(x+1), 2sin(x) -> 2*sin(x), 2pi -> 2*pi
+        s = s
+          .replace(/(\d)\s*([x(])/g, "$1*$2")
+          .replace(/(\d)\s*(sin|cos|tan|exp|log|sqrt|abs|pi)\b/g, "$1*$2")
+          .replace(/([x)])\s*(\()/g, "$1*$2")
+          .replace(/(\))\s*([x\d])/g, "$1*$2")
+          .replace(/\bpi\s*([x\d(])/g, "pi*$1");
+
+        return s;
+      }
+
+      function applyCustomFormula() {
+        const raw = $("customInput").value.trim();
+        if (!raw) return;
+
+        const normalized = normalizeMathInput(raw);
+
+        const expr = normalized
+          .replace(/\^/g, "**")
+          .replace(/\b(sin|cos|tan|exp|log|sqrt|abs)\b/g, "Math.$1")
+          .replace(/\bpi\b/g, "Math.PI");
+
+        const sanitized = expr.replace(/Math\.[A-Za-z]+/g, "");
+        if (!/^[0-9x+\-*\/().\s]*$/.test(sanitized)) {
+          $("formulaMsg").innerHTML = `<span class="text-rose-600 font-bold"><i class="fa-solid fa-circle-exclamation mr-1"></i>使用できない文字が含まれています。「入力ガイド」をご確認ください。</span>`;
+          return;
+        }
+
+        let f;
+        try {
+          f = new Function("x", "return " + expr);
+          const testVal = f(1);
+          if (typeof testVal !== "number") throw new Error();
+        } catch (e) {
+          $("formulaMsg").innerHTML = `<span class="text-rose-600 font-bold"><i class="fa-solid fa-circle-exclamation mr-1"></i>数式を解釈できませんでした。カッコの閉じ忘れや演算子を確認してください。</span>`;
+          return;
+        }
+
+        // 数値微分（中心差分法）と数値積分（シンプソン則）
+        const h = 1e-4;
+        const d = x => (f(x + h) - f(x - h)) / (2 * h);
+        const I = x => {
+          if (Math.abs(x) < 1e-9) return 0;
+          const n = 200;
+          const w = x / n;
+          let sum = f(0) + f(x);
+          for (let i = 1; i < n; i++) {
+            const val = f(i * w);
+            sum += (isFinite(val) ? val : 0) * (i % 2 ? 4 : 2);
+          }
+          return (sum * w) / 3;
+        };
+
+        currentKey = "";
+        cur = {
+          label: `f(x) = ${normalized}`,
+          dfLabel: "f′(x)（数値微分）",
+          f,
+          d,
+          I
+        };
+        updateChipStyles();
+        $("activeFuncBadge").textContent = cur.label;
+        $("derivFormulaBadge").textContent = cur.dfLabel;
+        $("formulaMsg").innerHTML = `<span class="text-emerald-700 font-bold"><i class="fa-solid fa-circle-check mr-1"></i>反映しました: <span class="mono">${cur.label}</span></span>`;
+        redrawAll();
+      }
+
+      $("applyCustomBtn").addEventListener("click", applyCustomFormula);
+      $("customInput").addEventListener("keydown", e => {
+        if (e.key === "Enter") applyCustomFormula();
+      });
+
+      // Y軸レンジ自動計算
+      function calcYRange(fn) {
+        let min = Infinity, max = -Infinity;
+        for (let x = XR[0]; x <= XR[1]; x += 0.05) {
+          const y = fn(x);
+          if (!isFinite(y) || Math.abs(y) > 40) continue;
+          if (y < min) min = y;
+          if (y > max) max = y;
+        }
+        if (!isFinite(min) || !isFinite(max) || min === max) {
+          min = -5;
+          max = 5;
+        }
+        const pad = Math.max((max - min) * 0.15, 0.8);
+        return [Math.floor(min - pad), Math.ceil(max + pad)];
+      }
+
+      // 座標軸・グリッド描画
+      function drawAxes(canvas, yr) {
+        const W = canvas.width;
+        const H = canvas.height;
+        const p = { l: 42, r: 16, t: 16, b: 26 };
+        const sx = x => p.l + ((x - XR[0]) / (XR[1] - XR[0])) * (W - p.l - p.r);
+        const sy = y => H - p.b - ((y - yr[0]) / (yr[1] - yr[0])) * (H - p.t - p.b);
+
+        const g = canvas.getContext("2d");
+        g.clearRect(0, 0, W, H);
+
+        // グリッド
+        g.font = "11px 'JetBrains Mono', monospace";
+        g.fillStyle = "#64748b";
+        g.strokeStyle = "#e2e8f0";
+        g.lineWidth = 1;
+
+        for (let x = Math.ceil(XR[0]); x <= XR[1]; x++) {
+          g.beginPath();
+          g.moveTo(sx(x), p.t);
+          g.lineTo(sx(x), H - p.b);
+          g.stroke();
+          g.textAlign = "center";
+          g.fillText(x, sx(x), H - 8);
+        }
+
+        const yStep = Math.max(1, Math.round((yr[1] - yr[0]) / 7));
+        for (let y = Math.ceil(yr[0]); y <= yr[1]; y += yStep) {
+          g.beginPath();
+          g.moveTo(p.l, sy(y));
+          g.lineTo(W - p.r, sy(y));
+          g.stroke();
+          g.textAlign = "right";
+          g.fillText(y, p.l - 6, sy(y) + 4);
+        }
+
+        // X軸・Y軸
+        g.strokeStyle = "#94a3b8";
+        g.lineWidth = 1.5;
+        if (yr[0] <= 0 && yr[1] >= 0) {
+          g.beginPath();
+          g.moveTo(p.l, sy(0));
+          g.lineTo(W - p.r, sy(0));
+          g.stroke();
+        }
+        g.beginPath();
+        g.moveTo(sx(0), p.t);
+        g.lineTo(sx(0), H - p.b);
+        g.stroke();
+
+        return { g, sx, sy, W, H, p, yr };
+      }
+
+      // 曲線描画
+      function drawCurve(ctxObj, fn, color, width = 2.5, maxX = XR[1]) {
+        const { g, sx, sy, yr } = ctxObj;
+        g.strokeStyle = color;
+        g.lineWidth = width;
+        g.beginPath();
+        let started = false;
+        for (let x = XR[0]; x <= maxX + 1e-9; x += 0.02) {
+          const y = fn(x);
+          if (!isFinite(y) || y < yr[0] - 8 || y > yr[1] + 8) {
+            started = false;
+            continue;
+          }
+          if (!started) {
+            g.moveTo(sx(x), sy(y));
+            started = true;
+          } else {
+            g.lineTo(sx(x), sy(y));
+          }
+        }
+        g.stroke();
+      }
+
+      // ① 微分描画
+      function renderDiff() {
+        const f = cur.f;
+        const d = cur.d;
+        const yrF = calcYRange(f);
+        const yrD = calcYRange(d);
+
+        // 上段：f(x) と接線
+        const c1 = drawAxes($("canvasFunc"), yrF);
+        drawCurve(c1, f, "#4f46e5", 3);
+
+        const y = f(x0);
+        const slope = d(x0);
+        if (isFinite(y) && isFinite(slope)) {
+          const { g, sx, sy } = c1;
+          g.strokeStyle = "#e11d48";
+          g.lineWidth = 2;
+          g.setLineDash([6, 4]);
+          g.beginPath();
+          g.moveTo(sx(x0 - 1.4), sy(y - slope * 1.4));
+          g.lineTo(sx(x0 + 1.4), sy(y + slope * 1.4));
+          g.stroke();
+          g.setLineDash([]);
+
+          g.fillStyle = "#e11d48";
+          g.beginPath();
+          g.arc(sx(x0), sy(y), 8, 0, Math.PI * 2);
+          g.fill();
+          g.fillStyle = "#ffffff";
+          g.beginPath();
+          g.arc(sx(x0), sy(y), 3, 0, Math.PI * 2);
+          g.fill();
+        }
+
+        // 下段：導関数 f'(x)
+        const c2 = drawAxes($("canvasDeriv"), yrD);
+        drawCurve(c2, d, "#cbd5e1", 2);
+        drawCurve(c2, d, "#e11d48", 3, x0);
+
+        if (isFinite(slope)) {
+          const { g, sx, sy, p, H } = c2;
+          g.setLineDash([4, 4]);
+          g.strokeStyle = "#94a3b8";
+          g.beginPath();
+          g.moveTo(sx(x0), p.t);
+          g.lineTo(sx(x0), H - p.b);
+          g.stroke();
+          g.setLineDash([]);
+
+          g.fillStyle = "#e11d48";
+          g.beginPath();
+          g.arc(sx(x0), sy(slope), 7, 0, Math.PI * 2);
+          g.fill();
+        }
+
+        $("sliderX").value = x0;
+        $("dispX").textContent = x0.toFixed(2);
+        $("valX").textContent = fmt(x0);
+        $("valFx").textContent = isFinite(y) ? fmt(y) : "定義外";
+        $("valSlope").textContent = isFinite(slope) ? fmt(slope) : "定義外";
+
+        let stateDesc = "";
+        if (Math.abs(slope) < 0.08) {
+          stateDesc = "傾きがほぼ 0（水平）です！グラフの山（極大）や谷（極小）の頂点付近では、導関数 f′(x) が x軸 と交わります。";
+        } else if (slope > 0) {
+          stateDesc = `接線が右上がり（傾き +${fmt(slope)}）なので、下の導関数グラフは x軸より上（プラス側）に位置しています。`;
+        } else {
+          stateDesc = `接線が右下がり（傾き ${fmt(slope)}）なので、下の導関数グラフは x軸より下（マイナス側）に位置しています。`;
+        }
+        $("diffGuideText").textContent = `現在 x = ${x0.toFixed(2)} における接線の傾きは ${fmt(slope)} です。${stateDesc}`;
+      }
+
+      // キャンバスドラッグ操作（微分）
+      const canvasFunc = $("canvasFunc");
+      let dragging = false;
+      function getCanvasX(e) {
+        const rect = canvasFunc.getBoundingClientRect();
+        const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+        const px = ((clientX - rect.left) / rect.width) * canvasFunc.width;
+        const mathX = XR[0] + ((px - 42) / (canvasFunc.width - 58)) * (XR[1] - XR[0]);
+        return Math.min(XR[1], Math.max(XR[0], mathX));
+      }
+
+      canvasFunc.addEventListener("pointerdown", e => {
+        dragging = true;
+        stopAutoPlay();
+        canvasFunc.setPointerCapture(e.pointerId);
+        x0 = getCanvasX(e);
+        renderDiff();
+      });
+      canvasFunc.addEventListener("pointermove", e => {
+        if (!dragging) return;
+        x0 = getCanvasX(e);
+        renderDiff();
+      });
+      canvasFunc.addEventListener("pointerup", () => {
+        dragging = false;
+      });
+
+      $("sliderX").addEventListener("input", e => {
+        stopAutoPlay();
+        x0 = parseFloat(e.target.value);
+        renderDiff();
+      });
+
+      function stopAutoPlay() {
+        autoPlaying = false;
+        $("btnAutoPlay").innerHTML = `<i class="fa-solid fa-play mr-1"></i>自動で動かす`;
+      }
+
+      function autoLoop() {
+        if (!autoPlaying) return;
+        x0 += autoDir * 0.025;
+        if (x0 >= 2.95) autoDir = -1;
+        if (x0 <= -2.95) autoDir = 1;
+        renderDiff();
+        requestAnimationFrame(autoLoop);
+      }
+
+      $("btnAutoPlay").addEventListener("click", () => {
+        autoPlaying = !autoPlaying;
+        if (autoPlaying) {
+          $("btnAutoPlay").innerHTML = `<i class="fa-solid fa-stop mr-1"></i>停止する`;
+          autoLoop();
+        } else {
+          stopAutoPlay();
+        }
+      });
+
+      $("btnResetDiff").addEventListener("click", () => {
+        stopAutoPlay();
+        x0 = 1.2;
+        renderDiff();
+      });
+
+      // ② 積分描画
+      function renderInteg() {
+        const f = cur.f;
+        let a = parseFloat($("sliderA").value);
+        let b = parseFloat($("sliderB").value);
+        if (a > b) [a, b] = [b, a];
+        const n = parseInt($("sliderN").value, 10);
+        const mode = $("rectMode").value;
+
+        const yr = calcYRange(f);
+        const c3 = drawAxes($("canvasInteg"), yr);
+        const { g, sx, sy, p, H } = c3;
+
+        const w = (b - a) / n;
+        let rectSum = 0;
+
+        for (let i = 0; i < n; i++) {
+          const leftX = a + i * w;
+          const sampleX = mode === "l" ? leftX : mode === "r" ? leftX + w : leftX + w / 2;
+          const h = f(sampleX);
+          if (!isFinite(h)) continue;
+          rectSum += h * w;
+
+          const rx = sx(leftX);
+          const rw = sx(leftX + w) - rx;
+          const ry = sy(Math.max(h, 0));
+          const rh = Math.abs(sy(h) - sy(0));
+
+          g.fillStyle = h >= 0 ? "rgba(79, 70, 229, 0.25)" : "rgba(225, 29, 72, 0.25)";
+          g.fillRect(rx, ry, rw, rh);
+
+          if (n <= 75) {
+            g.strokeStyle = h >= 0 ? "#4f46e5" : "#e11d48";
+            g.lineWidth = n > 40 ? 0.6 : 1.1;
+            g.strokeRect(rx, ry, rw, rh);
+          }
+        }
+
+        drawCurve(c3, f, "#0f172a", 2.8);
+
+        g.setLineDash([5, 4]);
+        g.strokeStyle = "#059669";
+        g.lineWidth = 2;
+        [a, b].forEach(bound => {
+          g.beginPath();
+          g.moveTo(sx(bound), p.t);
+          g.lineTo(sx(bound), H - p.b);
+          g.stroke();
+        });
+        g.setLineDash([]);
+
+        const exact = cur.I(b) - cur.I(a);
+        const err = Math.abs(rectSum - exact);
+
+        $("dispA").textContent = a.toFixed(2);
+        $("dispB").textContent = b.toFixed(2);
+        $("dispN").textContent = n;
+        $("valRectSum").textContent = fmt(rectSum);
+        $("valExactInt").textContent = isFinite(exact) ? fmt(exact) : "—";
+        $("valError").textContent = isFinite(err) ? fmt(err) : "—";
+
+        const modeName = mode === "m" ? "中点" : mode === "l" ? "左端" : "右端";
+        $("integGuideText").textContent =
+          `区間 [${a.toFixed(2)}, ${b.toFixed(2)}] を ${n} 個の短冊（1枚の幅 ${Math.abs(w).toFixed(3)}）に分割し、${modeName}の高さで合計しています。` +
+          (n < 15
+            ? " 分割数が少ないため曲線との隙間やはみ出しが目立ちますが、nを増やすと誤差がゼロに近づきます。"
+            : " 短冊が十分に細かくなり、曲線下の真の面積（定積分）にほぼ一致しています。");
+      }
+
+      ["sliderA", "sliderB", "sliderN", "rectMode"].forEach(id => {
+        $(id).addEventListener("input", () => {
+          if (id === "sliderN" && animTimer) {
+            clearInterval(animTimer);
+            animTimer = null;
+          }
+          renderInteg();
+        });
+      });
+
+      $("btnAnimN").addEventListener("click", () => {
+        if (animTimer) clearInterval(animTimer);
+        let n = 1;
+        $("sliderN").value = n;
+        renderInteg();
+        animTimer = setInterval(() => {
+          n = Math.min(120, n + (n < 25 ? 1 : 4));
+          $("sliderN").value = n;
+          renderInteg();
+          if (n >= 120) {
+            clearInterval(animTimer);
+            animTimer = null;
+          }
+        }, 65);
+      });
+
+      $("btnResetInteg").addEventListener("click", () => {
+        if (animTimer) {
+          clearInterval(animTimer);
+          animTimer = null;
+        }
+        $("sliderA").value = -2;
+        $("sliderB").value = 2;
+        $("sliderN").value = 6;
+        $("rectMode").value = "m";
+        renderInteg();
+      });
+
+      function switchTab(mode) {
+        const isDiff = mode === "diff";
+        $("panelDiff").classList.toggle("hidden", !isDiff);
+        $("panelInteg").classList.toggle("hidden", isDiff);
+
+        $("tabDiff").className = isDiff
+          ? "py-2.5 px-4 rounded-xl text-xs sm:text-sm font-bold transition bg-white text-indigo-600 shadow-xs cursor-pointer flex items-center justify-center gap-2"
+          : "py-2.5 px-4 rounded-xl text-xs sm:text-sm font-bold transition text-slate-600 hover:text-slate-900 cursor-pointer flex items-center justify-center gap-2";
+
+        $("tabInteg").className = !isDiff
+          ? "py-2.5 px-4 rounded-xl text-xs sm:text-sm font-bold transition bg-white text-emerald-600 shadow-xs cursor-pointer flex items-center justify-center gap-2"
+          : "py-2.5 px-4 rounded-xl text-xs sm:text-sm font-bold transition text-slate-600 hover:text-slate-900 cursor-pointer flex items-center justify-center gap-2";
+
+        if (!isDiff) stopAutoPlay();
+        redrawAll();
+      }
+
+      $("tabDiff").addEventListener("click", () => switchTab("diff"));
+      $("tabInteg").addEventListener("click", () => switchTab("integ"));
+
+      function redrawAll() {
+        if (!$("panelDiff").classList.contains("hidden")) {
+          renderDiff();
+        } else {
+          renderInteg();
+        }
+      }
+
+      updateChipStyles();
+      renderDiff();
+      renderInteg();
+    })();
+  </script>
+</body>
+</html>

@@ -1,0 +1,1066 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>多機能スマート電卓</title>
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Phosphor Icons -->
+  <script src="https://unpkg.com/@phosphor-icons/web"></script>
+  <!-- Google Fonts: Inter & JetBrains Mono -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;600;700&display=swap" rel="stylesheet">
+
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['Inter', 'sans-serif'],
+            mono: ['JetBrains Mono', 'monospace'],
+          },
+          colors: {
+            brand: {
+              50: '#eef2ff',
+              500: '#6366f1',
+              600: '#4f46e5',
+              700: '#4338ca',
+            }
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    /* スムーズなタッチやタップのフィードバック */
+    button {
+      -webkit-tap-highlight-color: transparent;
+      user-select: none;
+      transition: all 0.12s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+    button:active {
+      transform: scale(0.95);
+    }
+    /* カスタムスクロールバー */
+    .scrollbar-thin::-webkit-scrollbar {
+      width: 5px;
+      height: 5px;
+    }
+    .scrollbar-thin::-webkit-scrollbar-track {
+      background: transparent;
+    }
+    .scrollbar-thin::-webkit-scrollbar-thumb {
+      background: rgba(156, 163, 175, 0.4);
+      border-radius: 9999px;
+    }
+    .scrollbar-thin::-webkit-scrollbar-thumb:hover {
+      background: rgba(156, 163, 175, 0.7);
+    }
+  </style>
+</head>
+<body class="bg-slate-100 dark:bg-slate-950 text-slate-800 dark:text-slate-100 min-h-screen flex items-center justify-center p-3 sm:p-6 transition-colors duration-200">
+
+  <!-- メインコンテナ -->
+  <div class="w-full max-w-4xl bg-white dark:bg-slate-900 rounded-3xl shadow-2xl border border-slate-200/80 dark:border-slate-800 overflow-hidden flex flex-col md:flex-row transition-all duration-300">
+
+    <!-- 左側：電卓・各種ツール本体 -->
+    <div class="flex-1 p-5 sm:p-7 flex flex-col justify-between">
+      
+      <!-- ヘッダーバー（モード切替、テーマ、コピー） -->
+      <div class="flex items-center justify-between mb-4 gap-2 flex-wrap sm:flex-nowrap">
+        <!-- モード切替タブ -->
+        <div class="flex items-center bg-slate-100 dark:bg-slate-800/80 p-1 rounded-xl text-xs font-semibold overflow-x-auto scrollbar-thin">
+          <button id="tab-basic" onclick="setMode('basic')" class="px-2.5 sm:px-3 py-1.5 rounded-lg transition-all text-slate-700 dark:text-slate-200 bg-white dark:bg-slate-700 shadow-sm whitespace-nowrap">標準</button>
+          <button id="tab-scientific" onclick="setMode('scientific')" class="px-2.5 sm:px-3 py-1.5 rounded-lg transition-all text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-white whitespace-nowrap">関数</button>
+          <button id="tab-converter" onclick="setMode('converter')" class="px-2.5 sm:px-3 py-1.5 rounded-lg transition-all text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-white whitespace-nowrap">単位換算</button>
+          <button id="tab-combinatorics" onclick="setMode('combinatorics')" class="px-2.5 sm:px-3 py-1.5 rounded-lg transition-all text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-white whitespace-nowrap">場合の数</button>
+        </div>
+
+        <div class="flex items-center gap-2">
+          <!-- クリップボードへコピー -->
+          <button onclick="copyDisplayValue()" title="結果をコピー" class="p-2 rounded-xl text-slate-500 hover:text-indigo-600 hover:bg-slate-100 dark:hover:bg-slate-800 dark:text-slate-400 transition-colors">
+            <i class="ph ph-copy text-lg"></i>
+          </button>
+          <!-- ダークモード切り替え -->
+          <button onclick="toggleDarkMode()" title="テーマ切替" class="p-2 rounded-xl text-slate-500 hover:text-indigo-600 hover:bg-slate-100 dark:hover:bg-slate-800 dark:text-slate-400 transition-colors">
+            <i id="theme-icon" class="ph ph-moon text-lg"></i>
+          </button>
+          <!-- 履歴表示トグル（スマホ向け） -->
+          <button onclick="toggleHistoryMobile()" class="md:hidden p-2 rounded-xl text-slate-500 hover:text-indigo-600 hover:bg-slate-100 dark:hover:bg-slate-800">
+            <i class="ph ph-clock-counter-clockwise text-lg"></i>
+          </button>
+        </div>
+      </div>
+
+      <!-- 計算機ディスプレイ部 -->
+      <div id="calc-display-area" class="bg-slate-50 dark:bg-slate-950/60 p-5 rounded-2xl border border-slate-200/70 dark:border-slate-800/80 mb-5 flex flex-col justify-end text-right min-h-[110px] transition-all">
+        <!-- 途中の計算式 -->
+        <div id="expression-display" class="font-mono text-sm sm:text-base text-slate-400 dark:text-slate-500 h-6 overflow-x-auto scrollbar-thin whitespace-nowrap tracking-wide"></div>
+        <!-- 現在の入力 / 計算結果 -->
+        <div id="main-display" class="font-mono text-3xl sm:text-4xl md:text-5xl font-bold tracking-tight text-slate-900 dark:text-white overflow-x-auto scrollbar-thin whitespace-nowrap mt-1">0</div>
+      </div>
+
+      <!-- コピー完了トースト通知 -->
+      <div id="copy-toast" class="hidden text-xs text-center py-1 mb-2 font-medium text-emerald-600 dark:text-emerald-400">クリップボードにコピーしました！</div>
+
+      <!-- 電卓ボタンパネル -->
+      <div id="calc-keypad" class="space-y-2">
+        <!-- 関数電卓専用キー（モード切替で表示） -->
+        <div id="scientific-panel" class="hidden grid grid-cols-5 gap-2 mb-2 pb-2 border-b border-slate-200 dark:border-slate-800">
+          <button onclick="inputSci('sin')" class="sci-btn">sin</button>
+          <button onclick="inputSci('cos')" class="sci-btn">cos</button>
+          <button onclick="inputSci('tan')" class="sci-btn">tan</button>
+          <button onclick="inputSci('log')" class="sci-btn">log</button>
+          <button onclick="inputSci('ln')" class="sci-btn">ln</button>
+          <button onclick="inputSci('sqrt')" class="sci-btn">√</button>
+          <button onclick="inputSci('pow2')" class="sci-btn">x²</button>
+          <button onclick="inputSci('pow')" class="sci-btn">xʸ</button>
+          <button onclick="inputConst('pi')" class="sci-btn">π</button>
+          <button onclick="inputConst('e')" class="sci-btn">e</button>
+          <button onclick="inputSci('fact')" class="sci-btn">n!</button>
+          <button onclick="inputSci('abs')" class="sci-btn">|x|</button>
+          <button onclick="inputSci('exp')" class="sci-btn">exp</button>
+          <button onclick="inputOp('(')" class="sci-btn font-mono">(</button>
+          <button onclick="inputOp(')')" class="sci-btn font-mono">)</button>
+        </div>
+
+        <!-- 基本キーボード -->
+        <div class="grid grid-cols-4 gap-2 sm:gap-3">
+          <!-- 行 1 -->
+          <button onclick="clearAll()" class="btn-util">AC</button>
+          <button onclick="deleteLast()" class="btn-util"><i class="ph ph-backspace text-xl"></i></button>
+          <button onclick="inputPercent()" class="btn-util">%</button>
+          <button onclick="inputOp('/')" class="btn-op">÷</button>
+
+          <!-- 行 2 -->
+          <button onclick="inputDigit('7')" class="btn-num">7</button>
+          <button onclick="inputDigit('8')" class="btn-num">8</button>
+          <button onclick="inputDigit('9')" class="btn-num">9</button>
+          <button onclick="inputOp('*')" class="btn-op">×</button>
+
+          <!-- 行 3 -->
+          <button onclick="inputDigit('4')" class="btn-num">4</button>
+          <button onclick="inputDigit('5')" class="btn-num">5</button>
+          <button onclick="inputDigit('6')" class="btn-num">6</button>
+          <button onclick="inputOp('-')" class="btn-op">−</button>
+
+          <!-- 行 4 -->
+          <button onclick="inputDigit('1')" class="btn-num">1</button>
+          <button onclick="inputDigit('2')" class="btn-num">2</button>
+          <button onclick="inputDigit('3')" class="btn-num">3</button>
+          <button onclick="inputOp('+')" class="btn-op">+</button>
+
+          <!-- 行 5 -->
+          <button onclick="toggleSign()" class="btn-num text-sm sm:text-base font-semibold">±</button>
+          <button onclick="inputDigit('0')" class="btn-num">0</button>
+          <button onclick="inputDecimal()" class="btn-num">.</button>
+          <button onclick="calculateResult()" class="btn-equals">=</button>
+        </div>
+      </div>
+
+      <!-- 単位換算パネル（モード切替で表示） -->
+      <div id="converter-panel" class="hidden flex-1 flex flex-col justify-between py-2 space-y-4">
+        <div>
+          <label class="block text-xs font-semibold text-slate-500 mb-1">カテゴリー</label>
+          <select id="conv-category" onchange="updateConvUnits()" class="w-full bg-slate-100 dark:bg-slate-800 border-none rounded-xl p-3 text-sm font-semibold focus:ring-2 focus:ring-indigo-500 outline-none">
+            <option value="energy">カロリー・熱量 (Energy / ダイエット)</option>
+            <option value="netspeed">データ通信速度 (Speed)</option>
+            <option value="volume">体積・容量 (Volume)</option>
+            <option value="freq">周波数 (Frequency)</option>
+            <option value="pressure">圧力 (Pressure)</option>
+            <option value="time">時間 (Time)</option>
+            <option value="length">長さ (Length)</option>
+            <option value="weight">重さ (Weight)</option>
+            <option value="temp">温度 (Temperature)</option>
+            <option value="area">面積 (Area)</option>
+            <option value="data">データ容量 (Data)</option>
+          </select>
+        </div>
+
+        <div class="space-y-4">
+          <!-- 変換元 -->
+          <div class="bg-slate-50 dark:bg-slate-950/40 p-4 rounded-2xl border border-slate-200/80 dark:border-slate-800">
+            <span class="text-xs text-slate-400 block mb-1">変換元</span>
+            <div class="flex gap-2">
+              <input type="number" id="conv-from-val" value="500" oninput="convertUnits()" class="w-2/3 bg-transparent text-2xl font-mono font-bold focus:outline-none">
+              <select id="conv-from-unit" onchange="convertUnits()" class="w-1/3 bg-white dark:bg-slate-800 text-xs font-semibold rounded-lg px-2 py-1 outline-none border border-slate-200 dark:border-slate-700"></select>
+            </div>
+          </div>
+
+          <!-- 相互入れ替えボタン -->
+          <div class="flex justify-center -my-2 relative z-10">
+            <button onclick="swapUnits()" class="p-2.5 rounded-full bg-indigo-600 text-white shadow-md hover:bg-indigo-700">
+              <i class="ph ph-arrows-down-up text-lg"></i>
+            </button>
+          </div>
+
+          <!-- 変換先 -->
+          <div class="bg-slate-50 dark:bg-slate-950/40 p-4 rounded-2xl border border-slate-200/80 dark:border-slate-800">
+            <span class="text-xs text-slate-400 block mb-1">結果</span>
+            <div class="flex gap-2 items-center">
+              <div id="conv-to-val" class="w-2/3 text-2xl font-mono font-bold text-indigo-600 dark:text-indigo-400 overflow-x-auto scrollbar-thin">0</div>
+              <select id="conv-to-unit" onchange="convertUnits()" class="w-1/3 bg-white dark:bg-slate-800 text-xs font-semibold rounded-lg px-2 py-1 outline-none border border-slate-200 dark:border-slate-700"></select>
+            </div>
+          </div>
+        </div>
+
+        <!-- ダイエット・フィットネス換算アシスト（エネルギー選択時のみ表示） -->
+        <div id="diet-tips-container" class="bg-amber-50/80 dark:bg-amber-950/30 border border-amber-200/70 dark:border-amber-800/50 rounded-2xl p-3.5 space-y-2">
+          <div class="flex items-center gap-1.5 text-xs font-bold text-amber-700 dark:text-amber-400">
+            <i class="ph ph-flame text-base"></i>
+            <span>ダイエット・消費の目安</span>
+          </div>
+          <div class="grid grid-cols-3 gap-2 text-center">
+            <div class="bg-white/80 dark:bg-slate-900/60 p-2 rounded-xl">
+              <span class="text-[10px] text-slate-400 block">体脂肪換算</span>
+              <span id="diet-fat-val" class="font-bold text-xs sm:text-sm text-slate-700 dark:text-slate-200 font-mono">約 0 g</span>
+            </div>
+            <div class="bg-white/80 dark:bg-slate-900/60 p-2 rounded-xl">
+              <span class="text-[10px] text-slate-400 block">白米換算</span>
+              <span id="diet-rice-val" class="font-bold text-xs sm:text-sm text-slate-700 dark:text-slate-200 font-mono">約 0 杯</span>
+            </div>
+            <div class="bg-white/80 dark:bg-slate-900/60 p-2 rounded-xl">
+              <span class="text-[10px] text-slate-400 block">ウォーキング</span>
+              <span id="diet-walk-val" class="font-bold text-xs sm:text-sm text-slate-700 dark:text-slate-200 font-mono">約 0 分</span>
+            </div>
+          </div>
+        </div>
+
+        <p class="text-xs text-slate-400 text-center">リアルタイムで自動計算されます</p>
+      </div>
+
+      <!-- 場合の数・確率専用直感入力カード（モード切替で表示） -->
+      <div id="combinatorics-panel" class="hidden flex-1 flex flex-col justify-between py-1 space-y-3">
+        <!-- パラメータ入力カード -->
+        <div class="bg-slate-50 dark:bg-slate-950/50 p-4 rounded-2xl border border-slate-200/80 dark:border-slate-800">
+          <div class="flex items-center justify-between mb-3">
+            <span class="text-xs font-bold text-indigo-600 dark:text-indigo-400 flex items-center gap-1">
+              <i class="ph ph-sliders text-base"></i> パラメータ設定
+            </span>
+            <span class="text-[11px] text-slate-400">整数を入力またはボタンで調整</span>
+          </div>
+
+          <div class="grid grid-cols-2 gap-3">
+            <!-- n の入力 -->
+            <div class="bg-white dark:bg-slate-800/80 p-3 rounded-xl border border-slate-200/60 dark:border-slate-700/60">
+              <div class="flex justify-between items-center mb-1">
+                <label class="text-xs font-bold text-slate-500">全体数 (n)</label>
+                <div class="flex gap-1">
+                  <button onclick="stepParam('n', -1)" class="w-5 h-5 rounded bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 text-xs font-bold leading-none">−</button>
+                  <button onclick="stepParam('n', 1)" class="w-5 h-5 rounded bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 text-xs font-bold leading-none">+</button>
+                </div>
+              </div>
+              <input type="number" id="comb-n" value="7" min="0" max="60" oninput="calcCombinatorics()" class="w-full bg-transparent text-2xl font-mono font-bold focus:outline-none">
+            </div>
+
+            <!-- r の入力 -->
+            <div class="bg-white dark:bg-slate-800/80 p-3 rounded-xl border border-slate-200/60 dark:border-slate-700/60">
+              <div class="flex justify-between items-center mb-1">
+                <label class="text-xs font-bold text-slate-500">選ぶ数 (r)</label>
+                <div class="flex gap-1">
+                  <button onclick="stepParam('r', -1)" class="w-5 h-5 rounded bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 text-xs font-bold leading-none">−</button>
+                  <button onclick="stepParam('r', 1)" class="w-5 h-5 rounded bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 text-xs font-bold leading-none">+</button>
+                </div>
+              </div>
+              <input type="number" id="comb-r" value="3" min="0" max="60" oninput="calcCombinatorics()" class="w-full bg-transparent text-2xl font-mono font-bold focus:outline-none">
+            </div>
+          </div>
+        </div>
+
+        <!-- 場合の数：結果カードグリッド -->
+        <div class="grid grid-cols-2 gap-2.5">
+          <!-- 組合せ nCr -->
+          <div class="bg-indigo-50/70 dark:bg-indigo-950/30 p-3 rounded-xl border border-indigo-100 dark:border-indigo-900/50 flex flex-col justify-between">
+            <div class="flex justify-between items-start">
+              <div>
+                <span class="text-xs font-bold text-indigo-700 dark:text-indigo-300">組合せ (Combination)</span>
+                <span class="text-[10px] text-slate-400 block font-mono">ₙCᵣ = n! / (r!(n-r)!)</span>
+              </div>
+              <button onclick="sendToCalc('nCr')" title="電卓に結果を送る" class="text-[10px] bg-white dark:bg-slate-800 px-1.5 py-0.5 rounded shadow-sm text-indigo-600 dark:text-indigo-400 hover:bg-indigo-50">電卓へ</button>
+            </div>
+            <div id="res-ncr" class="text-xl sm:text-2xl font-mono font-bold text-slate-900 dark:text-white mt-1.5 overflow-x-auto scrollbar-thin">35</div>
+          </div>
+
+          <!-- 順列 nPr -->
+          <div class="bg-indigo-50/70 dark:bg-indigo-950/30 p-3 rounded-xl border border-indigo-100 dark:border-indigo-900/50 flex flex-col justify-between">
+            <div class="flex justify-between items-start">
+              <div>
+                <span class="text-xs font-bold text-indigo-700 dark:text-indigo-300">順列 (Permutation)</span>
+                <span class="text-[10px] text-slate-400 block font-mono">ₙPᵣ = n! / (n-r)!</span>
+              </div>
+              <button onclick="sendToCalc('nPr')" title="電卓に結果を送る" class="text-[10px] bg-white dark:bg-slate-800 px-1.5 py-0.5 rounded shadow-sm text-indigo-600 dark:text-indigo-400 hover:bg-indigo-50">電卓へ</button>
+            </div>
+            <div id="res-npr" class="text-xl sm:text-2xl font-mono font-bold text-slate-900 dark:text-white mt-1.5 overflow-x-auto scrollbar-thin">210</div>
+          </div>
+
+          <!-- 重複組合せ nHr -->
+          <div class="bg-slate-50 dark:bg-slate-800/60 p-3 rounded-xl border border-slate-200/70 dark:border-slate-700/60 flex flex-col justify-between">
+            <div class="flex justify-between items-start">
+              <div>
+                <span class="text-xs font-semibold text-slate-700 dark:text-slate-300">重複組合せ (nHr)</span>
+                <span class="text-[10px] text-slate-400 block font-mono">ₙ₊ᵣ₋₁Cᵣ</span>
+              </div>
+              <button onclick="sendToCalc('nHr')" title="電卓に結果を送る" class="text-[10px] bg-white dark:bg-slate-700 px-1.5 py-0.5 rounded shadow-sm text-slate-600 dark:text-slate-300 hover:bg-slate-100">電卓へ</button>
+            </div>
+            <div id="res-nhr" class="text-lg sm:text-xl font-mono font-bold text-slate-800 dark:text-slate-200 mt-1.5 overflow-x-auto scrollbar-thin">84</div>
+          </div>
+
+          <!-- 重複順列 n^r -->
+          <div class="bg-slate-50 dark:bg-slate-800/60 p-3 rounded-xl border border-slate-200/70 dark:border-slate-700/60 flex flex-col justify-between">
+            <div class="flex justify-between items-start">
+              <div>
+                <span class="text-xs font-semibold text-slate-700 dark:text-slate-300">重複順列 (nʳ)</span>
+                <span class="text-[10px] text-slate-400 block font-mono">n の r 乗</span>
+              </div>
+              <button onclick="sendToCalc('nPowR')" title="電卓に結果を送る" class="text-[10px] bg-white dark:bg-slate-700 px-1.5 py-0.5 rounded shadow-sm text-slate-600 dark:text-slate-300 hover:bg-slate-100">電卓へ</button>
+            </div>
+            <div id="res-npowr" class="text-lg sm:text-xl font-mono font-bold text-slate-800 dark:text-slate-200 mt-1.5 overflow-x-auto scrollbar-thin">343</div>
+          </div>
+        </div>
+
+        <!-- 確率・実用豆知識カード -->
+        <div class="bg-emerald-50/70 dark:bg-emerald-950/30 border border-emerald-200/70 dark:border-emerald-800/50 rounded-2xl p-3 space-y-1.5">
+          <div class="flex items-center gap-1.5 text-xs font-bold text-emerald-800 dark:text-emerald-300">
+            <i class="ph ph-dice-three text-base"></i>
+            <span>確率・日常シミュレーション</span>
+          </div>
+          <div class="grid grid-cols-2 gap-2 text-xs">
+            <div class="bg-white/80 dark:bg-slate-900/60 p-2 rounded-xl">
+              <span class="text-[10px] text-slate-400 block">n人の中で誕生日重複</span>
+              <span id="prob-birthday" class="font-bold text-xs sm:text-sm font-mono text-emerald-700 dark:text-emerald-400">約 5.6%</span>
+            </div>
+            <div class="bg-white/80 dark:bg-slate-900/60 p-2 rounded-xl">
+              <span class="text-[10px] text-slate-400 block">コインでr回連続表</span>
+              <span id="prob-coin" class="font-bold text-xs sm:text-sm font-mono text-emerald-700 dark:text-emerald-400">1 / 8 (12.5%)</span>
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+    </div>
+
+    <!-- 右側：計算履歴パネル -->
+    <div id="history-sidebar" class="hidden md:flex w-full md:w-80 border-t md:border-t-0 md:border-l border-slate-200 dark:border-slate-800 bg-slate-50/60 dark:bg-slate-900/60 p-5 flex-col justify-between">
+      <div>
+        <div class="flex items-center justify-between mb-4">
+          <div class="flex items-center gap-2 font-semibold text-sm">
+            <i class="ph ph-clock-counter-clockwise text-indigo-600 dark:text-indigo-400 text-lg"></i>
+            <span>履歴</span>
+          </div>
+          <button onclick="clearHistory()" class="text-xs text-slate-400 hover:text-red-500 font-medium transition-colors">消去</button>
+        </div>
+
+        <!-- 履歴リスト -->
+        <div id="history-list" class="space-y-3 overflow-y-auto max-h-[460px] scrollbar-thin pr-1">
+          <!-- 履歴アイテムのプレースホルダー -->
+          <div class="text-xs text-slate-400 text-center py-10">履歴はまだありません</div>
+        </div>
+      </div>
+
+      <div class="pt-4 border-t border-slate-200 dark:border-slate-800 text-xs text-slate-400 flex justify-between items-center">
+        <span>キーボード操作対応</span>
+        <span class="font-mono bg-slate-200 dark:bg-slate-800 px-1.5 py-0.5 rounded text-[10px]">Enter = 計算</span>
+      </div>
+    </div>
+
+  </div>
+
+  <style>
+    /* ボタンスタイル共通定義 */
+    .btn-num {
+      @apply bg-white dark:bg-slate-800/90 hover:bg-slate-100 dark:hover:bg-slate-700/80 text-slate-800 dark:text-slate-100 font-medium text-lg sm:text-xl py-3 sm:py-4 rounded-2xl shadow-sm border border-slate-200/60 dark:border-slate-700/60;
+    }
+    .btn-op {
+      @apply bg-indigo-50 dark:bg-indigo-950/40 hover:bg-indigo-100 dark:hover:bg-indigo-900/60 text-indigo-600 dark:text-indigo-400 font-semibold text-xl py-3 sm:py-4 rounded-2xl border border-indigo-100 dark:border-indigo-900/40;
+    }
+    .btn-util {
+      @apply bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 font-semibold text-base py-3 sm:py-4 rounded-2xl border border-slate-200/50 dark:border-slate-700/50;
+    }
+    .btn-equals {
+      @apply bg-gradient-to-tr from-indigo-600 to-indigo-500 hover:from-indigo-700 hover:to-indigo-600 text-white font-bold text-xl py-3 sm:py-4 rounded-2xl shadow-lg shadow-indigo-500/25;
+    }
+    .sci-btn {
+      @apply bg-slate-100/80 dark:bg-slate-800/60 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-300 font-medium text-xs sm:text-sm py-2 rounded-xl border border-slate-200/40 dark:border-slate-700/40;
+    }
+  </style>
+
+  <script>
+    // --- 状態管理 ---
+    let currentInput = '0';
+    let expression = '';
+    let shouldResetInput = false;
+    let history = [];
+    let currentMode = 'basic'; // basic, scientific, converter, combinatorics
+    let lastCombResults = {};
+
+    // --- 初期化 ---
+    window.addEventListener('DOMContentLoaded', () => {
+      // ローカルストレージから履歴を読み込み
+      const savedHistory = localStorage.getItem('calc_history');
+      if (savedHistory) {
+        history = JSON.parse(savedHistory);
+        renderHistory();
+      }
+
+      // システムテーマの適用
+      if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
+        document.documentElement.classList.add('dark');
+        updateThemeIcon();
+      }
+
+      initConverter();
+      calcCombinatorics();
+      updateDisplay();
+    });
+
+    // --- ディスプレイ表示更新 ---
+    function updateDisplay() {
+      const mainEl = document.getElementById('main-display');
+      const exprEl = document.getElementById('expression-display');
+      
+      mainEl.textContent = formatDisplay(currentInput);
+      exprEl.textContent = expression;
+
+      if (currentInput.length > 12) {
+        mainEl.className = mainEl.className.replace(/text-[2-5]xl/, 'text-2xl');
+      }
+    }
+
+    function formatDisplay(val) {
+      if (!val) return '0';
+      if (val === 'エラー') return 'エラー';
+      if (val.includes('(') || val.includes(')')) return val;
+      const parts = val.split('.');
+      parts[0] = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+      return parts.join('.');
+    }
+
+    // --- 基本計算ロジック ---
+    function inputDigit(digit) {
+      if (currentInput === '0' || shouldResetInput) {
+        currentInput = digit;
+        shouldResetInput = false;
+      } else {
+        if (currentInput.length < 16) {
+          currentInput += digit;
+        }
+      }
+      updateDisplay();
+    }
+
+    function inputDecimal() {
+      if (shouldResetInput) {
+        currentInput = '0.';
+        shouldResetInput = false;
+        updateDisplay();
+        return;
+      }
+      if (!currentInput.includes('.')) {
+        currentInput += '.';
+        updateDisplay();
+      }
+    }
+
+    function toggleSign() {
+      if (currentInput === '0' || currentInput === 'エラー') return;
+      if (currentInput.startsWith('-')) {
+        currentInput = currentInput.slice(1);
+      } else {
+        currentInput = '-' + currentInput;
+      }
+      updateDisplay();
+    }
+
+    function inputPercent() {
+      try {
+        const val = parseFloat(currentInput);
+        if (isNaN(val)) return;
+        currentInput = String(val / 100);
+        updateDisplay();
+      } catch (e) {
+        currentInput = 'エラー';
+        updateDisplay();
+      }
+    }
+
+    function deleteLast() {
+      if (shouldResetInput || currentInput === 'エラー') {
+        currentInput = '0';
+        shouldResetInput = false;
+      } else if (currentInput.length > 1) {
+        currentInput = currentInput.slice(0, -1);
+      } else {
+        currentInput = '0';
+      }
+      updateDisplay();
+    }
+
+    function clearAll() {
+      currentInput = '0';
+      expression = '';
+      shouldResetInput = false;
+      updateDisplay();
+    }
+
+    function inputOp(op) {
+      const sym = { '+': '+', '-': '−', '*': '×', '/': '÷', '(': '(', ')': ')' };
+      const displaySym = sym[op] || op;
+
+      if (op === '(' || op === ')') {
+        if (expression === '' && currentInput !== '0') {
+          expression = currentInput + ' ' + op;
+        } else {
+          expression += ' ' + op;
+        }
+        updateDisplay();
+        return;
+      }
+
+      if (expression !== '' && shouldResetInput) {
+        expression = expression.trim().slice(0, -1) + ' ' + displaySym + ' ';
+      } else {
+        expression += (expression ? ' ' : '') + currentInput + ' ' + displaySym + ' ';
+      }
+      
+      shouldResetInput = true;
+      updateDisplay();
+    }
+
+    function calculateResult() {
+      if (!expression && !shouldResetInput) return;
+
+      const fullExpr = expression + currentInput;
+      let evalExpr = fullExpr
+        .replace(/×/g, '*')
+        .replace(/÷/g, '/')
+        .replace(/−/g, '-')
+        .replace(/,/g, '');
+
+      try {
+        if (!/^[0-9+\-*/().\s]+$/.test(evalExpr)) {
+          throw new Error("Invalid Input");
+        }
+        
+        let res = Function(`'use strict'; return (${evalExpr})`)();
+        
+        if (!isFinite(res) || isNaN(res)) {
+          currentInput = 'エラー';
+        } else {
+          res = Math.round(res * 1e10) / 1e10;
+          const resultStr = String(res);
+          addHistory(fullExpr, resultStr);
+          currentInput = resultStr;
+        }
+      } catch (err) {
+        currentInput = 'エラー';
+      }
+
+      expression = '';
+      shouldResetInput = true;
+      updateDisplay();
+    }
+
+    // --- 関数電卓機能 ---
+    function inputSci(type) {
+      let val = parseFloat(currentInput);
+      if (isNaN(val)) return;
+
+      let res = 0;
+      switch (type) {
+        case 'sin': res = Math.sin((val * Math.PI) / 180); break;
+        case 'cos': res = Math.cos((val * Math.PI) / 180); break;
+        case 'tan': res = Math.tan((val * Math.PI) / 180); break;
+        case 'log': res = Math.log10(val); break;
+        case 'ln':  res = Math.log(val); break;
+        case 'sqrt': res = Math.sqrt(val); break;
+        case 'pow2': res = Math.pow(val, 2); break;
+        case 'pow':
+          expression = currentInput + ' ^ ';
+          shouldResetInput = true;
+          updateDisplay();
+          return;
+        case 'abs': res = Math.abs(val); break;
+        case 'exp': res = Math.exp(val); break;
+        case 'fact':
+          res = factorial(Math.floor(val));
+          break;
+      }
+
+      if (!isFinite(res) || isNaN(res)) {
+        currentInput = 'エラー';
+      } else {
+        res = Math.round(res * 1e10) / 1e10;
+        addHistory(`${type}(${val})`, String(res));
+        currentInput = String(res);
+      }
+      shouldResetInput = true;
+      updateDisplay();
+    }
+
+    function factorial(n) {
+      if (n < 0 || n > 170) return NaN;
+      if (n === 0 || n === 1) return 1;
+      let r = 1;
+      for (let i = 2; i <= n; i++) r *= i;
+      return r;
+    }
+
+    function inputConst(c) {
+      if (c === 'pi') currentInput = String(Math.PI.toFixed(8));
+      if (c === 'e') currentInput = String(Math.E.toFixed(8));
+      shouldResetInput = false;
+      updateDisplay();
+    }
+
+    // --- モード切替 ---
+    function setMode(mode) {
+      currentMode = mode;
+      const tabs = {
+        basic: document.getElementById('tab-basic'),
+        scientific: document.getElementById('tab-scientific'),
+        converter: document.getElementById('tab-converter'),
+        combinatorics: document.getElementById('tab-combinatorics')
+      };
+
+      const sciPanel = document.getElementById('scientific-panel');
+      const calcKeypad = document.getElementById('calc-keypad');
+      const convPanel = document.getElementById('converter-panel');
+      const combPanel = document.getElementById('combinatorics-panel');
+      const calcDisplay = document.getElementById('calc-display-area');
+
+      // 全タブスタイルリセット
+      Object.values(tabs).forEach(tab => {
+        if (tab) tab.className = "px-2.5 sm:px-3 py-1.5 rounded-lg transition-all text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-white whitespace-nowrap";
+      });
+
+      const activeClass = "px-2.5 sm:px-3 py-1.5 rounded-lg transition-all text-slate-700 dark:text-slate-200 bg-white dark:bg-slate-700 shadow-sm font-semibold whitespace-nowrap";
+      if (tabs[mode]) tabs[mode].className = activeClass;
+
+      // パネル表示制御
+      if (mode === 'basic') {
+        sciPanel.classList.add('hidden');
+        calcKeypad.classList.remove('hidden');
+        convPanel.classList.add('hidden');
+        combPanel.classList.add('hidden');
+        calcDisplay.classList.remove('hidden');
+      } else if (mode === 'scientific') {
+        sciPanel.classList.remove('hidden');
+        calcKeypad.classList.remove('hidden');
+        convPanel.classList.add('hidden');
+        combPanel.classList.add('hidden');
+        calcDisplay.classList.remove('hidden');
+      } else if (mode === 'converter') {
+        calcKeypad.classList.add('hidden');
+        convPanel.classList.remove('hidden');
+        combPanel.classList.add('hidden');
+        calcDisplay.classList.add('hidden');
+        convertUnits();
+      } else if (mode === 'combinatorics') {
+        calcKeypad.classList.add('hidden');
+        convPanel.classList.add('hidden');
+        combPanel.classList.remove('hidden');
+        calcDisplay.classList.add('hidden');
+        calcCombinatorics();
+      }
+    }
+
+    // --- 場合の数・確率計算ロジック ---
+    function stepParam(param, delta) {
+      const input = document.getElementById(`comb-${param}`);
+      let val = parseInt(input.value, 10) || 0;
+      val = Math.max(0, Math.min(60, val + delta));
+      input.value = val;
+      calcCombinatorics();
+    }
+
+    function calcCombinatorics() {
+      const n = parseInt(document.getElementById('comb-n').value, 10);
+      const r = parseInt(document.getElementById('comb-r').value, 10);
+
+      const ncrEl = document.getElementById('res-ncr');
+      const nprEl = document.getElementById('res-npr');
+      const nhrEl = document.getElementById('res-nhr');
+      const npowrEl = document.getElementById('res-npowr');
+      const probBdayEl = document.getElementById('prob-birthday');
+      const probCoinEl = document.getElementById('prob-coin');
+
+      if (isNaN(n) || isNaN(r) || n < 0 || r < 0) {
+        ncrEl.textContent = '-';
+        nprEl.textContent = '-';
+        nhrEl.textContent = '-';
+        npowrEl.textContent = '-';
+        return;
+      }
+
+      // 順列 nPr
+      let npr = 0;
+      if (r <= n) {
+        npr = 1;
+        for (let i = 0; i < r; i++) {
+          npr *= (n - i);
+        }
+      }
+      nprEl.textContent = r <= n ? formatDisplay(String(npr)) : '0 (r > n)';
+
+      // 組合せ nCr
+      let ncr = 0;
+      if (r <= n) {
+        let num = 1;
+        let den = 1;
+        const k = Math.min(r, n - r);
+        for (let i = 1; i <= k; i++) {
+          num *= (n - i + 1);
+          den *= i;
+        }
+        ncr = Math.round(num / den);
+      }
+      ncrEl.textContent = r <= n ? formatDisplay(String(ncr)) : '0 (r > n)';
+
+      // 重複組合せ nHr = (n+r-1)Cr
+      let nhr = 0;
+      if (n === 0 && r === 0) {
+        nhr = 1;
+      } else if (n > 0) {
+        const top = n + r - 1;
+        let num = 1;
+        let den = 1;
+        const k = Math.min(r, top - r);
+        for (let i = 1; i <= k; i++) {
+          num *= (top - i + 1);
+          den *= i;
+        }
+        nhr = Math.round(num / den);
+      }
+      nhrEl.textContent = formatDisplay(String(nhr));
+
+      // 重複順列 n^r
+      let npowr = Math.pow(n, r);
+      npowrEl.textContent = formatDisplay(String(npowr));
+
+      // キャッシュ（電卓転送用）
+      lastCombResults = {
+        nCr: ncr,
+        nPr: npr,
+        nHr: nhr,
+        nPowR: npowr
+      };
+
+      // 確率豆知識 1: n人の中に同じ誕生日の人がいる確率
+      if (n > 365) {
+        probBdayEl.textContent = '100%';
+      } else {
+        let notSameProb = 1.0;
+        for (let i = 0; i < n; i++) {
+          notSameProb *= (365 - i) / 365;
+        }
+        const bdayProb = (1 - notSameProb) * 100;
+        probBdayEl.textContent = `約 ${Math.round(bdayProb * 10) / 10}%`;
+      }
+
+      // 確率豆知識 2: コインで r 回連続表が出る確率
+      const coinProb = Math.pow(0.5, r) * 100;
+      const coinDenominator = Math.pow(2, r);
+      probCoinEl.textContent = r > 20 ? `1 / 2^${r}` : `1 / ${coinDenominator} (${(coinProb < 0.01 ? coinProb.toExponential(2) : Math.round(coinProb * 100) / 100)}%)`;
+    }
+
+    function sendToCalc(key) {
+      const val = lastCombResults[key];
+      if (val !== undefined) {
+        currentInput = String(val);
+        expression = '';
+        shouldResetInput = true;
+        setMode('basic');
+        updateDisplay();
+        addHistory(`${key} 計算結果`, String(val));
+      }
+    }
+
+    // --- 履歴機能 ---
+    function addHistory(expr, result) {
+      history.unshift({ expr, result, time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) });
+      if (history.length > 25) history.pop();
+      localStorage.setItem('calc_history', JSON.stringify(history));
+      renderHistory();
+    }
+
+    function renderHistory() {
+      const listEl = document.getElementById('history-list');
+      if (history.length === 0) {
+        listEl.innerHTML = '<div class="text-xs text-slate-400 text-center py-10">履歴はまだありません</div>';
+        return;
+      }
+
+      listEl.innerHTML = history.map((item, idx) => `
+        <div onclick="restoreHistory(${idx})" class="p-3 bg-white dark:bg-slate-800/70 hover:bg-indigo-50 dark:hover:bg-slate-800 rounded-xl cursor-pointer border border-slate-200/60 dark:border-slate-700/50 transition-all text-right">
+          <div class="text-[11px] text-slate-400 font-mono overflow-hidden text-ellipsis whitespace-nowrap">${item.expr}</div>
+          <div class="text-base font-bold text-slate-800 dark:text-slate-100 font-mono">= ${formatDisplay(item.result)}</div>
+        </div>
+      `).join('');
+    }
+
+    function restoreHistory(idx) {
+      if (history[idx]) {
+        currentInput = history[idx].result;
+        expression = '';
+        shouldResetInput = true;
+        if (currentMode === 'converter' || currentMode === 'combinatorics') {
+          setMode('basic');
+        }
+        updateDisplay();
+      }
+    }
+
+    function clearHistory() {
+      history = [];
+      localStorage.removeItem('calc_history');
+      renderHistory();
+    }
+
+    function toggleHistoryMobile() {
+      const historySidebar = document.getElementById('history-sidebar');
+      historySidebar.classList.toggle('hidden');
+    }
+
+    // --- 単位換算機能 ---
+    const unitRates = {
+      energy: {
+        units: { kcal: 'キロカロリー (kcal)', kJ: 'キロジュール (kJ)', J: 'ジュール (J)', cal: 'カロリー (cal)' },
+        rates: { kcal: 1, kJ: 4.184, J: 4184, cal: 1000 }
+      },
+      netspeed: {
+        units: {
+          Mbps: 'メガビット/秒 (Mbps)',
+          Gbps: 'ギガビット/秒 (Gbps)',
+          Kbps: 'キロビット/秒 (Kbps)',
+          bps: 'ビット/秒 (bps)',
+          MBs: 'メガバイト/秒 (MB/s)',
+          GBs: 'ギガバイト/秒 (GB/s)'
+        },
+        rates: { Mbps: 1, Gbps: 0.001, Kbps: 1000, bps: 1000000, MBs: 0.125, GBs: 0.000125 }
+      },
+      volume: {
+        units: {
+          L: 'リットル (L)',
+          mL: 'ミリリットル (mL)',
+          m3: '立方メートル (m³)',
+          cm3: '立方センチメートル (cm³ / cc)',
+          go: '合 (Go / 180mL)',
+          sho: '升 (Sho / 1.8L)',
+          gal: '米ガロン (US gal)'
+        },
+        rates: { L: 1, mL: 1000, m3: 0.001, cm3: 1000, go: 5.5435, sho: 0.55435, gal: 0.264172 }
+      },
+      freq: {
+        units: {
+          Hz: 'ヘルツ (Hz)',
+          kHz: 'キロヘルツ (kHz)',
+          MHz: 'メガヘルツ (MHz)',
+          GHz: 'ギガヘルツ (GHz)',
+          rpm: '毎分回転数 (rpm)'
+        },
+        rates: { Hz: 1, kHz: 0.001, MHz: 0.000001, GHz: 1e-9, rpm: 60 }
+      },
+      pressure: {
+        units: {
+          hPa: 'ヘクトパスカル (hPa)',
+          Pa: 'パスカル (Pa)',
+          kPa: 'キロパスカル (kPa)',
+          MPa: 'メガパスカル (MPa)',
+          atm: '標準気圧 (atm)',
+          bar: 'バール (bar)',
+          mmHg: '水銀柱ミリメートル (mmHg)'
+        },
+        rates: { hPa: 1, Pa: 100, kPa: 0.1, MPa: 0.0001, atm: 0.000986923, bar: 0.001, mmHg: 0.750062 }
+      },
+      time: {
+        units: {
+          s: '秒 (s)',
+          min: '分 (min)',
+          h: '時間 (h)',
+          day: '日 (day)',
+          week: '週間 (week)',
+          year: '年 (365日)'
+        },
+        rates: { s: 1, min: 1/60, h: 1/3600, day: 1/86400, week: 1/604800, year: 1/31536000 }
+      },
+      length: {
+        units: { m: 'メートル (m)', km: 'キロメートル (km)', cm: 'センチメートル (cm)', mm: 'ミリメートル (mm)', in: 'インチ (in)', ft: 'フィート (ft)' },
+        rates: { m: 1, km: 0.001, cm: 100, mm: 1000, in: 39.3701, ft: 3.28084 }
+      },
+      weight: {
+        units: { kg: 'キログラム (kg)', g: 'グラム (g)', mg: 'ミリグラム (mg)', lb: 'ポンド (lb)', oz: 'オンス (oz)' },
+        rates: { kg: 1, g: 1000, mg: 1e6, lb: 2.20462, oz: 35.274 }
+      },
+      area: {
+        units: { m2: '平方メートル (m²)', km2: '平方キロ (km²)', tsubo: '坪 (tsubo)', tatami: '畳 (tatami)' },
+        rates: { m2: 1, km2: 0.000001, tsubo: 0.3025, tatami: 0.606 }
+      },
+      data: {
+        units: { MB: 'メガバイト (MB)', GB: 'ギガバイト (GB)', TB: 'テラバイト (TB)', KB: 'キロバイト (KB)' },
+        rates: { MB: 1, GB: 0.0009765625, TB: 0.00000095367, KB: 1024 }
+      },
+      temp: {
+        units: { C: '摂氏 (°C)', F: '華氏 (°F)', K: 'ケルビン (K)' }
+      }
+    };
+
+    function initConverter() {
+      updateConvUnits();
+    }
+
+    function updateConvUnits() {
+      const cat = document.getElementById('conv-category').value;
+      const fromSel = document.getElementById('conv-from-unit');
+      const toSel = document.getElementById('conv-to-unit');
+      const dietContainer = document.getElementById('diet-tips-container');
+      const units = unitRates[cat].units;
+
+      if (cat === 'energy') {
+        dietContainer.classList.remove('hidden');
+      } else {
+        dietContainer.classList.add('hidden');
+      }
+
+      fromSel.innerHTML = '';
+      toSel.innerHTML = '';
+
+      Object.entries(units).forEach(([key, label], idx) => {
+        fromSel.add(new Option(label, key, false, idx === 0));
+        toSel.add(new Option(label, key, false, idx === 1));
+      });
+
+      convertUnits();
+    }
+
+    function convertUnits() {
+      const cat = document.getElementById('conv-category').value;
+      const val = parseFloat(document.getElementById('conv-from-val').value);
+      const fromU = document.getElementById('conv-from-unit').value;
+      const toU = document.getElementById('conv-to-unit').value;
+      const toValEl = document.getElementById('conv-to-val');
+
+      if (isNaN(val)) {
+        toValEl.textContent = '0';
+        updateDietTips(0);
+        return;
+      }
+
+      if (cat === 'temp') {
+        let celsius = val;
+        if (fromU === 'F') celsius = (val - 32) * 5 / 9;
+        if (fromU === 'K') celsius = val - 273.15;
+
+        let res = celsius;
+        if (toU === 'F') res = (celsius * 9 / 5) + 32;
+        if (toU === 'K') res = celsius + 273.15;
+        toValEl.textContent = Math.round(res * 1000) / 1000;
+        return;
+      }
+
+      const rates = unitRates[cat].rates;
+      const baseValue = val / rates[fromU];
+      const result = baseValue * rates[toU];
+      toValEl.textContent = Math.round(result * 100000) / 100000;
+
+      if (cat === 'energy') {
+        updateDietTips(baseValue);
+      }
+    }
+
+    function updateDietTips(kcal) {
+      const fatEl = document.getElementById('diet-fat-val');
+      const riceEl = document.getElementById('diet-rice-val');
+      const walkEl = document.getElementById('diet-walk-val');
+
+      if (!fatEl) return;
+
+      if (kcal <= 0 || isNaN(kcal)) {
+        fatEl.textContent = '0 g';
+        riceEl.textContent = '0 杯';
+        walkEl.textContent = '0 分';
+        return;
+      }
+
+      const fatG = Math.round((kcal / 7.2) * 10) / 10;
+      const riceBowls = Math.round((kcal / 235) * 10) / 10;
+      const walkMins = Math.round(kcal / 3.6);
+
+      fatEl.textContent = `約 ${fatG} g`;
+      riceEl.textContent = `約 ${riceBowls} 杯`;
+      walkEl.textContent = `約 ${walkMins} 分`;
+    }
+
+    function swapUnits() {
+      const fromSel = document.getElementById('conv-from-unit');
+      const toSel = document.getElementById('conv-to-unit');
+      const temp = fromSel.value;
+      fromSel.value = toSel.value;
+      toSel.value = temp;
+      convertUnits();
+    }
+
+    // --- クリップボードコピー ---
+    function copyDisplayValue() {
+      let copyVal = currentInput;
+      if (currentMode === 'converter') {
+        copyVal = document.getElementById('conv-to-val').innerText;
+      } else if (currentMode === 'combinatorics') {
+        copyVal = document.getElementById('res-ncr').innerText;
+      }
+
+      const tempTextArea = document.createElement("textarea");
+      tempTextArea.value = copyVal;
+      document.body.appendChild(tempTextArea);
+      tempTextArea.select();
+      try {
+        document.execCommand('copy');
+        const toast = document.getElementById('copy-toast');
+        toast.classList.remove('hidden');
+        setTimeout(() => toast.classList.add('hidden'), 2000);
+      } catch (err) {}
+      document.body.removeChild(tempTextArea);
+    }
+
+    // --- テーマ設定 ---
+    function toggleDarkMode() {
+      document.documentElement.classList.toggle('dark');
+      updateThemeIcon();
+    }
+
+    function updateThemeIcon() {
+      const icon = document.getElementById('theme-icon');
+      if (document.documentElement.classList.contains('dark')) {
+        icon.className = 'ph ph-sun text-lg';
+      } else {
+        icon.className = 'ph ph-moon text-lg';
+      }
+    }
+
+    // --- キーボード操作サポート ---
+    window.addEventListener('keydown', (e) => {
+      if (currentMode === 'converter' || currentMode === 'combinatorics') return;
+
+      if ((e.key >= '0' && e.key <= '9')) {
+        inputDigit(e.key);
+      } else if (e.key === '.') {
+        inputDecimal();
+      } else if (e.key === '+' || e.key === '-' || e.key === '*' || e.key === '/') {
+        inputOp(e.key);
+      } else if (e.key === 'Enter' || e.key === '=') {
+        e.preventDefault();
+        calculateResult();
+      } else if (e.key === 'Backspace') {
+        deleteLast();
+      } else if (e.key === 'Escape') {
+        clearAll();
+      } else if (e.key === '%') {
+        inputPercent();
+      }
+    });
+  </script>
+</body>
+</html>

@@ -1,0 +1,2601 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>英文ブロック＆前置詞ビジュアルラボ - EngStruct Lab</title>
+  <style>
+    :root {
+      --bg: #f8fafc;
+      --surface: #ffffff;
+      --surface-sub: #f1f5f9;
+      --ink: #0f172a;
+      --ink-sub: #475569;
+      --muted: #64748b;
+      --line: #e2e8f0;
+      --line-strong: #cbd5e1;
+      --primary: #4f46e5;
+      --primary-hover: #4338ca;
+      --primary-soft: #eef2ff;
+      --emerald: #059669;
+      --emerald-soft: #ecfdf5;
+      --rose: #e11d48;
+      --rose-soft: #fff1f2;
+      --amber: #d97706;
+      --amber-soft: #fffbeb;
+      --role-S: #e11d48;
+      --role-V: #2563eb;
+      --role-O: #059669;
+      --role-P: #7c3aed;
+      --role-T: #d97706;
+      --shadow-xs: 0 1px 2px rgba(15, 23, 42, 0.05);
+      --shadow-sm: 0 4px 12px rgba(15, 23, 42, 0.06);
+      --radius-lg: 16px;
+      --radius-md: 12px;
+      --radius-sm: 8px;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Hiragino Sans", "Hiragino Kaku Gothic ProN", "Noto Sans JP", "Yu Gothic", sans-serif;
+      background-color: var(--bg);
+      color: var(--ink);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      line-height: 1.6;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    button, select, input { font: inherit; color: inherit; }
+    button { cursor: pointer; }
+    button:disabled { opacity: 0.45; cursor: not-allowed; }
+    .hidden { display: none !important; }
+
+    /* Header */
+    header {
+      background: var(--surface);
+      border-bottom: 1px solid var(--line);
+      position: sticky;
+      top: 0;
+      z-index: 40;
+      box-shadow: var(--shadow-xs);
+    }
+    .header-inner {
+      max-width: 1040px;
+      margin: 0 auto;
+      padding: 0 16px;
+      height: 64px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+    }
+    .header-left {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      min-width: 0;
+    }
+    .back-link {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      font-size: 12px;
+      font-weight: 700;
+      color: var(--ink-sub);
+      text-decoration: none;
+      padding: 6px 12px;
+      border-radius: 999px;
+      background: var(--surface-sub);
+      border: 1px solid var(--line);
+      white-space: nowrap;
+      transition: background 0.15s, color 0.15s;
+    }
+    .back-link:hover { background: var(--line); color: var(--ink); }
+    .divider-v { width: 1px; height: 18px; background: var(--line); flex-shrink: 0; }
+    .brand-box { display: flex; align-items: center; gap: 10px; min-width: 0; }
+    .brand-icon {
+      width: 34px;
+      height: 34px;
+      border-radius: 10px;
+      background: var(--primary);
+      color: #fff;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+    .brand-title {
+      font-size: 15px;
+      font-weight: 800;
+      color: var(--ink);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .brand-sub {
+      font-size: 11px;
+      color: var(--muted);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    @media (max-width: 640px) {
+      .brand-sub { display: none; }
+      .brand-title { font-size: 14px; }
+    }
+
+    .header-controls { display: flex; align-items: center; gap: 6px; flex-shrink: 0; }
+    .ctl-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      padding: 6px 11px;
+      border-radius: 10px;
+      border: 1px solid var(--line);
+      background: var(--surface);
+      font-size: 12px;
+      font-weight: 700;
+      color: var(--ink-sub);
+      transition: background 0.15s, border-color 0.15s;
+    }
+    .ctl-pill:hover { background: var(--surface-sub); border-color: var(--line-strong); }
+
+    /* Main Nav Tabs */
+    .nav-bar {
+      max-width: 1040px;
+      margin: 0 auto;
+      padding: 10px 16px;
+      display: flex;
+      gap: 8px;
+      border-top: 1px solid #f1f5f9;
+      overflow-x: auto;
+    }
+    .nav-tab {
+      padding: 8px 16px;
+      border-radius: 11px;
+      font-size: 13px;
+      font-weight: 800;
+      border: 1px solid var(--line);
+      background: var(--surface);
+      color: var(--muted);
+      display: inline-flex;
+      align-items: center;
+      gap: 7px;
+      white-space: nowrap;
+      transition: all 0.15s;
+    }
+    .nav-tab:hover { background: var(--surface-sub); color: var(--ink); }
+    .nav-tab.active {
+      background: var(--primary);
+      color: #ffffff;
+      border-color: var(--primary);
+      box-shadow: 0 3px 8px rgba(79, 70, 229, 0.24);
+    }
+
+    /* Main Layout */
+    main {
+      max-width: 1040px;
+      width: 100%;
+      margin: 0 auto;
+      padding: 20px 16px 32px;
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      gap: 18px;
+    }
+
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--line);
+      border-radius: var(--radius-lg);
+      padding: 18px;
+      box-shadow: var(--shadow-xs);
+    }
+
+    .section-head {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+    }
+    .section-title {
+      font-size: 16px;
+      font-weight: 800;
+      color: var(--ink);
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 8px;
+    }
+    .badge {
+      font-size: 11px;
+      font-weight: 800;
+      padding: 3px 10px;
+      border-radius: 999px;
+      background: var(--primary-soft);
+      color: var(--primary);
+    }
+    .badge-emerald { background: var(--emerald-soft); color: var(--emerald); }
+    .badge-amber { background: var(--amber-soft); color: var(--amber); }
+    .section-desc { font-size: 12.5px; color: var(--muted); margin-top: 4px; }
+
+    /* Progress Widget */
+    .progress-box {
+      background: var(--bg);
+      border: 1px solid var(--line);
+      border-radius: var(--radius-md);
+      padding: 8px 14px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      flex-shrink: 0;
+    }
+    .progress-track {
+      width: 96px;
+      height: 8px;
+      background: var(--line);
+      border-radius: 999px;
+      overflow: hidden;
+    }
+    .progress-fill {
+      height: 100%;
+      background: var(--primary);
+      border-radius: 999px;
+      transition: width 0.3s ease;
+    }
+
+    /* Filter Chips & Controls */
+    .filter-row {
+      margin-top: 14px;
+      padding-top: 14px;
+      border-top: 1px solid #f1f5f9;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+    .filter-top {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+    }
+    .chip-group { display: flex; flex-wrap: wrap; gap: 6px; }
+    .filter-chip {
+      padding: 5px 11px;
+      border-radius: 999px;
+      font-size: 12px;
+      font-weight: 700;
+      border: 1px solid var(--line);
+      background: var(--surface);
+      color: var(--ink-sub);
+      transition: all 0.15s;
+    }
+    .filter-chip:hover { border-color: var(--primary); color: var(--primary); }
+    .filter-chip.active {
+      background: var(--primary);
+      color: #fff;
+      border-color: var(--primary);
+    }
+    .filter-chip.cleared-all {
+      border-color: #a7f3d0;
+      background: var(--emerald-soft);
+      color: var(--emerald);
+    }
+    .filter-chip.cleared-all.active {
+      background: var(--emerald);
+      color: #fff;
+      border-color: var(--emerald);
+    }
+
+    .select-row {
+      margin-top: 12px;
+      padding-top: 12px;
+      border-top: 1px solid #f1f5f9;
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 10px;
+    }
+    .select-box {
+      flex: 1;
+      min-width: 220px;
+      padding: 9px 12px;
+      border-radius: 10px;
+      border: 1px solid var(--line-strong);
+      background: var(--bg);
+      font-size: 13px;
+      font-weight: 700;
+      color: var(--ink);
+    }
+    .select-box:focus { outline: 2px solid var(--primary); background: #fff; }
+
+    .seg-toggle {
+      display: inline-flex;
+      background: var(--surface-sub);
+      padding: 3px;
+      border-radius: 10px;
+      border: 1px solid var(--line);
+    }
+    .seg-btn {
+      padding: 6px 12px;
+      border-radius: 8px;
+      border: none;
+      background: transparent;
+      font-size: 12px;
+      font-weight: 700;
+      color: var(--muted);
+    }
+    .seg-btn.active {
+      background: var(--surface);
+      color: var(--primary);
+      box-shadow: var(--shadow-xs);
+    }
+
+    /* Block Tray & Word Blocks */
+    .tray-area {
+      min-height: 76px;
+      padding: 14px;
+      border-radius: 14px;
+      background: var(--bg);
+      border: 2px dashed var(--line-strong);
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 10px;
+      transition: all 0.15s;
+    }
+    .tray-area.drag-over {
+      border-color: var(--primary);
+      background: var(--primary-soft);
+    }
+    .tray-empty-msg {
+      font-size: 12.5px;
+      color: var(--emerald);
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .word-block {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      padding: 9px 14px;
+      border-radius: 11px;
+      font-size: 14px;
+      font-weight: 800;
+      color: #ffffff;
+      background: var(--blk-color, #475569);
+      box-shadow: 0 2px 0 rgba(15, 23, 42, 0.2);
+      cursor: grab;
+      user-select: none;
+      touch-action: manipulation;
+      transition: transform 0.15s, box-shadow 0.15s, outline 0.15s;
+    }
+    .word-block:hover { transform: translateY(-1px); }
+    .word-block:active { cursor: grabbing; }
+    .word-block.selected {
+      outline: 3px solid #f59e0b;
+      outline-offset: 2px;
+      transform: scale(1.04);
+    }
+    .word-block.mono-mode {
+      background: #475569 !important;
+    }
+    .word-block.en-mode {
+      background: var(--blk-color) !important;
+      cursor: pointer;
+    }
+    .particle-tag {
+      background: rgba(15, 23, 42, 0.26);
+      padding: 1px 6px;
+      border-radius: 6px;
+      font-size: 11.5px;
+      font-weight: 700;
+    }
+    .prep-tag {
+      background: rgba(15, 23, 42, 0.3);
+      padding: 1px 7px;
+      border-radius: 6px;
+      font-size: 12px;
+      text-decoration: underline;
+      text-underline-offset: 2px;
+    }
+
+    /* Action Buttons */
+    .btn-bar {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      padding-top: 12px;
+      border-top: 1px solid #f1f5f9;
+    }
+    .btn-group { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+    .btn {
+      padding: 9px 15px;
+      border-radius: 10px;
+      font-size: 13px;
+      font-weight: 800;
+      border: 1px solid var(--line);
+      background: var(--surface);
+      color: var(--ink-sub);
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      transition: all 0.15s;
+    }
+    .btn:hover:not(:disabled) { background: var(--surface-sub); border-color: var(--line-strong); color: var(--ink); }
+    .btn:active:not(:disabled) { transform: scale(0.98); }
+    .btn-primary {
+      background: var(--primary);
+      border-color: var(--primary);
+      color: #ffffff;
+    }
+    .btn-primary:hover:not(:disabled) { background: var(--primary-hover); color: #ffffff; }
+    .btn-emerald {
+      background: var(--emerald);
+      border-color: var(--emerald);
+      color: #ffffff;
+    }
+    .btn-emerald:hover:not(:disabled) { background: #047857; color: #ffffff; }
+    .btn-soft {
+      background: var(--primary-soft);
+      border-color: #c7d2fe;
+      color: var(--primary);
+    }
+    .btn-soft:hover:not(:disabled) { background: #e0e7ff; color: var(--primary-hover); }
+    .btn-rose-soft {
+      background: var(--rose-soft);
+      border-color: #fecdd3;
+      color: var(--rose);
+    }
+
+    /* 5 Fixed English Slots */
+    .slots-grid {
+      display: grid;
+      grid-template-columns: repeat(5, minmax(0, 1fr));
+      gap: 10px;
+    }
+    @media (max-width: 820px) {
+      .slots-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+      .slots-grid .slot-card:last-child { grid-column: span 2; }
+    }
+    .slot-card {
+      border: 2px solid var(--slot-color, var(--line-strong));
+      border-radius: 14px;
+      padding: 10px;
+      background: var(--surface);
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      min-height: 98px;
+      transition: transform 0.15s, background 0.15s, box-shadow 0.15s;
+    }
+    .slot-card.drag-over {
+      background: var(--primary-soft);
+      transform: scale(1.02);
+      box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.25);
+    }
+    .slot-card.slot-wrong {
+      border-color: var(--rose) !important;
+      background: var(--rose-soft);
+      animation: shake 0.4s ease;
+    }
+    .slot-card.slot-correct {
+      background: #f8fafc;
+    }
+    @keyframes shake {
+      0%, 100% { transform: translateX(0); }
+      25% { transform: translateX(-5px); }
+      50% { transform: translateX(5px); }
+      75% { transform: translateX(-3px); }
+    }
+    .slot-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      font-size: 11.5px;
+      font-weight: 800;
+      color: var(--slot-color, var(--ink-sub));
+    }
+    .slot-sub { font-size: 10px; color: var(--muted); font-weight: 700; }
+    .slot-body {
+      flex: 1;
+      min-height: 46px;
+      border-radius: 10px;
+      border: 1.5px dashed #cbd5e1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 4px;
+    }
+    .slot-body.has-block { border-style: solid; border-color: transparent; padding: 0; }
+    .slot-placeholder { font-size: 11px; color: #94a3b8; font-weight: 600; }
+    .slot-hint-err { font-size: 11px; color: var(--rose); font-weight: 800; }
+
+    /* Result / Explanation Box */
+    .result-box {
+      border-radius: var(--radius-lg);
+      padding: 18px;
+      border: 1px solid var(--line);
+      background: var(--surface);
+    }
+    .result-box.ok { border-color: #a7f3d0; background: #f0fdf4; }
+    .result-box.err { border-color: #fecdd3; background: #fff1f2; }
+    .en-sentence {
+      font-size: 20px;
+      font-weight: 900;
+      color: var(--ink);
+      letter-spacing: -0.01em;
+    }
+
+    /* Tab 2: Preposition Lab & Quiz */
+    .prep-grid-btns {
+      display: grid;
+      grid-template-columns: repeat(9, minmax(0, 1fr));
+      gap: 8px;
+    }
+    @media (max-width: 720px) {
+      .prep-grid-btns { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+    }
+    .prep-btn {
+      padding: 10px 6px;
+      border-radius: 11px;
+      border: 1.5px solid var(--line);
+      background: var(--surface);
+      font-size: 14px;
+      font-weight: 800;
+      color: var(--ink);
+      transition: all 0.15s;
+    }
+    .prep-btn:hover { border-color: var(--primary); color: var(--primary); }
+    .prep-btn.active {
+      background: var(--primary);
+      border-color: var(--primary);
+      color: #ffffff;
+      box-shadow: 0 3px 8px rgba(79, 70, 229, 0.25);
+    }
+
+    .visual-layout {
+      display: grid;
+      grid-template-columns: 1.05fr 0.95fr;
+      gap: 18px;
+      align-items: start;
+    }
+    @media (max-width: 820px) {
+      .visual-layout { grid-template-columns: 1fr; }
+    }
+
+    .svg-frame {
+      background: var(--bg);
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      overflow: hidden;
+    }
+    #prep-stage .ln {
+      stroke: #1e293b;
+      stroke-width: 2.2;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+    }
+    #prep-stage .fl { fill: #e2e8f0; }
+    #prep-stage .dash { stroke-dasharray: 5 6; stroke: #64748b; }
+    #prep-stage .thick { stroke-width: 5; }
+    #prep-stage .b2 { fill: #10b981; stroke: none; }
+    .svg-tx {
+      font: 700 13px -apple-system, BlinkMacSystemFont, "Noto Sans JP", sans-serif;
+      fill: #475569;
+      text-anchor: middle;
+    }
+    #prep-ball {
+      transition: transform 0.85s cubic-bezier(0.32, 1.35, 0.5, 1);
+    }
+    @media (prefers-reduced-motion: reduce) {
+      #prep-ball { transition: none !important; }
+    }
+
+    .ex-item {
+      padding: 10px 12px;
+      border-radius: 12px;
+      background: var(--bg);
+      border: 1px solid var(--line);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+    }
+    .ex-item mark {
+      background: #fef08a;
+      color: #0f172a;
+      font-weight: 900;
+      padding: 1px 5px;
+      border-radius: 4px;
+    }
+
+    /* Quiz Answer Palette */
+    .quiz-palette {
+      display: grid;
+      grid-template-columns: repeat(9, minmax(0, 1fr));
+      gap: 8px;
+    }
+    @media (max-width: 720px) {
+      .quiz-palette { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+    }
+    .q-choice {
+      padding: 11px 6px;
+      border-radius: 11px;
+      border: 2px solid var(--line);
+      background: var(--surface);
+      font-size: 14px;
+      font-weight: 800;
+      color: var(--ink);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 4px;
+      transition: all 0.12s;
+    }
+    .q-choice:hover:not(:disabled) {
+      border-color: var(--primary);
+      background: var(--primary-soft);
+      color: var(--primary);
+    }
+    .q-choice .key-num {
+      font-size: 10px;
+      color: var(--muted);
+      font-weight: 700;
+    }
+    .q-choice.q-ok {
+      background: var(--emerald);
+      border-color: var(--emerald);
+      color: #fff;
+    }
+    .q-choice.q-ok .key-num { color: #d1fae5; }
+    .q-choice.q-ng {
+      background: var(--rose);
+      border-color: var(--rose);
+      color: #fff;
+    }
+    .q-choice.q-ng .key-num { color: #ffe4e6; }
+    .q-choice.q-dim { opacity: 0.45; }
+
+    /* Footer */
+    footer {
+      margin-top: auto;
+      padding: 20px 16px;
+      text-align: center;
+      border-top: 1px solid var(--line);
+      background: var(--surface);
+    }
+    footer p { font-size: 11px; color: #94a3b8; }
+  </style>
+</head>
+<body>
+
+  <!-- Header -->
+  <header>
+    <div class="header-inner">
+      <div class="header-left">
+        <a href="../" class="back-link">← Apps Hub</a>
+        <div class="divider-v"></div>
+        <div class="brand-box">
+          <div class="brand-icon" aria-hidden="true">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/>
+              <polyline points="3.27 6.96 12 12.01 20.73 6.96"/>
+              <line x1="12" y1="22.08" x2="12" y2="12"/>
+            </svg>
+          </div>
+          <div style="min-width:0">
+            <h1 class="brand-title">英文ブロック＆前置詞ビジュアルラボ</h1>
+            <p class="brand-sub">EngStruct Lab · 日本語⇄英語 90文パズル＆空間イメージ実力ラボ</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="header-controls">
+        <button type="button" id="btn-speed" class="ctl-pill" onclick="toggleSpeechRate()" title="読み上げ速度の切替">
+          <span>速度:</span>
+          <span id="speed-label" style="color:var(--primary)">1.0x</span>
+        </button>
+        <button type="button" id="btn-mute" class="ctl-pill" onclick="toggleMute()" title="音声のON/OFF">
+          <span id="mute-label" style="color:var(--primary)">🔊 音声ON</span>
+        </button>
+      </div>
+    </div>
+
+    <nav class="nav-bar" aria-label="学習モード切替">
+      <button type="button" id="tab-builder" class="nav-tab active" onclick="switchMainTab('builder')">
+        <span>① 語順スロット・ビルダー</span>
+      </button>
+      <button type="button" id="tab-prepositions" class="nav-tab" onclick="switchMainTab('prepositions')">
+        <span>② 前置詞ビジュアルラボ (図解＆クイズ)</span>
+      </button>
+    </nav>
+  </header>
+
+  <!-- Main -->
+  <main>
+    <!-- ========================================== -->
+    <!-- TAB 1: ① 語順スロット・ビルダー (90文)      -->
+    <!-- ========================================== -->
+    <section id="view-builder" style="display:flex; flex-direction:column; gap:16px;">
+      <!-- Intro & Filters -->
+      <div class="card">
+        <div class="section-head">
+          <div>
+            <h2 class="section-title">
+              <span>日本語 ➔ 英語 語順スロット・ビルダー</span>
+              <span class="badge">9前置詞 × 各10文（全90文）</span>
+            </h2>
+            <p class="section-desc">
+              日本語ブロックを下の英語スロットへ<strong>ドラッグ（またはタップ選択→スロットタップ）</strong>して並べ替え、「答え合わせ」で成否判定します。
+            </p>
+          </div>
+          <div class="progress-box">
+            <div>
+              <div style="font-size:11px; font-weight:700; color:var(--ink-sub)">クリア進捗</div>
+              <div id="builder-progress-text" style="font-size:12px; font-weight:800; color:var(--primary)">0 / 90 文完了</div>
+            </div>
+            <div class="progress-track">
+              <div id="builder-progress-bar" class="progress-fill" style="width:0%"></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Preposition Filter Chips -->
+        <div class="filter-row">
+          <div class="filter-top">
+            <span style="font-size:12px; font-weight:800; color:var(--ink-sub)">前置詞別フィルター:</span>
+            <div style="display:flex; align-items:center; gap:12px; flex-wrap:wrap;">
+              <label style="display:inline-flex; align-items:center; gap:5px; font-size:12px; font-weight:700; color:var(--ink-sub); cursor:pointer;">
+                <input type="checkbox" id="chk-unsolved" onchange="applyBuilderFilter(true)">
+                <span>未クリアのみ</span>
+              </label>
+              <button type="button" class="btn btn-soft" style="padding:5px 11px; font-size:11.5px;" onclick="goNextUnsolved()">
+                <span>次の未クリア文へ ➔</span>
+              </button>
+            </div>
+          </div>
+          <div id="builder-filter-chips" class="chip-group"></div>
+        </div>
+
+        <!-- Sentence Selector & Hint Color Toggle -->
+        <div class="select-row">
+          <label for="sentence-select" id="sentence-count-label" style="font-size:12px; font-weight:800; color:var(--ink-sub); white-space:nowrap;">例文 (90文):</label>
+          <select id="sentence-select" class="select-box" onchange="onSelectSentence()"></select>
+
+          <div class="seg-toggle">
+            <button type="button" id="btn-hint-on" class="seg-btn active" onclick="setHintColor(true)">🎨 ヒント色あり</button>
+            <button type="button" id="btn-hint-off" class="seg-btn" onclick="setHintColor(false)">実力単色</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Step 1: Japanese Block Tray -->
+      <div class="card" style="display:flex; flex-direction:column; gap:12px;">
+        <div class="section-head">
+          <span style="font-size:12.5px; font-weight:800; color:var(--ink-sub)">
+            ① 日本語ブロック（ドラッグまたはタップ選択で下の英語スロットへ配置）
+          </span>
+          <div style="display:flex; align-items:center; gap:8px;">
+            <span id="builder-theme-badge" class="badge" style="background:#f3e8ff; color:#6d28d9;">テーマ: in</span>
+            <span id="builder-rem-badge" class="badge">残り 5 ブロック</span>
+          </div>
+        </div>
+
+        <div id="source-tray" class="tray-area"></div>
+
+        <div class="btn-bar">
+          <div class="btn-group">
+            <button type="button" id="btn-check" class="btn btn-emerald" onclick="checkArrangement()">
+              <span>✓ 答え合わせ (成否判定)</span>
+            </button>
+            <button type="button" id="btn-return-wrong" class="btn btn-rose-soft hidden" onclick="returnWrongBlocks()">
+              <span>↺ 間違えたブロックだけ戻す</span>
+            </button>
+          </div>
+
+          <div class="btn-group">
+            <button type="button" id="btn-step" class="btn btn-soft" onclick="stepAutoDemo()">
+              <span>お手本1つ</span>
+            </button>
+            <button type="button" id="btn-auto" class="btn btn-soft" onclick="runFullAutoDemo()">
+              <span>✨ 自動お手本</span>
+            </button>
+            <button type="button" id="btn-reset" class="btn" onclick="resetCurrentSentence()">
+              <span>最初から</span>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Step 2: 5 Fixed English Slots -->
+      <div class="card" style="display:flex; flex-direction:column; gap:10px;">
+        <div class="section-head">
+          <span style="font-size:12.5px; font-weight:800; color:var(--primary)">
+            ② 英語の固定スロット（ドラッグ＆ドロップ、またはスロット同士の入れ替えも可能）
+          </span>
+          <span style="font-size:11px; color:var(--muted)">※配置後の英語ブロックをタップすると単体で発音します</span>
+        </div>
+        <div id="english-slots" class="slots-grid"></div>
+      </div>
+
+      <!-- Step 3: Feedback & Explanation Card -->
+      <div id="builder-feedback" class="result-box"></div>
+    </section>
+
+    <!-- ========================================== -->
+    <!-- TAB 2: ② 前置詞ビジュアルラボ (図解＆クイズ) -->
+    <!-- ========================================== -->
+    <section id="view-prepositions" class="hidden" style="display:flex; flex-direction:column; gap:16px;">
+      <!-- Submode Header -->
+      <div class="card" style="display:flex; flex-direction:column; gap:14px;">
+        <div class="section-head">
+          <div>
+            <h2 class="section-title">
+              <span>前置詞の空間イラスト＆実験ラボ</span>
+              <span class="badge badge-emerald">コアイメージ図解＋実力テスト</span>
+            </h2>
+            <p class="section-desc">
+              前置詞を選ぶとボールが空間位置へ移動します。「図解ラボ」と「全9前置詞クイズ」を切り替えて定着させましょう。
+            </p>
+          </div>
+
+          <div class="seg-toggle">
+            <button type="button" id="submode-lab" class="seg-btn active" onclick="switchPrepSubmode('lab')">図解ラボ</button>
+            <button type="button" id="submode-quiz" class="seg-btn" onclick="switchPrepSubmode('quiz')">全9前置詞クイズ</button>
+          </div>
+        </div>
+
+        <!-- Lab Preposition Buttons & Sub-variations -->
+        <div id="lab-controls" style="display:flex; flex-direction:column; gap:10px; padding-top:12px; border-top:1px solid #f1f5f9;">
+          <div id="prep-selector-grid" class="prep-grid-btns"></div>
+          <div id="prep-variation-bar" class="chip-group" style="align-items:center;"></div>
+        </div>
+      </div>
+
+      <!-- Quiz Panel -->
+      <div id="quiz-container" class="card hidden" style="display:flex; flex-direction:column; gap:14px;">
+        <div class="section-head" style="padding-bottom:12px; border-bottom:1px solid #f1f5f9;">
+          <div style="display:flex; flex-wrap:wrap; align-items:center; gap:8px;">
+            <span style="font-size:12px; font-weight:800; color:var(--ink-sub)">出題範囲:</span>
+            <select id="quiz-scope" class="select-box" style="min-width:190px; padding:7px 10px; font-size:12px;" onchange="startQuizSession()">
+              <option value="all">全カテゴリー・全前置詞 (450問)</option>
+              <optgroup label="意味・イメージ別">
+                <option value="space">空間・場所イメージ</option>
+                <option value="time">時間・期限イメージ</option>
+                <option value="relation">方向・相手・手段・抽象</option>
+              </optgroup>
+              <optgroup label="前置詞別（各50問）">
+                <option value="prep:in">in のみ (50問)</option>
+                <option value="prep:on">on のみ (50問)</option>
+                <option value="prep:at">at のみ (50問)</option>
+                <option value="prep:to">to のみ (50問)</option>
+                <option value="prep:for">for のみ (50問)</option>
+                <option value="prep:by">by のみ (50問)</option>
+                <option value="prep:with">with のみ (50問)</option>
+                <option value="prep:under">under のみ (50問)</option>
+                <option value="prep:over">over のみ (50問)</option>
+              </optgroup>
+            </select>
+
+            <select id="quiz-count" class="select-box" style="min-width:130px; padding:7px 10px; font-size:12px;" onchange="startQuizSession()">
+              <option value="10">10問セット</option>
+              <option value="25">25問セット</option>
+              <option value="50">50問セット</option>
+              <option value="999">全問チャレンジ</option>
+            </select>
+
+            <button type="button" class="btn" style="padding:7px 12px; font-size:12px;" onclick="startQuizSession()">
+              <span>出題リセット</span>
+            </button>
+          </div>
+
+          <div style="display:flex; align-items:center; gap:8px;">
+            <span id="quiz-badge-progress" class="badge">第 1 / 10 問</span>
+            <span id="quiz-badge-score" class="badge badge-emerald">正解: 0</span>
+            <span id="quiz-badge-streak" class="badge badge-amber">0連続</span>
+          </div>
+        </div>
+
+        <div id="quiz-body"></div>
+      </div>
+
+      <!-- Visual Stage & Core Image Card -->
+      <div class="visual-layout">
+        <div class="card" style="display:flex; flex-direction:column; gap:12px;">
+          <div class="section-head">
+            <span style="font-size:12.5px; font-weight:800; color:var(--ink-sub)">空間イメージ実験ステージ</span>
+            <button type="button" class="btn" style="padding:6px 12px; font-size:12px;" onclick="replayPrepAnimation()">
+              <span>▶ もう一度動かす</span>
+            </button>
+          </div>
+
+          <div class="svg-frame">
+            <svg id="prep-stage" viewBox="0 0 420 240" style="width:100%; height:auto; display:block;" role="img" aria-label="前置詞の空間イメージ図">
+              <path class="ln" d="M16 206H404" style="opacity:0.25"/>
+              <g id="prep-ref"></g>
+              <g id="prep-ball">
+                <circle r="15" fill="#f97316" stroke="#c2410c" stroke-width="1.6"/>
+                <circle cx="-5" cy="-5" r="4.2" fill="#ffffff" opacity="0.65"/>
+              </g>
+            </svg>
+          </div>
+          <p style="font-size:11px; color:var(--muted); text-align:center;">
+            ※ボタン選択やクイズ解答に連動して、ボールと図形がコアイメージを再現します
+          </p>
+        </div>
+
+        <div id="prep-detail-card" class="card" style="display:flex; flex-direction:column; gap:14px;"></div>
+      </div>
+    </section>
+  </main>
+
+  <!-- Footer -->
+  <footer>
+    <p>※個人開発プロトタイプにつき無保証・自己責任にてご利用ください（データは端末内完結・サポート対象外）</p>
+  </footer>
+
+  <script>
+    // ========================================================
+    // 1. Speech & Audio Helpers
+    // ========================================================
+    let isMuted = false;
+    let speechRate = 1.0;
+
+    function toggleMute() {
+      isMuted = !isMuted;
+      const lbl = document.getElementById('mute-label');
+      lbl.textContent = isMuted ? '🔇 音声OFF' : '🔊 音声ON';
+      lbl.style.color = isMuted ? '#64748b' : 'var(--primary)';
+      if (isMuted && 'speechSynthesis' in window) {
+        try { window.speechSynthesis.cancel(); } catch (e) {}
+      }
+    }
+
+    function toggleSpeechRate() {
+      speechRate = speechRate === 1.0 ? 0.75 : 1.0;
+      document.getElementById('speed-label').textContent = speechRate === 1.0 ? '1.0x' : '0.75x';
+    }
+
+    function speakEnglish(text) {
+      if (isMuted || !('speechSynthesis' in window)) return;
+      try {
+        window.speechSynthesis.cancel();
+        const u = new SpeechSynthesisUtterance(text);
+        u.lang = 'en-US';
+        u.rate = speechRate;
+        window.speechSynthesis.speak(u);
+      } catch (e) {}
+    }
+
+    function switchMainTab(tab) {
+      const isBuilder = tab === 'builder';
+      document.getElementById('view-builder').classList.toggle('hidden', !isBuilder);
+      document.getElementById('view-prepositions').classList.toggle('hidden', isBuilder);
+      document.getElementById('tab-builder').classList.toggle('active', isBuilder);
+      document.getElementById('tab-prepositions').classList.toggle('active', !isBuilder);
+    }
+
+    // ========================================================
+    // 2. Tab 1 Data: 9 Prepositions x 10 Sentences = 90 Sentences
+    // Format: { prep, title, ja: [S, T, P, O, V], en: {S, V, O, P, T}, exp }
+    // ========================================================
+    const BUILDER_SENTENCES = [
+      // --- IN (10) ---
+      { prep: 'in', title: '部屋の中で本を読む', ja: [['私','は'],['毎日',''],['部屋','で'],['本','を'],['読む','']], en: {S:'I',V:'read',O:'books',P:'in my room',T:'every day'}, exp: 'wall（壁）で囲まれた空間の中なので in my room を使います。動詞 read は主語 I のすぐ後ろに来ます。' },
+      { prep: 'in', title: '公園で犬を散歩させる', ja: [['彼女','は'],['毎朝',''],['公園','で'],['犬','を'],['散歩させる','']], en: {S:'She',V:'walks',O:'her dog',P:'in the park',T:'every morning'}, exp: '敷地という境界の枠の中なので in the park を使います。' },
+      { prep: 'in', title: '台所で夕食を作る', ja: [['母','は'],['夕方','に'],['台所','で'],['夕食','を'],['作る','']], en: {S:'My mother',V:'cooks',O:'dinner',P:'in the kitchen',T:'in the evening'}, exp: '台所という空間の中も、夕方という幅のある時間帯も、どちらも「枠の中」の in です。' },
+      { prep: 'in', title: '東京で寿司を食べた', ja: [['私たち','は'],['先週',''],['東京','で'],['寿司','を'],['食べた','']], en: {S:'We',V:'ate',O:'sushi',P:'in Tokyo',T:'last week'}, exp: '都市や国は境界線で囲まれた大きな枠とみなして in Tokyo と表現します。' },
+      { prep: 'in', title: '6月にたくさんの本を買う', ja: [['私','は'],['6月','に'],['本屋','で'],['新しい本','を'],['買った','']], en: {S:'I',V:'bought',O:'a new book',P:'in a bookstore',T:'in June'}, exp: '建物の中（in a bookstore）と月（in June）の両方に「期間・空間の枠の中」の in を使います。' },
+      { prep: 'in', title: '海で魚を見た', ja: [['子どもたち','は'],['夏','に'],['海','で'],['魚','を'],['見た','']], en: {S:'The children',V:'saw',O:'fish',P:'in the sea',T:'in summer'}, exp: '水中の立体空間（in the sea）と季節の枠（in summer）のどちらも in です。' },
+      { prep: 'in', title: '教室で英語を話す', ja: [['生徒たち','は'],['授業中','に'],['教室','で'],['英語','を'],['話す','']], en: {S:'The students',V:'speak',O:'English',P:'in the classroom',T:'during class'}, exp: '教室という囲まれた部屋の中なので in the classroom となります。' },
+      { prep: 'in', title: '箱の中に鍵を入れた', ja: [['彼','は'],['昨日',''],['箱','の中に'],['鍵','を'],['入れた','']], en: {S:'He',V:'put',O:'the keys',P:'in the box',T:'yesterday'}, exp: '立体の入れ物の中に入れる動きなので in the box を使います。' },
+      { prep: 'in', title: '森の中で写真を撮った', ja: [['彼ら','は'],['秋','に'],['森','で'],['写真','を'],['撮った','']], en: {S:'They',V:'took',O:'photos',P:'in the forest',T:'in autumn'}, exp: '木々に囲まれたエリアの中（in the forest）と季節（in autumn）の表現です。' },
+      { prep: 'in', title: '車の中で音楽を聴く', ja: [['父','は'],['朝','に'],['車','の中で'],['音楽','を'],['聴く','']], en: {S:'My father',V:'listens to',O:'music',P:'in the car',T:'in the morning'}, exp: '屋根とドアで囲まれた車内空間なので in the car を使います。' },
+
+      // --- ON (10) ---
+      { prep: 'on', title: 'テーブルの上にカップを置く', ja: [['私','は'],['今朝',''],['テーブル','の上に'],['カップ','を'],['置いた','']], en: {S:'I',V:'put',O:'a cup',P:'on the table',T:'this morning'}, exp: 'テーブルの「表面にピタッと接触」させるので on the table を使います。' },
+      { prep: 'on', title: '壁に時計を掛ける', ja: [['父','は'],['日曜日','に'],['壁','に'],['時計','を'],['掛けた','']], en: {S:'My father',V:'hung',O:'a clock',P:'on the wall',T:'on Sunday'}, exp: '垂直の壁でも「面に接触している」ので on the wall。曜日（on Sunday）もカレンダーの1日分の面です。' },
+      { prep: 'on', title: '月曜日に手紙を送る', ja: [['彼女','は'],['月曜日','に'],['会社','で'],['メール','を'],['送った','']], en: {S:'She',V:'sent',O:'an email',P:'at the office',T:'on Monday'}, exp: '特定の曜日（Monday）はカレンダーの1マス（面）に乗るイメージで on を使います。' },
+      { prep: 'on', title: '5月5日に誕生日パーティーを開く', ja: [['私たち','は'],['5月5日','に'],['自宅','で'],['パーティー','を'],['開いた','']], en: {S:'We',V:'had',O:'a party',P:'at home',T:'on May 5th'}, exp: '特定の日付（May 5th）には必ず接触の on を使います。' },
+      { prep: 'on', title: '床の上にカバンを置く', ja: [['彼','は'],['放課後','に'],['床','の上に'],['カバン','を'],['置いた','']], en: {S:'He',V:'put',O:'his bag',P:'on the floor',T:'after school'}, exp: '床の面に接触して置くので on the floor となります。' },
+      { prep: 'on', title: '紙の上に名前を書く', ja: [['生徒','は'],['テスト前','に'],['用紙','の上に'],['名前','を'],['書いた','']], en: {S:'The student',V:'wrote',O:'his name',P:'on the paper',T:'before the test'}, exp: '紙の表面に文字を乗せる接触のイメージなので on the paper です。' },
+      { prep: 'on', title: 'テレビでサッカーの試合を見る', ja: [['兄','は'],['週末','に'],['テレビ','で'],['試合','を'],['見る','']], en: {S:'My brother',V:'watches',O:'games',P:'on TV',T:'on weekends'}, exp: 'テレビ画面というスクリーン面に映る情報なので on TV と表現します。' },
+      { prep: 'on', title: 'インターネットでニュースを読む', ja: [['私','は'],['昼休み','に'],['ネット','上で'],['ニュース','を'],['読む','']], en: {S:'I',V:'read',O:'the news',P:'on the internet',T:'at noon'}, exp: 'ネットワーク・画面上に公開されている情報なので on the internet です。' },
+      { prep: 'on', title: '本棚の上に辞書を戻す', ja: [['彼女','は'],['昨日',''],['棚','の上に'],['辞書','を'],['戻した','']], en: {S:'She',V:'returned',O:'the dictionary',P:'on the shelf',T:'yesterday'}, exp: '棚板の面に接触して置くので on the shelf を使います。' },
+      { prep: 'on', title: 'トーストにバターを塗る', ja: [['私','は'],['朝食時','に'],['トースト','に'],['バター','を'],['塗る','']], en: {S:'I',V:'spread',O:'butter',P:'on my toast',T:'at breakfast'}, exp: 'パンの表面にバターを接触させて広げるので on my toast です。' },
+
+      // --- AT (10) ---
+      { prep: 'at', title: 'カフェで本を読んだ', ja: [['私','は'],['昨日',''],['カフェ','で'],['本','を'],['読んだ','']], en: {S:'I',V:'read',O:'a book',P:'at a cafe',T:'yesterday'}, exp: '立ち寄る地点（ピンポイントの場所）としてカフェを捉えるときは at a cafe を使います。' },
+      { prep: 'at', title: '駅で友だちに会った', ja: [['私たち','は'],['先週',''],['駅','で'],['友だち','に'],['会った','']], en: {S:'We',V:'met',O:'our friends',P:'at the station',T:'last week'}, exp: '路線図や地図上の待ち合わせの一点なので at the station です。' },
+      { prep: 'at', title: '7時に朝食を食べる', ja: [['彼','は'],['7時','に'],['台所','で'],['朝食','を'],['食べる','']], en: {S:'He',V:'eats',O:'breakfast',P:'in the kitchen',T:'at 7:00'}, exp: '7:00 は時間軸上のピンポイントの一点なので at 7:00 を使います。' },
+      { prep: 'at', title: 'バス停でバスを待つ', ja: [['彼女','は'],['毎朝',''],['バス停','で'],['バス','を'],['待つ','']], en: {S:'She',V:'waits for',O:'the bus',P:'at the bus stop',T:'every morning'}, exp: 'バス停は道路上の小さな一点なので at the bus stop です。' },
+      { prep: 'at', title: '空港でスーツケースを受け取る', ja: [['私たち','は'],['正午','に'],['空港','で'],['荷物','を'],['受け取った','']], en: {S:'We',V:'picked up',O:'our bags',P:'at the airport',T:'at noon'}, exp: '地点としての空港（at the airport）と、12:00という時刻の一点（at noon）の組み合わせです。' },
+      { prep: 'at', title: '入口でチケットを見せる', ja: [['観客','は'],['開演前','に'],['入口','で'],['チケット','を'],['見せた','']], en: {S:'Visitors',V:'showed',O:'their tickets',P:'at the entrance',T:'before the show'}, exp: '建物の出入り口という特定の1地点なので at the entrance です。' },
+      { prep: 'at', title: '机に向かって手紙を書く', ja: [['私','は'],['夜','に'],['自分の机','で'],['手紙','を'],['書く','']], en: {S:'I',V:'write',O:'letters',P:'at my desk',T:'at night'}, exp: '机という作業地点（at my desk）と、夜という時間帯の点（at night）の表現です。' },
+      { prep: 'at', title: '角の店で牛乳を買う', ja: [['母','は'],['夕方','に'],['通りの角','で'],['牛乳','を'],['買った','']], en: {S:'My mother',V:'bought',O:'milk',P:'at the corner',T:'yesterday'}, exp: '角（コーナー）という地図上のピンポイントの一点は at the corner です。' },
+      { prep: 'at', title: 'ホテルの受付で鍵を受け取る', ja: [['彼','は'],['午後3時','に'],['受付','で'],['鍵','を'],['受け取った','']], en: {S:'He',V:'got',O:'the key',P:'at the front desk',T:'at 3:00 pm'}, exp: 'フロントデスクという1地点（at the front desk）と時刻の一点（at 3:00 pm）です。' },
+      { prep: 'at', title: '黒板の単語を見る', ja: [['生徒たち','は'],['授業中','に'],['黒板','の'],['単語','を'],['見た','']], en: {S:'The students',V:'looked at',O:'the words',P:'at the blackboard',T:'in class'}, exp: '視線を一点に集中させるターゲットを表すのが at です。' },
+
+      // --- TO (10) ---
+      { prep: 'to', title: '友だちに手紙を書いた', ja: [['私','は'],['昨日',''],['友だち','に'],['手紙','を'],['書いた','']], en: {S:'I',V:'wrote',O:'a letter',P:'to my friend',T:'yesterday'}, exp: '手紙が相手の手元まで届く到達の矢印なので to my friend を使います。' },
+      { prep: 'to', title: '彼に本をあげた', ja: [['彼女','は'],['先週',''],['彼','に'],['本','を'],['あげた','']], en: {S:'She',V:'gave',O:'a book',P:'to him',T:'last week'}, exp: 'モノが相手へ渡って届く到達点を表す give A to B の形です。' },
+      { prep: 'to', title: '図書館に本を返した', ja: [['私','は'],['今日',''],['図書館','に'],['その本','を'],['返した','']], en: {S:'I',V:'returned',O:'the book',P:'to the library',T:'today'}, exp: '返却先の目的地（図書館）へ届く移動の矢印なので to the library です。' },
+      { prep: 'to', title: '先生に質問を送った', ja: [['生徒','は'],['放課後','に'],['先生','に'],['メール','を'],['送った','']], en: {S:'The student',V:'sent',O:'an email',P:'to the teacher',T:'after school'}, exp: 'メッセージが相手に到達する矢印なので send A to B を使います。' },
+      { prep: 'to', title: 'クラスメートに写真を見せた', ja: [['彼','は'],['昼休み','に'],['みんな','に'],['写真','を'],['見せた','']], en: {S:'He',V:'showed',O:'the photo',P:'to everyone',T:'at lunchtime'}, exp: '写真の内容を相手へ届ける矢印なので show A to B となります。' },
+      { prep: 'to', title: '弟にボールを投げた', ja: [['兄','は'],['庭','で'],['弟','に'],['ボール','を'],['投げた','']], en: {S:'He',V:'threw',O:'the ball',P:'to his brother',T:'yesterday'}, exp: 'ボールが相手の手元へ届く矢印なので throw A to B を使います。' },
+      { prep: 'to', title: '祖母に花を贈った', ja: [['私たち','は'],['母の日','に'],['祖母','に'],['花','を'],['贈った','']], en: {S:'We',V:'sent',O:'flowers',P:'to our grandmother',T:'on Mother’s Day'}, exp: '贈り物が相手のもとへ届く到達点を表す to です。' },
+      { prep: 'to', title: '友だちに辞書を貸した', ja: [['私','は'],['今朝',''],['友だち','に'],['辞書','を'],['貸した','']], en: {S:'I',V:'lent',O:'my dictionary',P:'to my friend',T:'this morning'}, exp: '辞書が相手へ渡る到達の矢印なので lend A to B を使います。' },
+      { prep: 'to', title: '新しい町へ引っ越した', ja: [['彼ら','は'],['春','に'],['大阪','へ'],['荷物','を'],['運んだ','']], en: {S:'They',V:'moved',O:'their boxes',P:'to Osaka',T:'in spring'}, exp: '大阪という目的地へ到達する移動の矢印なので to Osaka です。' },
+      { prep: 'to', title: '隣人に塩を渡した', ja: [['父','は'],['夕食時','に'],['母','に'],['塩','を'],['渡した','']], en: {S:'My father',V:'passed',O:'the salt',P:'to my mother',T:'at dinner'}, exp: '塩が相手の手元に届く矢印なので pass A to B を使います。' },
+
+      // --- FOR (10) ---
+      { prep: 'for', title: 'あなたのためにプレゼントを買った', ja: [['私','は'],['昨日',''],['あなた','のために'],['プレゼント','を'],['買った','']], en: {S:'I',V:'bought',O:'a gift',P:'for you',T:'yesterday'}, exp: '「相手の利益・目的に向ける気持ち（受益者）」を表すので for you を使います。' },
+      { prep: 'for', title: '家族のために夕食を作る', ja: [['父','は'],['日曜日','に'],['家族','のために'],['カレー','を'],['作る','']], en: {S:'My father',V:'cooks',O:'curry',P:'for our family',T:'on Sundays'}, exp: '家族という受け手のために作る受益の矢印が for です。' },
+      { prep: 'for', title: '3時間英語を勉強した', ja: [['私','は'],['昨日',''],['図書館','で'],['英語','を'],['3時間勉強した','']], en: {S:'I',V:'studied',O:'English',P:'at the library',T:'for three hours'}, exp: '「3時間という長さ（区間）」を表す時間スロットには for three hours を使います。' },
+      { prep: 'for', title: '病気の友だちにスープを作った', ja: [['彼女','は'],['今朝',''],['友だち','のために'],['スープ','を'],['作った','']], en: {S:'She',V:'made',O:'soup',P:'for her friend',T:'this morning'}, exp: '誰かのために用意する受益者を表すので for her friend となります。' },
+      { prep: 'for', title: '東京行きの電車に乗る', ja: [['私たち','は'],['朝','に'],['ホーム','で'],['東京行きの電車','を'],['待った','']], en: {S:'We',V:'waited for',O:'the train',P:'for Tokyo',T:'in the morning'}, exp: '「〜行き（向かう方向）」を示すときは到着前でも向きを表す for Tokyo を使います。' },
+      { prep: 'for', title: '母のためにドアを開けた', ja: [['少年','は'],['入口','で'],['母','のために'],['ドア','を'],['開けた','']], en: {S:'The boy',V:'opened',O:'the door',P:'for his mother',T:'just now'}, exp: '相手を助ける思いやりの向きを表す for his mother です。' },
+      { prep: 'for', title: '友だちのために席を取っておく', ja: [['彼','は'],['教室','で'],['友だち','のために'],['席','を'],['確保した','']], en: {S:'He',V:'saved',O:'a seat',P:'for his friend',T:'before class'}, exp: '友だちという受け手のために準備するので for his friend です。' },
+      { prep: 'for', title: 'テストのために数学を復習する', ja: [['私','は'],['昨夜',''],['試験','のために'],['数学','を'],['復習した','']], en: {S:'I',V:'reviewed',O:'math',P:'for the exam',T:'last night'}, exp: '試験という目標・目的に向かう行動なので for the exam です。' },
+      { prep: 'for', title: '誕生日に花を買った', ja: [['兄','は'],['先週',''],['母の誕生日','のために'],['花','を'],['買った','']], en: {S:'My brother',V:'bought',O:'flowers',P:'for her birthday',T:'last week'}, exp: '誕生日というイベントの目的に向けた買い物なので for her birthday です。' },
+      { prep: 'for', title: '2週間京都に滞在した', ja: [['彼ら','は'],['夏','に'],['京都','に'],['ホテル','を'],['2週間予約した','']], en: {S:'They',V:'booked',O:'a hotel',P:'in Kyoto',T:'for two weeks'}, exp: '2週間という時間の長さを示すものさしとして for two weeks を使います。' },
+
+      // --- BY (10) ---
+      { prep: 'by', title: '窓のそばで本を読む', ja: [['彼女','は'],['午後','に'],['窓','のそばで'],['小説','を'],['読む','']], en: {S:'She',V:'reads',O:'novels',P:'by the window',T:'in the afternoon'}, exp: '接触はせず「すぐ隣に寄り添う距離感」を表すので by the window を使います。' },
+      { prep: 'by', title: '5時までにレポートを終える', ja: [['私','は'],['今日',''],['オフィス','で'],['レポート','を'],['5時までに終える','']], en: {S:'I',V:'will finish',O:'the report',P:'at the office',T:'by 5:00 pm'}, exp: '期限のデッドラインの手前で完了する「〜までに」は by 5:00 pm です。' },
+      { prep: 'by', title: '川のそばで昼食を食べた', ja: [['私たち','は'],['日曜日','に'],['川','のそばで'],['お弁当','を'],['食べた','']], en: {S:'We',V:'ate',O:'lunch',P:'by the river',T:'on Sunday'}, exp: '川のすぐ隣（ほとり）にいる位置関係は by the river で表します。' },
+      { prep: 'by', title: '電車で学校へ行く', ja: [['彼','は'],['毎朝',''],['電車','で'],['高校','へ'],['通う','']], en: {S:'He',V:'goes to',O:'school',P:'by train',T:'every morning'}, exp: '交通手段（〜によって）を表すときは冠詞をつけず by train とします。' },
+      { prep: 'by', title: '金曜日までに本を返す', ja: [['あなた','は'],['今週',''],['図書館','に'],['その本','を'],['金曜日までに返す','']], en: {S:'You',V:'must return',O:'the book',P:'to the library',T:'by Friday'}, exp: '金曜日という締め切り（期限）までに完了を求めるので by Friday です。' },
+      { prep: 'by', title: 'メールで写真を送った', ja: [['私','は'],['昨夜',''],['メール','で'],['写真','を'],['送った','']], en: {S:'I',V:'sent',O:'the photos',P:'by email',T:'last night'}, exp: '通信・連絡の手段を表すときも by email を使います。' },
+      { prep: 'by', title: 'ドアのそばに傘を置く', ja: [['父','は'],['帰宅後','に'],['ドア','のそばに'],['傘','を'],['置いた','']], en: {S:'My father',V:'put',O:'his umbrella',P:'by the door',T:'after work'}, exp: 'ドアのすぐ横に寄り添わせて置く位置関係なので by the door です。' },
+      { prep: 'by', title: 'クレジットカードで支払う', ja: [['彼女','は'],['レジ','で'],['カード','で'],['本代','を'],['支払った','']], en: {S:'She',V:'paid',O:'the bill',P:'by credit card',T:'just now'}, exp: '決済の手段を表すときは by credit card を使います。' },
+      { prep: 'by', title: '自転車で公園へ行った', ja: [['子どもたち','は'],['午後','に'],['自転車','で'],['公園','へ'],['行った','']], en: {S:'The children',V:'went to',O:'the park',P:'by bicycle',T:'in the afternoon'}, exp: '自転車という移動手段を使うので by bicycle となります。' },
+      { prep: 'by', title: '海辺の家で夏を過ごす', ja: [['私たち','は'],['毎年',''],['海','のそばで'],['夏休み','を'],['過ごす','']], en: {S:'We',V:'spend',O:'our summer',P:'by the sea',T:'every year'}, exp: '海のすぐ近くという距離感を表す by the sea です。' },
+
+      // --- WITH (10) ---
+      { prep: 'with', title: '姉と一緒に買い物に行く', ja: [['私','は'],['土曜日','に'],['姉','と一緒に'],['服','を'],['買った','']], en: {S:'I',V:'bought',O:'clothes',P:'with my sister',T:'on Saturday'}, exp: '「誰かと一緒に（同伴）」を表すときは寄り添うイメージの with を使います。' },
+      { prep: 'with', title: '赤いペンで名前を書く', ja: [['彼','は'],['昨日',''],['赤いペン','で'],['名前','を'],['書いた','']], en: {S:'He',V:'wrote',O:'his name',P:'with a red pen',T:'yesterday'}, exp: '手に持って使う「道具（〜を使って）」には with a red pen を使います。' },
+      { prep: 'with', title: 'ハサミで紙を切る', ja: [['彼女','は'],['図工室','で'],['ハサミ','で'],['紙','を'],['切った','']], en: {S:'She',V:'cut',O:'the paper',P:'with scissors',T:'in class'}, exp: '手で操作する道具を使って動作を行うので with scissors です。' },
+      { prep: 'with', title: '友だちと一緒にテニスをする', ja: [['ケン','は'],['放課後','に'],['友だち','と一緒に'],['テニス','を'],['する','']], en: {S:'Ken',V:'plays',O:'tennis',P:'with his friends',T:'after school'}, exp: '一緒にスポーツをする相手を示す同伴の with です。' },
+      { prep: 'with', title: 'スプーンでスープを食べる', ja: [['赤ちゃん','は'],['昼食時','に'],['スプーン','で'],['スープ','を'],['飲んだ','']], en: {S:'The baby',V:'ate',O:'soup',P:'with a spoon',T:'at lunch'}, exp: '手に持って使う食事の道具なので with a spoon を使います。' },
+      { prep: 'with', title: '新しいカメラで写真を撮る', ja: [['父','は'],['旅行中','に'],['新しいカメラ','で'],['山','を'],['撮った','']], en: {S:'My father',V:'took',O:'pictures',P:'with his new camera',T:'on the trip'}, exp: 'カメラという道具を手に持って撮影するので with his new camera です。' },
+      { prep: 'with', title: '銀色の鍵でドアを開ける', ja: [['彼','は'],['今朝',''],['銀の鍵','で'],['玄関のドア','を'],['開けた','']], en: {S:'He',V:'opened',O:'the door',P:'with a silver key',T:'this morning'}, exp: '手に持って使う道具（鍵）なので with a silver key です。' },
+      { prep: 'with', title: '家族と一緒に夕食を食べる', ja: [['私たち','は'],['毎晩',''],['家族','と一緒に'],['夕食','を'],['食べる','']], en: {S:'We',V:'eat',O:'dinner',P:'with our family',T:'every night'}, exp: '家族と共に食卓を囲む同伴の with our family です。' },
+      { prep: 'with', title: 'ナイフでりんごを切る', ja: [['母','は'],['台所','で'],['ナイフ','で'],['りんご','を'],['切った','']], en: {S:'My mother',V:'cut',O:'an apple',P:'with a knife',T:'just now'}, exp: '刃物などの道具を手に持って使うときは with a knife を使います。' },
+      { prep: 'with', title: 'お箸でご飯を食べる', ja: [['私','は'],['毎日',''],['お箸','で'],['ご飯','を'],['食べる','']], en: {S:'I',V:'eat',O:'rice',P:'with chopsticks',T:'every day'}, exp: '手に持って使う食事道具なので with chopsticks と表現します。' },
+
+      // --- UNDER (10) ---
+      { prep: 'under', title: 'テーブルの下に猫がいる', ja: [['私','は'],['今朝',''],['テーブル','の下で'],['猫','を'],['見つけた','']], en: {S:'I',V:'found',O:'the cat',P:'under the table',T:'this morning'}, exp: 'テーブルの「真下（上から覆われる位置）」にあるので under the table を使います。' },
+      { prep: 'under', title: '大きな木の下で本を読む', ja: [['彼女','は'],['午後','に'],['木','の下で'],['本','を'],['読む','']], en: {S:'She',V:'reads',O:'books',P:'under a big tree',T:'in the afternoon'}, exp: '木の枝葉に上から覆われた真下の空間なので under a big tree です。' },
+      { prep: 'under', title: 'ベッドの下に靴をしまう', ja: [['彼','は'],['昨夜',''],['ベッド','の下に'],['靴','を'],['置いた','']], en: {S:'He',V:'put',O:'his shoes',P:'under the bed',T:'last night'}, exp: 'ベッドの真下の空間に隠れる位置なので under the bed を使います。' },
+      { prep: 'under', title: '机の下にカバンを置く', ja: [['生徒','は'],['朝','に'],['机','の下に'],['カバン','を'],['置いた','']], en: {S:'The student',V:'put',O:'his bag',P:'under his desk',T:'in the morning'}, exp: '机の天板の真下に置くので under his desk となります。' },
+      { prep: 'under', title: '橋の下を船が通る', ja: [['私たち','は'],['昨日',''],['橋','の下で'],['小さな船','を'],['見た','']], en: {S:'We',V:'saw',O:'a small boat',P:'under the bridge',T:'yesterday'}, exp: '橋桁に上から覆われた真下の位置を通過するので under the bridge です。' },
+      { prep: 'under', title: 'カーペットの下で鍵を見つける', ja: [['母','は'],['今日',''],['カーペット','の下で'],['コイン','を'],['見つけた','']], en: {S:'My mother',V:'found',O:'a coin',P:'under the carpet',T:'today'}, exp: 'カーペットに上から覆い隠された真下の位置なので under the carpet です。' },
+      { prep: 'under', title: '傘の下を一緒に歩く', ja: [['二人','は'],['雨の日','に'],['一つの傘','の下で'],['道','を'],['歩いた','']], en: {S:'They',V:'walked',O:'the street',P:'under one umbrella',T:'on a rainy day'}, exp: '傘に上から覆われた真下の空間に入るので under one umbrella です。' },
+      { prep: 'under', title: '枕の下に手紙を隠す', ja: [['少女','は'],['夜','に'],['枕','の下に'],['手紙','を'],['隠した','']], en: {S:'The girl',V:'hid',O:'the letter',P:'under her pillow',T:'at night'}, exp: '枕の真下に覆い隠す位置なので under her pillow を使います。' },
+      { prep: 'under', title: 'ソファの下からボールを取る', ja: [['犬','は'],['夕方','に'],['ソファ','の下から'],['ボール','を'],['取った','']], en: {S:'The dog',V:'got',O:'the ball',P:'under the sofa',T:'in the evening'}, exp: 'ソファの真下の隙間にある位置を示す under the sofa です。' },
+      { prep: 'under', title: '星空の下でテントを張る', ja: [['私たち','は'],['夏休み','に'],['星空','の下で'],['テント','を'],['張った','']], en: {S:'We',V:'set up',O:'a tent',P:'under the stars',T:'in summer'}, exp: '満天の夜空に上から包まれる真下の空間なので under the stars です。' },
+
+      // --- OVER (10) ---
+      { prep: 'over', title: '街の上空を飛行機が飛ぶ', ja: [['飛行機','は'],['昨日',''],['街','の上空を'],['雲','を'],['越えて飛んだ','']], en: {S:'The plane',V:'flew',O:'its route',P:'over the city',T:'yesterday'}, exp: '接触せずに離れた上方をアーチ状に通過するので over the city を使います。' },
+      { prep: 'over', title: 'フェンスを飛び越える', ja: [['その猫','は'],['今朝',''],['フェンス','を越えて'],['庭','を'],['飛び越えた','']], en: {S:'The cat',V:'jumped',O:'the gap',P:'over the fence',T:'this morning'}, exp: '障害物に触れずに弧を描いて乗り越える動きは over the fence です。' },
+      { prep: 'over', title: '赤ちゃんの上に毛布を掛ける', ja: [['母','は'],['夜','に'],['赤ちゃん','の上に'],['毛布','を'],['掛けた','']], en: {S:'My mother',V:'put',O:'a blanket',P:'over the baby',T:'at night'}, exp: '上から覆いかぶせるイメージも over のコアイメージです。' },
+      { prep: 'over', title: 'ネットを越えてボールを打つ', ja: [['ケン','は'],['試合中','に'],['ネット','を越えて'],['ボール','を'],['打った','']], en: {S:'Ken',V:'hit',O:'the ball',P:'over the net',T:'during the match'}, exp: 'ネットに触れずに上を越える軌道なので over the net を使います。' },
+      { prep: 'over', title: 'テーブルの上にクロスを広げる', ja: [['彼女','は'],['夕食前','に'],['テーブル','の上に'],['クロス','を'],['広げた','']], en: {S:'She',V:'spread',O:'a cloth',P:'over the table',T:'before dinner'}, exp: 'テーブル全体を上から覆うように掛けるので over the table です。' },
+      { prep: 'over', title: '川に橋を架ける', ja: [['人々','は'],['昨年',''],['川','の上に'],['新しい橋','を'],['架けた','']], en: {S:'Workers',V:'built',O:'a bridge',P:'over the river',T:'last year'}, exp: '川の上を端から端へまたいで覆う位置関係は over the river です。' },
+      { prep: 'over', title: '低い壁を乗り越える', ja: [['少年','は'],['放課後','に'],['低い壁','を越えて'],['ボール','を'],['追った','']], en: {S:'The boy',V:'climbed',O:'his way',P:'over the wall',T:'after school'}, exp: '壁の上を越えて向こう側へ移動する動きなので over the wall です。' },
+      { prep: 'over', title: '頭上を白い鳥が飛ぶ', ja: [['白い鳥','は'],['朝','に'],['私たちの頭上','を'],['輪','を'],['描いて飛んだ','']], en: {S:'A white bird',V:'flew',O:'a circle',P:'over our heads',T:'in the morning'}, exp: '頭に触れずに上空を通過していくので over our heads です。' },
+      { prep: 'over', title: '小川を飛び越える', ja: [['犬','は'],['公園','で'],['小さな小川','を'],['軽々と',''],['飛び越えた','']], en: {S:'The dog',V:'leaped',O:'the water',P:'over the stream',T:'in the park'}, exp: '小川に触れずに弧を描いて越えるので over the stream を使います。' },
+      { prep: 'over', title: '週末の間ずっとパリに滞在する', ja: [['私たち','は'],['先週末',''],['パリ','で'],['休日','を'],['過ごした','']], en: {S:'We',V:'spent',O:'our holiday',P:'in Paris',T:'over the weekend'}, exp: '週末の始まりから終わりまでをまたいで覆う期間は over the weekend です。' }
+    ];
+
+    const ROLES = ['S', 'V', 'O', 'P', 'T'];
+    const ROLE_META = {
+      S: { label: '① 誰が (S)', sub: '主語', color: 'var(--role-S)' },
+      V: { label: '② どうする (V)', sub: '動詞', color: 'var(--role-V)' },
+      O: { label: '③ 何を (O)', sub: '目的語', color: 'var(--role-O)' },
+      P: { label: '④ どこで・誰に', sub: '場所/対象', color: 'var(--role-P)' },
+      T: { label: '⑤ いつ (Time)', sub: '時間', color: 'var(--role-T)' }
+    };
+    const PREP_LIST = ['in', 'on', 'at', 'to', 'for', 'by', 'with', 'under', 'over'];
+
+    let builderDone = new Set();
+    try {
+      const saved = localStorage.getItem('engstruct_builder_done_v1');
+      if (saved) builderDone = new Set(JSON.parse(saved));
+    } catch (e) {}
+
+    let activePrepFilter = 'all';
+    let filteredIndices = [];
+    let currentSentenceIdx = 0;
+    let hintColorEnabled = true;
+
+    // Slot state: slotAssignments[role] = roleOfBlockPlacedThere | null
+    let slotAssignments = { S: null, V: null, O: null, P: null, T: null };
+    let trayOrder = []; // array of role keys currently in source tray
+    let selectedBlockRole = null; // for tap-to-select -> tap-slot
+    let isSolved = false;
+    let wrongSlots = new Set();
+    let autoDemoToken = 0;
+
+    function saveBuilderProgress() {
+      try {
+        localStorage.setItem('engstruct_builder_done_v1', JSON.stringify([...builderDone]));
+      } catch (e) {}
+      updateBuilderProgressUI();
+      renderBuilderFilterChips();
+    }
+
+    function updateBuilderProgressUI() {
+      const count = builderDone.size;
+      const total = BUILDER_SENTENCES.length;
+      document.getElementById('builder-progress-text').textContent = `${count} / ${total} 文完了`;
+      document.getElementById('builder-progress-bar').style.width = `${Math.round((count / total) * 100)}%`;
+    }
+
+    function renderBuilderFilterChips() {
+      const container = document.getElementById('builder-filter-chips');
+      const allCleared = builderDone.size === BUILDER_SENTENCES.length;
+      let html = `<button type="button" class="filter-chip ${activePrepFilter === 'all' ? 'active' : ''} ${allCleared ? 'cleared-all' : ''}" onclick="setBuilderPrepFilter('all')">すべて (${builderDone.size}/90)</button>`;
+
+      PREP_LIST.forEach(p => {
+        const indices = BUILDER_SENTENCES.map((s, idx) => s.prep === p ? idx : -1).filter(i => i !== -1);
+        const doneCnt = indices.filter(i => builderDone.has(i)).length;
+        const isDoneAll = doneCnt === indices.length;
+        html += `<button type="button" class="filter-chip ${activePrepFilter === p ? 'active' : ''} ${isDoneAll ? 'cleared-all' : ''}" onclick="setBuilderPrepFilter('${p}')">${p} (${doneCnt}/10)</button>`;
+      });
+      container.innerHTML = html;
+    }
+
+    function setBuilderPrepFilter(prep) {
+      activePrepFilter = prep;
+      renderBuilderFilterChips();
+      applyBuilderFilter(true);
+    }
+
+    function applyBuilderFilter(selectFirstIfNeeded) {
+      const unsolvedOnly = document.getElementById('chk-unsolved').checked;
+      filteredIndices = [];
+      BUILDER_SENTENCES.forEach((s, idx) => {
+        if (activePrepFilter !== 'all' && s.prep !== activePrepFilter) return;
+        if (unsolvedOnly && builderDone.has(idx)) return;
+        filteredIndices.push(idx);
+      });
+
+      const sel = document.getElementById('sentence-select');
+      const lbl = document.getElementById('sentence-count-label');
+      lbl.textContent = `例文 (${filteredIndices.length}文):`;
+
+      if (filteredIndices.length === 0) {
+        sel.innerHTML = `<option value="-1">条件に一致する未クリア文はありません</option>`;
+        return;
+      }
+
+      sel.innerHTML = filteredIndices.map(idx => {
+        const s = BUILDER_SENTENCES[idx];
+        const mark = builderDone.has(idx) ? '✓ ' : '';
+        const jaStr = s.ja.map(part => part[0] + part[1]).join(' ');
+        return `<option value="${idx}">${mark}[${s.prep}] ${jaStr}</option>`;
+      }).join('');
+
+      if (selectFirstIfNeeded && !filteredIndices.includes(currentSentenceIdx)) {
+        currentSentenceIdx = filteredIndices[0];
+      }
+      sel.value = String(currentSentenceIdx);
+      loadSentence(currentSentenceIdx);
+    }
+
+    function onSelectSentence() {
+      const val = Number(document.getElementById('sentence-select').value);
+      if (val >= 0) {
+        currentSentenceIdx = val;
+        loadSentence(currentSentenceIdx);
+      }
+    }
+
+    function goNextUnsolved() {
+      const total = BUILDER_SENTENCES.length;
+      for (let offset = 1; offset <= total; offset++) {
+        const idx = (currentSentenceIdx + offset) % total;
+        if (activePrepFilter !== 'all' && BUILDER_SENTENCES[idx].prep !== activePrepFilter) continue;
+        if (!builderDone.has(idx)) {
+          currentSentenceIdx = idx;
+          if (!filteredIndices.includes(idx)) {
+            document.getElementById('chk-unsolved').checked = false;
+            applyBuilderFilter(false);
+          }
+          document.getElementById('sentence-select').value = String(idx);
+          loadSentence(idx);
+          return;
+        }
+      }
+      // All cleared in current filter
+      const fb = document.getElementById('builder-feedback');
+      fb.className = 'result-box ok';
+      fb.innerHTML = `<p style="font-size:13px; font-weight:800; color:var(--emerald);">🎉 この範囲の例文はすべてクリア済みです！他の前置詞フィルターも試してみましょう。</p>`;
+    }
+
+    function setHintColor(enabled) {
+      hintColorEnabled = enabled;
+      document.getElementById('btn-hint-on').classList.toggle('active', enabled);
+      document.getElementById('btn-hint-off').classList.toggle('active', !enabled);
+      renderBuilderBoard();
+    }
+
+    function loadSentence(idx) {
+      autoDemoToken++;
+      currentSentenceIdx = idx;
+      const s = BUILDER_SENTENCES[idx];
+      document.getElementById('builder-theme-badge').textContent = `テーマ: ${s.prep}`;
+
+      slotAssignments = { S: null, V: null, O: null, P: null, T: null };
+      // Japanese natural order: S, T, P, O, V
+      trayOrder = ['S', 'T', 'P', 'O', 'V'];
+      selectedBlockRole = null;
+      isSolved = false;
+      wrongSlots.clear();
+
+      renderBuilderBoard();
+      renderBuilderFeedbackInitial();
+    }
+
+    function resetCurrentSentence() {
+      loadSentence(currentSentenceIdx);
+    }
+
+    function createBlockElement(role, inEnglishMode) {
+      const s = BUILDER_SENTENCES[currentSentenceIdx];
+      const jaIdxMap = { S: 0, T: 1, P: 2, O: 3, V: 4 };
+      const pair = s.ja[jaIdxMap[role]];
+      const enText = s.en[role];
+
+      const el = document.createElement('div');
+      el.className = 'word-block';
+      el.dataset.role = role;
+      el.style.setProperty('--blk-color', ROLE_META[role].color);
+
+      if (inEnglishMode) {
+        el.classList.add('en-mode');
+        if (role === 'P') {
+          const formatted = enText.replace(/^(\S+)/, '<span class="prep-tag">$1</span>');
+          el.innerHTML = formatted;
+        } else {
+          el.textContent = enText;
+        }
+        el.title = 'タップで英語を発音';
+        el.onclick = (e) => {
+          e.stopPropagation();
+          speakEnglish(enText);
+        };
+      } else {
+        if (!hintColorEnabled) el.classList.add('mono-mode');
+        if (selectedBlockRole === role) el.classList.add('selected');
+        el.draggable = true;
+        el.innerHTML = `<span>${pair[0]}</span>${pair[1] ? `<span class="particle-tag">${pair[1]}</span>` : ''}`;
+
+        el.ondragstart = (e) => {
+          selectedBlockRole = role;
+          e.dataTransfer.setData('text/plain', role);
+          e.dataTransfer.effectAllowed = 'move';
+        };
+
+        el.onclick = (e) => {
+          e.stopPropagation();
+          if (isSolved) return;
+          selectedBlockRole = (selectedBlockRole === role) ? null : role;
+          renderBuilderBoard();
+        };
+      }
+      return el;
+    }
+
+    function placeBlockIntoSlot(blockRole, targetSlotRole) {
+      if (isSolved || !blockRole) return;
+      wrongSlots.clear();
+
+      // Find where blockRole currently is
+      let sourceSlot = null;
+      for (const r of ROLES) {
+        if (slotAssignments[r] === blockRole) {
+          sourceSlot = r;
+          break;
+        }
+      }
+
+      const existingInTarget = slotAssignments[targetSlotRole];
+
+      if (sourceSlot) {
+        // Swap or move between slots
+        slotAssignments[sourceSlot] = existingInTarget;
+        slotAssignments[targetSlotRole] = blockRole;
+      } else {
+        // Moving from tray to targetSlotRole
+        trayOrder = trayOrder.filter(r => r !== blockRole);
+        if (existingInTarget) {
+          trayOrder.push(existingInTarget);
+        }
+        slotAssignments[targetSlotRole] = blockRole;
+      }
+
+      selectedBlockRole = null;
+      renderBuilderBoard();
+    }
+
+    function returnBlockToTray(blockRole) {
+      if (isSolved || !blockRole) return;
+      wrongSlots.clear();
+      for (const r of ROLES) {
+        if (slotAssignments[r] === blockRole) {
+          slotAssignments[r] = null;
+          if (!trayOrder.includes(blockRole)) {
+            trayOrder.push(blockRole);
+          }
+          break;
+        }
+      }
+      selectedBlockRole = null;
+      renderBuilderBoard();
+    }
+
+    function renderBuilderBoard() {
+      const trayEl = document.getElementById('source-tray');
+      trayEl.innerHTML = '';
+
+      if (trayOrder.length === 0) {
+        trayEl.innerHTML = `<div class="tray-empty-msg">✓ すべてのブロックが英語のスロットへ配置されました</div>`;
+      } else {
+        trayOrder.forEach(role => {
+          trayEl.appendChild(createBlockElement(role, isSolved));
+        });
+      }
+
+      // Tray drop zone events
+      trayEl.ondragover = (e) => {
+        if (isSolved) return;
+        e.preventDefault();
+        trayEl.classList.add('drag-over');
+      };
+      trayEl.ondragleave = () => trayEl.classList.remove('drag-over');
+      trayEl.ondrop = (e) => {
+        e.preventDefault();
+        trayEl.classList.remove('drag-over');
+        const role = e.dataTransfer.getData('text/plain') || selectedBlockRole;
+        if (role) returnBlockToTray(role);
+      };
+      trayEl.onclick = () => {
+        if (!isSolved && selectedBlockRole && !trayOrder.includes(selectedBlockRole)) {
+          returnBlockToTray(selectedBlockRole);
+        }
+      };
+
+      // Update remaining count & buttons
+      document.getElementById('builder-rem-badge').textContent = `残り ${trayOrder.length} ブロック`;
+      document.getElementById('btn-check').disabled = isSolved || trayOrder.length > 0;
+      document.getElementById('btn-step').disabled = isSolved;
+      document.getElementById('btn-auto').disabled = isSolved;
+      document.getElementById('btn-return-wrong').classList.toggle('hidden', wrongSlots.size === 0);
+
+      // Render 5 English slots
+      const slotsContainer = document.getElementById('english-slots');
+      slotsContainer.innerHTML = '';
+
+      ROLES.forEach(slotRole => {
+        const meta = ROLE_META[slotRole];
+        const placedRole = slotAssignments[slotRole];
+        const isWrong = wrongSlots.has(slotRole);
+
+        const card = document.createElement('div');
+        card.className = `slot-card ${isWrong ? 'slot-wrong' : ''} ${isSolved ? 'slot-correct' : ''}`;
+        card.style.setProperty('--slot-color', meta.color);
+        card.dataset.slot = slotRole;
+
+        card.innerHTML = `
+          <div class="slot-head">
+            <span>${meta.label}</span>
+            <span class="slot-sub">${meta.sub}</span>
+          </div>
+          <div class="slot-body ${placedRole ? 'has-block' : ''}">
+            ${placedRole ? '' : '<span class="slot-placeholder">ここに配置</span>'}
+          </div>
+          ${isWrong ? `<div class="slot-hint-err">×「${meta.sub}」ではありません</div>` : ''}
+        `;
+
+        const body = card.querySelector('.slot-body');
+        if (placedRole) {
+          body.appendChild(createBlockElement(placedRole, isSolved));
+        }
+
+        // Drag & drop handlers
+        card.ondragover = (e) => {
+          if (isSolved) return;
+          e.preventDefault();
+          card.classList.add('drag-over');
+        };
+        card.ondragleave = () => card.classList.remove('drag-over');
+        card.ondrop = (e) => {
+          e.preventDefault();
+          card.classList.remove('drag-over');
+          const draggedRole = e.dataTransfer.getData('text/plain') || selectedBlockRole;
+          if (draggedRole) placeBlockIntoSlot(draggedRole, slotRole);
+        };
+
+        // Tap-to-place handler
+        card.onclick = () => {
+          if (isSolved) return;
+          if (selectedBlockRole) {
+            placeBlockIntoSlot(selectedBlockRole, slotRole);
+          } else if (placedRole) {
+            selectedBlockRole = placedRole;
+            renderBuilderBoard();
+          }
+        };
+
+        slotsContainer.appendChild(card);
+      });
+    }
+
+    function renderBuilderFeedbackInitial() {
+      const fb = document.getElementById('builder-feedback');
+      fb.className = 'result-box';
+      fb.innerHTML = `
+        <p style="font-size:13px; color:var(--ink-sub); font-weight:600;">
+          日本語ブロックをドラッグ（またはタップ選択→スロットタップ）して①〜⑤のスロットへ並べ、<strong>「答え合わせ (成否判定)」</strong>を押してください。動きを先に見たい場合は「自動お手本」も使えます。
+        </p>
+      `;
+    }
+
+    function checkArrangement() {
+      if (trayOrder.length > 0 || isSolved) return;
+      wrongSlots.clear();
+
+      ROLES.forEach(role => {
+        if (slotAssignments[role] !== role) {
+          wrongSlots.add(role);
+        }
+      });
+
+      if (wrongSlots.size === 0) {
+        completeBuilderSentence(true);
+      } else {
+        renderBuilderBoard();
+        const fb = document.getElementById('builder-feedback');
+        fb.className = 'result-box err';
+        fb.innerHTML = `
+          <div style="font-size:14px; font-weight:800; color:var(--rose);">
+            おしい！ ${wrongSlots.size} 箇所の語順が入れ替わっています（赤枠のスロットを確認してください）
+          </div>
+          <p style="font-size:12.5px; color:var(--ink-sub); margin-top:4px;">
+            英語は「①誰が ➔ ②どうする ➔ ③何を ➔ ④どこで・誰に ➔ ⑤いつ」の固定スロット順です。「間違えたブロックだけ戻す」で修正できます。
+          </p>
+        `;
+      }
+    }
+
+    function returnWrongBlocks() {
+      wrongSlots.forEach(slotRole => {
+        const wrongBlock = slotAssignments[slotRole];
+        if (wrongBlock) {
+          slotAssignments[slotRole] = null;
+          if (!trayOrder.includes(wrongBlock)) trayOrder.push(wrongBlock);
+        }
+      });
+      wrongSlots.clear();
+      renderBuilderBoard();
+      renderBuilderFeedbackInitial();
+    }
+
+    function completeBuilderSentence(markAsCleared) {
+      isSolved = true;
+      wrongSlots.clear();
+      selectedBlockRole = null;
+
+      if (markAsCleared) {
+        builderDone.add(currentSentenceIdx);
+        saveBuilderProgress();
+        // Update option label checkmark
+        const opt = document.querySelector(`#sentence-select option[value="${currentSentenceIdx}"]`);
+        if (opt && !opt.textContent.startsWith('✓ ')) {
+          opt.textContent = '✓ ' + opt.textContent;
+        }
+      }
+
+      renderBuilderBoard();
+
+      const s = BUILDER_SENTENCES[currentSentenceIdx];
+      const fullEn = ROLES.map(r => s.en[r]).join(' ') + '.';
+      const fullJa = s.ja.map(p => p[0] + p[1]).join(' ');
+
+      speakEnglish(fullEn);
+
+      const fb = document.getElementById('builder-feedback');
+      fb.className = 'result-box ok';
+      fb.innerHTML = `
+        <div style="display:flex; flex-wrap:wrap; align-items:center; justify-content:space-between; gap:10px;">
+          <div>
+            <span class="badge badge-emerald" style="margin-bottom:6px; display:inline-block;">${markAsCleared ? '✓ 正解・クリア記録済み！' : '✨ 自動お手本完了'}</span>
+            <div class="en-sentence">${fullEn}</div>
+            <div style="font-size:12.5px; color:var(--muted); margin-top:2px;">${fullJa}</div>
+          </div>
+          <div style="display:flex; gap:8px; flex-wrap:wrap;">
+            <button type="button" class="btn btn-primary" onclick="speakEnglish('${fullEn.replace(/'/g, "\\'")}')">
+              <span>🔊 英文を聞く</span>
+            </button>
+            <button type="button" class="btn" onclick="goNextUnsolved()">
+              <span>次の文へ ➔</span>
+            </button>
+          </div>
+        </div>
+        <p style="font-size:13px; color:var(--ink-sub); margin-top:12px; padding-top:10px; border-top:1px solid #d1fae5;">
+          <strong>解説：</strong>${s.exp}
+        </p>
+      `;
+    }
+
+    function animateSingleRoleToCorrectSlot(role, onFinish) {
+      // Capture FLIP first positions
+      const firstRects = {};
+      document.querySelectorAll('.word-block').forEach(el => {
+        firstRects[el.dataset.role] = el.getBoundingClientRect();
+      });
+
+      // Move block into its own slot
+      for (const r of ROLES) {
+        if (slotAssignments[r] === role) slotAssignments[r] = null;
+      }
+      const displaced = slotAssignments[role];
+      slotAssignments[role] = role;
+      trayOrder = trayOrder.filter(r => r !== role);
+      if (displaced && displaced !== role && !trayOrder.includes(displaced)) {
+        trayOrder.push(displaced);
+      }
+
+      // Check if all 5 are now in place
+      const allCorrect = ROLES.every(r => slotAssignments[r] === r);
+      if (allCorrect) {
+        completeBuilderSentence(false);
+      } else {
+        renderBuilderBoard();
+      }
+
+      // Apply FLIP animation
+      requestAnimationFrame(() => {
+        document.querySelectorAll('.word-block').forEach(el => {
+          const r = el.dataset.role;
+          const first = firstRects[r];
+          if (!first) return;
+          const last = el.getBoundingClientRect();
+          const dx = first.left - last.left;
+          const dy = first.top - last.top;
+          if ((dx || dy) && el.animate) {
+            el.animate(
+              [{ transform: `translate(${dx}px, ${dy}px) scale(1.07)` }, { transform: 'none' }],
+              { duration: 520, easing: 'cubic-bezier(0.2, 0.85, 0.25, 1)' }
+            );
+          }
+        });
+        if (onFinish) onFinish();
+      });
+    }
+
+    function stepAutoDemo() {
+      if (isSolved) return;
+      const nextRole = ROLES.find(r => slotAssignments[r] !== r);
+      if (nextRole) {
+        animateSingleRoleToCorrectSlot(nextRole);
+      }
+    }
+
+    function runFullAutoDemo() {
+      if (isSolved) return;
+      const token = ++autoDemoToken;
+      const remaining = ROLES.filter(r => slotAssignments[r] !== r);
+      remaining.forEach((role, idx) => {
+        setTimeout(() => {
+          if (token !== autoDemoToken || isSolved) return;
+          animateSingleRoleToCorrectSlot(role);
+        }, idx * 420);
+      });
+    }
+
+    // ========================================================
+    // 3. Tab 2: Preposition Lab Diagrams & Data
+    // ========================================================
+    const svgTx = (x, y, t) => `<text class="svg-tx" x="${x}" y="${y}">${t}</text>`;
+    const svgPerson = (x) => `<circle class="fl ln" cx="${x}" cy="136" r="14"/><path class="fl ln" d="M${x - 25} 206c0-36 11-54 25-54s25 18 25 54z"/>`;
+    const svgFlag = `<path class="ln" d="M340 206V106"/><path class="fl ln" d="M340 106h38v24h-38"/>`;
+    const svgTable = `<rect class="fl ln" x="110" y="140" width="200" height="14" rx="4"/><path class="ln" d="M132 154v52M288 154v52"/>`;
+    const svgArrow = (x1, x2) => `<path class="ln dash" d="M${x1} 162H${x2}"/><path class="ln" d="M${x2 - 12} 154l14 8-14 8"/>`;
+
+    const PREPOSITIONS = {
+      in: {
+        core: '囲まれた空間・枠の「中」',
+        variants: [
+          {
+            label: '箱の中',
+            title: '箱の中（立体の入れ物）',
+            desc: 'まわりを壁や境界で囲まれた入れ物の中、というイメージです。部屋・カバン・車の中もすべて in を使います。',
+            svg: `<path class="fl ln" d="M145 76v130h130V76"/>` + svgTx(210, 226, 'box'),
+            from: [210, 26], to: [210, 180],
+            examples: [['The keys are in the box.', '鍵は箱の中にあります。'], ['She is in her room.', '彼女は自分の部屋にいます。']]
+          },
+          {
+            label: '地域・国',
+            title: '地域・都市・国の中',
+            desc: '東京や日本のように広い場所も「地図上で境界線に囲まれた大きな枠」とみなして in を使います。',
+            svg: `<circle class="fl ln" cx="210" cy="118" r="78"/>` + svgTx(210, 86, 'Tokyo / Japan'),
+            from: [36, 200], to: [210, 142],
+            examples: [['I live in Tokyo.', '私は東京に住んでいます。'], ['We met in Japan.', '私たちは日本で出会いました。']]
+          },
+          {
+            label: '期間',
+            title: '月・年・朝など期間の中',
+            desc: '時間も入れ物と考えます。6月・2026年・朝のように、ある程度の幅がある期間の中に入る感覚です。',
+            svg: `<rect class="fl ln" x="80" y="140" width="260" height="48" rx="8"/>` + svgTx(210, 226, 'June / 2026 / morning'),
+            from: [210, 26], to: [210, 164],
+            examples: [['It rains a lot in June.', '6月は雨がよく降ります。'], ['I study in the morning.', '私は朝に勉強します。']]
+          }
+        ]
+      },
+      on: {
+        core: '面にピタッと接触',
+        variants: [
+          {
+            label: 'テーブル',
+            title: 'テーブルの上（水平面への接触）',
+            desc: '本質は「上」ではなく「面に接触していること」。重力で乗っている場合も、この接触の一例です。',
+            svg: svgTable + svgTx(210, 226, 'table'),
+            from: [210, 26], to: [210, 125],
+            examples: [['The cup is on the table.', 'カップはテーブルの上にあります。'], ['Put your bag on the floor.', '床にカバンを置いてください。']]
+          },
+          {
+            label: '壁・天井',
+            title: '壁や天井にも on（垂直面への接触）',
+            desc: '壁にかかった時計は、壁の面にピタッと接触しているので on the wall。上下の向きは関係ありません。',
+            svg: `<rect class="fl ln" x="280" y="24" width="20" height="182"/>` + svgTx(290, 226, 'wall'),
+            from: [130, 96], to: [265, 96],
+            examples: [['There is a clock on the wall.', '壁に時計がかかっています。'], ['A fly is on the ceiling.', '天井にハエがとまっています。']]
+          },
+          {
+            label: '曜日・日付',
+            title: '曜日と特定の日付',
+            desc: '日付や曜日は、カレンダーの「1日分のマス（面）」。そこに予定がピタッと乗るイメージで on Monday / on May 5th と言います。',
+            svg: `<rect class="fl ln" x="150" y="102" width="120" height="86" rx="10"/><path class="ln" d="M150 130h120"/>` + svgTx(210, 164, 'Monday / May 5th'),
+            from: [210, 26], to: [210, 86],
+            examples: [['I have a meeting on Monday.', '月曜日に会議があります。'], ['We met on May 5th.', '私たちは5月5日に会いました。']]
+          }
+        ]
+      },
+      at: {
+        core: '地図上・時間軸上の「一点」',
+        variants: [
+          {
+            label: '場所の点',
+            title: '場所をピンポイントの「点」として見る',
+            desc: '駅・バス停・入口など、広さを意識せず「ここ」と指す一点です。待ち合わせ場所は at the station。',
+            svg: `<path class="ln" d="M50 190h320"/><circle class="fl ln" cx="210" cy="190" r="8"/>` + svgTx(210, 226, 'station / bus stop'),
+            from: [55, 162], to: [210, 162],
+            examples: [['Wait for me at the station.', '駅で待っていてください。'], ['Someone is at the door.', 'ドアのところに誰かいます。']]
+          },
+          {
+            label: '時刻の点',
+            title: '時刻も時間軸上の「点」',
+            desc: '7時や正午は時間の流れの中の一点。場所も時刻も「ピンポイントの点」で捉えるので、どちらにも at を使います。',
+            svg: `<path class="ln" d="M50 172h320M130 162v20M210 162v20M290 162v20"/>` + svgTx(130, 204, '6:00') + svgTx(210, 204, '7:00') + svgTx(290, 204, '8:00'),
+            from: [55, 144], to: [210, 144],
+            examples: [['I get up at 7:00.', '私は7時に起きます。'], ['The train leaves at noon.', '電車は正午に出ます。']]
+          }
+        ]
+      },
+      to: {
+        core: '到着点へ向かう矢印（届く）',
+        variants: [
+          {
+            label: '目的地',
+            title: '目的地へ移動して到達する',
+            desc: '矢印の先がゴールにしっかり届くイメージです。go to school のように「到着する」ところまで含みます。',
+            svg: svgFlag + svgArrow(60, 285) + svgTx(358, 226, 'park / school'),
+            from: [52, 190], to: [314, 190],
+            examples: [['We walked to the park.', '私たちは公園まで歩きました。'], ['She goes to school by bus.', '彼女はバスで学校へ行きます。']]
+          },
+          {
+            label: '相手',
+            title: 'モノや言葉が相手に届く',
+            desc: '物や言葉が相手の手元まで到達する矢印です。give A to B、send an email to him のように使います。',
+            svg: svgPerson(340) + svgArrow(60, 275) + svgTx(340, 226, 'him / friend'),
+            from: [52, 190], to: [300, 190],
+            examples: [['She gave a book to him.', '彼女は彼に本をあげました。'], ['Please send an email to me.', '私にメールを送ってください。']]
+          }
+        ]
+      },
+      for: {
+        core: '向かう先・目的・受益者・長さ',
+        variants: [
+          {
+            label: '向かう先',
+            title: '〜行き（方向だけを示す）',
+            desc: 'for は向きを示すだけで、到着は言いません。ゴールに届く手前で向きを示すボールがポイント。for Osaka は大阪に向かう電車です。',
+            svg: svgFlag + svgArrow(60, 295) + svgTx(358, 226, 'Osaka'),
+            from: [52, 190], to: [175, 190],
+            examples: [['This train is for Osaka.', 'この電車は大阪行きです。'], ['Let us leave for London.', 'ロンドンへ向けて出発しましょう。']]
+          },
+          {
+            label: '受け手・目的',
+            title: '〜のために（受益者・目的）',
+            desc: 'その人の利益のために、という気持ちが向く先です。届くかどうかではなく、誰のため・何のためかを表します。',
+            svg: svgPerson(330) + `<text class="svg-tx" x="330" y="102" style="font-size:22px; fill:#e11d48;">♥</text>` + svgTx(330, 226, 'you'),
+            from: [70, 190], to: [250, 190],
+            examples: [['I bought a gift for you.', 'あなたのためにプレゼントを買いました。'], ['Thank you for your help.', '助けてくれてありがとう。']]
+          },
+          {
+            label: '期間の長さ',
+            title: '〜の間（時間の長さ）',
+            desc: '時間の長さを測るものさしです。for three hours のように「どれだけの区間か」を表します。',
+            svg: `<path class="ln" d="M80 172h260M80 160v24M340 160v24"/>` + svgTx(210, 204, 'for 3 hours'),
+            from: [80, 146], to: [340, 146],
+            examples: [['I studied for three hours.', '私は3時間勉強しました。'], ['They stayed for two weeks.', '彼らは2週間滞在しました。']]
+          }
+        ]
+      },
+      by: {
+        core: 'すぐそばに寄り添う／期限／手段',
+        variants: [
+          {
+            label: 'そば・手段',
+            title: '〜のそば／〜によって（手段）',
+            desc: '接触はしないけれどすぐ隣に寄り添う距離感（by the window）から、すぐ手元にある手段（by train / by email）へ広がります。',
+            svg: `<path class="fl ln" d="M275 206v-76l45-36 45 36v76z"/>` + svgTx(320, 226, 'house / window'),
+            from: [50, 190], to: [240, 190],
+            examples: [['He is sitting by the window.', '彼は窓のそばに座っています。'], ['My father goes to work by train.', '父は電車で通勤しています。']]
+          },
+          {
+            label: '期限',
+            title: '〜までに（デッドライン）',
+            desc: '期限の線のすぐ手前で完了します。by 5 pm は5時までに終えること。ずっと動作が続く until とは違います。',
+            svg: `<path class="ln" d="M50 182h320"/><path class="ln dash" d="M280 86v110"/>` + svgTx(280, 76, '5:00 pm'),
+            from: [52, 158], to: [230, 158],
+            examples: [['Please finish it by 5 pm.', '午後5時までに終わらせてください。'], ['Return the book by Friday.', '金曜日までに本を返してください。']]
+          }
+        ]
+      },
+      with: {
+        core: '一緒（同伴）・手に持つ道具',
+        variants: [
+          {
+            label: '一緒',
+            title: '〜と一緒に（同伴）',
+            desc: '二つが寄り添って行動を共にするイメージです。with my sister は「姉と一緒に」。',
+            svg: `<circle class="b2" cx="242" cy="190" r="15"/>` + svgTx(226, 226, 'together'),
+            from: [45, 190], to: [208, 190],
+            examples: [['I went shopping with my sister.', '私は姉と買い物に行きました。'], ['I played tennis with Tom.', 'トムと一緒にテニスをしました。']]
+          },
+          {
+            label: '道具',
+            title: '〜を使って（手に持つ道具）',
+            desc: '手に持って使う道具にも with を使います。ペンやナイフなど、手元に伴って使う物が対象です。',
+            svg: `<path class="ln thick" d="M244 158L306 104"/>` + svgTx(316, 130, 'pen'),
+            from: [50, 174], to: [228, 174],
+            examples: [['He wrote it with a pen.', '彼はペンで書きました。'], ['Cut the paper with scissors.', 'ハサミで紙を切りなさい。']]
+          }
+        ]
+      },
+      under: {
+        core: '真下（上から覆われる）',
+        variants: [
+          {
+            label: '真下',
+            title: 'テーブルや木の下',
+            desc: 'ある物の真下にあって、上から覆われているイメージです。数値や年齢の「〜未満」にも使います。',
+            svg: svgTable + svgTx(210, 226, 'table'),
+            from: [210, 66], to: [210, 184],
+            examples: [['The cat is under the table.', '猫はテーブルの下にいます。'], ['We rested under a big tree.', '大きな木の下で休みました。']]
+          }
+        ]
+      },
+      over: {
+        core: '接触せずに上を越える・覆う',
+        variants: [
+          {
+            label: '上を越える',
+            title: '触れずに上空を越えていく',
+            desc: '触れずに離れた上方を通過したり、弧を描いて越えたりする動きです。接触する on との違いは「離れていること」です。',
+            svg: svgTable + `<path class="ln dash" d="M115 128Q210 14 305 128"/>` + svgTx(210, 226, 'city / fence'),
+            from: [115, 128], to: [210, 72],
+            examples: [['The plane flew over the city.', '飛行機が街の上空を飛びました。'], ['The cat jumped over the fence.', '猫はフェンスを飛び越えました。']]
+          }
+        ]
+      }
+    };
+
+    // ========================================================
+    // 4. 450-Question Quiz Bank (9 Prepositions x 50 Questions)
+    // Format: [category, before, answer, after, ja, variantIdx, explanation]
+    // ========================================================
+    const QUIZ_BANK = [
+      // --- 1. IN (50) ---
+      ['space','The keys are','in','the box.','鍵は箱の中にあります。',0,'箱という立体の入れ物の中なので in です。'],
+      ['space','She is studying','in','her room.','彼女は自分の部屋で勉強しています。',0,'壁で囲まれた部屋の中なので in を使います。'],
+      ['space','My uncle lives','in','Tokyo.','私のおじは東京に住んでいます。',1,'都市や国は境界線で囲まれた大きな枠とみなして in を使います。'],
+      ['space','There is a lot of milk','in','the bottle.','ボトルの中に牛乳がたくさん入っています。',0,'容器の内部に入っている状態は in です。'],
+      ['space','The children are playing','in','the park.','子どもたちは公園で遊んでいます。',1,'敷地という広がりの枠の中なので in the park となります。'],
+      ['space','Put your wallet','in','your pocket.','財布をポケットに入れなさい。',0,'ポケットという袋状の空間の中に入れるので in です。'],
+      ['space','There are many fish','in','the sea.','海の中にはたくさんの魚がいます。',1,'海という広い立体空間の中なので in the sea となります。'],
+      ['space','I saw a funny story','in','the newspaper.','私は新聞の中で面白い記事を見ました。',0,'新聞や本などの紙面の枠の中にある情報にも in を使います。'],
+      ['space','He is sitting','in','the car.','彼は車の中に座っています。',0,'屋根やドアで囲まれた車内の空間は in the car です。'],
+      ['space','Mount Fuji is','in','Japan.','富士山は日本にあります。',1,'国名という大きな領域の枠の中なので in Japan です。'],
+      ['space','She put the flowers','in','a glass vase.','彼女はガラスの花瓶に花を生けました。',0,'花瓶という入れ物の中に入れるので in です。'],
+      ['space','We swam','in','the swimming pool.','私たちはプールで泳ぎました。',0,'水で満たされたプールの枠の中なので in を使います。'],
+      ['space','There are some coins','in','my purse.','小銭入れの中に硬貨がいくつか入っています。',0,'財布という入れ物の中なので in です。'],
+      ['space','He kept old letters','in','a wooden drawer.','彼は古い手紙を木の引き出しの中にしまっていました。',0,'引き出しという箱状の空間の中なので in です。'],
+      ['space','The birds are flying','in','the blue sky.','鳥たちが青い空の中を飛んでいます。',1,'空という大きな空間の広がりの中なので in the sky です。'],
+      ['space','She looked at her face','in','the mirror.','彼女は鏡の中の自分の顔を見ました。',0,'鏡という枠の中に映る像を見るイメージで in the mirror です。'],
+      ['space','There is a typo','in','the third paragraph.','第3段落の中に誤字があります。',0,'文章の段落という枠組みの中なので in です。'],
+      ['space','They got lost','in','the thick forest.','彼らは深い森の中で道に迷いました。',1,'木々に囲まれた森の空間の中なので in the forest です。'],
+      ['space','He is waiting','in','the lobby.','彼はロビーで待っています。',0,'建物内のロビーという空間の中なので in です。'],
+      ['space','Add a little sugar','in','your coffee.','コーヒーに砂糖を少し入れなさい。',0,'カップの中の液体に混ぜ込むので in です。'],
+      ['space','I found an old photo','in','the album.','私はアルバムの中で古い写真を見つけました。',0,'アルバムという冊子の枠の中なので in です。'],
+      ['space','She lives','in','a quiet village.','彼女は静かな村に住んでいます。',1,'村という境界のある地域の中なので in です。'],
+      ['space','The ice cubes melted','in','the warm water.','氷はぬるま湯の中で溶けました。',0,'水という液体に包まれた状態なので in です。'],
+      ['space','He hid the gift','in','the closet.','彼はクローゼットの中にプレゼントを隠しました。',0,'クローゼットという閉じた空間の中なので in です。'],
+      ['space','There are many stars','in','the universe.','宇宙にはたくさんの星があります。',1,'宇宙という最大の空間の枠の中なので in です。'],
+      ['space','Please write your answers','in','ink.','インクで答えを書きなさい。',0,'インクや鉛筆などの筆記材料を表すときも in ink とします。'],
+      ['space','The woman','in','the red dress is my aunt.','赤いドレスを着ている女性は私のおばです。',0,'衣服に包まれている状態（「〜を着て」）も in で表します。'],
+      ['space','Can you say that','in','English?','それを英語で言えますか？',1,'英語という言語の枠組みの中で表現する意味で in English です。'],
+      ['space','He was standing','in','the rain.','彼は雨の中に立っていました。',1,'降ってくる雨に囲まれた空間の中なので in the rain です。'],
+      ['space','We sat','in','the shade of the tree.','私たちは木陰の中に座りました。',0,'影というエリアの枠の中に入るイメージで in the shade です。'],
+      ['time','It rains a lot','in','June.','6月は雨がよく降ります。',2,'月（6月）は幅のある期間の枠の中なので in を使います。'],
+      ['time','I always drink coffee','in','the morning.','私はいつも朝にコーヒーを飲みます。',2,'朝・午後・夕方といった幅のある時間帯の枠には in を使います。'],
+      ['time','The next Olympics will be held','in','2028.','次のオリンピックは2028年に開催されます。',2,'「年」という大きな時間の枠の中なので in 2028 です。'],
+      ['time','Leaves turn red','in','autumn.','秋になると葉が赤くなります。',2,'季節（春夏秋冬）も幅のある期間なので in を使います。'],
+      ['time','Many flowers bloom','in','spring.','春にはたくさんの花が咲きます。',2,'季節という期間の枠の中なので in spring です。'],
+      ['time','He was born','in','1998.','彼は1998年に生まれました。',2,'西暦の「年」は大きな時間の入れ物なので in を使います。'],
+      ['time','We usually watch TV','in','the evening.','私たちは普段夕方にテレビを見ます。',2,'evening という幅のある時間帯は in です。'],
+      ['time','People landed on the moon','in','the 20th century.','人類は20世紀に月面に降り立ちました。',2,'「世紀」という長い期間の枠の中も in を使います。'],
+      ['time','The train will arrive','in','ten minutes.','電車は10分後に到着します。',2,'今から10分という時間の枠が経過した先を表すときは in です。'],
+      ['time','She finished the race','in','three hours.','彼女は3時間でレースを完走しました。',2,'3時間という時間の枠内で達成した所要時間も in です。'],
+      ['time','We often go skiing','in','winter.','私たちは冬によくスキーに行きます。',2,'冬という季節の期間の中なので in winter です。'],
+      ['time','I will call you back','in','an hour.','1時間後に折り返し電話します。',2,'今から1時間後という経過時間の枠を示す in です。'],
+      ['time','Smartphones spread','in','the 2010s.','スマートフォンは2010年代に普及しました。',2,'「〜年代」も時間の入れ物なので in です。'],
+      ['time','He takes a nap','in','the afternoon.','彼は午後に昼寝をします。',2,'afternoon（午後という幅のある時間帯）には in を使います。'],
+      ['time','Dinner will be ready','in','a few minutes.','夕食はあと数分で準備ができます。',2,'数分という時間の枠の中で完了する意味の in です。'],
+      ['relation','She is','in','trouble now.','彼女は今困った状況の中にいます。',0,'トラブルや困難という状態の枠の中に入るのも in です。'],
+      ['relation','They fell','in','love at first sight.','彼らは一目惚れしました。',0,'恋愛という感情の空間に包まれるイメージで in love です。'],
+      ['relation','Please stand','in','a straight line.','まっすぐ一列に並んでください。',0,'列という形・並びの枠の中に収まるイメージで in a line です。'],
+      ['relation','The cherry trees are','in','full bloom.','桜の木が満開の状態です。',0,'満開という状態の中にいることを in full bloom で表します。'],
+      ['relation','He is','in','good health.','彼は健康な状態です。',0,'健康という良好な状態の枠の中にいるので in good health です。'],
+
+      // --- 2. ON (50) ---
+      ['space','The cup is','on','the table.','カップはテーブルの上にあります。',0,'テーブルの面にピタッと接触しているので on です。'],
+      ['space','There is a clock','on','the wall.','壁に時計がかかっています。',1,'垂直の壁であっても面に接触しているので on the wall です。'],
+      ['space','A small fly is','on','the ceiling.','小さなハエが天井にとまっています。',1,'上下に関係なく、天井の面に接触していれば on です。'],
+      ['space','Please put your bag','on','the floor.','床にカバンを置いてください。',0,'床の面に接触して置くので on the floor です。'],
+      ['space','Look at that picture','on','the page.','そのページの絵を見てください。',0,'紙の面に印刷されて乗っているので on です。'],
+      ['space','She wore a gold ring','on','her finger.','彼女は指に金の指輪をしていました。',0,'指の表面にピタッと接触してはめるので on を使います。'],
+      ['space','There is snow','on','the roof.','屋根の上に雪が積もっています。',0,'屋根という傾斜面に雪が接触して乗っているので on です。'],
+      ['space','Write your name','on','the line.','その線の上に名前を書いてください。',0,'線の表面に文字を乗せる接触のイメージなので on です。'],
+      ['space','The books are','on','the bookshelf.','本は本棚の上にあります。',0,'棚板の面に接触して並んでいるので on です。'],
+      ['space','Put some butter','on','your toast.','トーストにバターを少し塗りなさい。',0,'パンの表面にバターを接触させて乗せるので on です。'],
+      ['space','There is a sticker','on','my laptop.','私のノートパソコンにステッカーが貼ってあります。',0,'パソコンの天板にピタッと貼り付いているので on です。'],
+      ['space','We walked','on','the sandy beach.','私たちは砂浜の上を歩きました。',0,'砂浜という地面の面に足が接触して歩くので on です。'],
+      ['space','There is a small island','on','the map.','地図の上に小さな島が載っています。',0,'地図という平面に描かれているので on the map です。'],
+      ['space','He sat','on','the wooden bench.','彼は木のベンチに座りました。',0,'ベンチの座面に接触して腰掛けるので on です。'],
+      ['space','She put a hat','on','her head.','彼女は頭に帽子をかぶりました。',0,'頭の表面に帽子が接触して乗るので on です。'],
+      ['space','A leaf floated','on','the water.','一枚の葉が水面に浮かんでいました。',0,'水面という境界の面に接触して浮いているので on です。'],
+      ['space','There is a bandage','on','his knee.','彼の膝に絆創膏が貼ってあります。',1,'膝の皮膚にピタッと接触して貼られているので on です。'],
+      ['space','Our office is','on','the fifth floor.','私たちのオフィスは5階にあります。',0,'ビルの各階（フロアという床面）に乗っているので on です。'],
+      ['space','I saw a stray cat','on','the street.','私は通りで野良猫を見かけました。',0,'道路という帯状の面に接しているので on the street です。'],
+      ['space','Raindrops tapped','on','the windowpane.','雨粒が窓ガラスをコツコツと叩きました。',1,'窓ガラスという垂直の面に雨粒が接触するので on です。'],
+      ['space','Hang your coat','on','that hook.','そのフックにコートを掛けなさい。',1,'フックという接点に引っ掛けて接触させるので on です。'],
+      ['space','There is a scratch','on','the screen.','画面に傷がついています。',1,'ディスプレイの表面についている傷なので on です。'],
+      ['space','He leaned his back','on','the fence.','彼はフェンスに背中をもたれかけました。',1,'フェンスに背中が接触して支えられているので on です。'],
+      ['space','Yokohama is','on','Tokyo Bay.','横浜は東京湾に面しています。',0,'海岸線というラインに接して位置する都市も on で表します。'],
+      ['space','Put the stamp','on','the envelope.','封筒に切手を貼りなさい。',0,'封筒の面に切手を貼り付ける接触なので on です。'],
+      ['time','I have a piano lesson','on','Monday.','月曜日にピアノのレッスンがあります。',2,'曜日はカレンダーの1日分の面に予定が乗るイメージなので on です。'],
+      ['time','We met','on','May 5th.','私たちは5月5日に出会いました。',2,'特定の日付もカレンダーの1マス（面）なので on を使います。'],
+      ['time','What do you do','on','Sundays?','日曜日には何をしますか？',2,'曜日には接触の on を使います。'],
+      ['time','My birthday is','on','October 10th.','私の誕生日は10月10日です。',2,'日付（〜月〜日）には必ず on を使います。'],
+      ['time','We always eat turkey','on','Christmas Day.','クリスマスの日にいつも七面鳥を食べます。',2,'「〜の日（特定の1日）」にはカレンダーの面を表す on を使います。'],
+      ['time','The festival is held','on','the first Sunday of June.','その祭りは6月の第1日曜日に開催されます。',2,'特定の日曜日を指しているので on を使います。'],
+      ['time','I have a dentist visit','on','Friday morning.','金曜日の朝に歯医者の予約があります。',2,'曜日がくっつくとカレンダーの特定の日になるため on を使います。'],
+      ['time','The store is closed','on','New Year’s Day.','その店は元日に休業します。',2,'特定の祝日（1日分の面）なので on を使います。'],
+      ['time','We go hiking','on','weekends.','私たちは週末にハイキングに行きます。',2,'週末というカレンダーの枠に乗る予定には on weekends を使います。'],
+      ['time','The train arrived right','on','time.','電車は時間通りに到着しました。',2,'予定時刻にピタッと重なる感覚を on time で表します。'],
+      ['time','She graduated','on','a sunny day in March.','彼女は3月の晴れた日に卒業しました。',2,'「ある特定の1日」を指すときは on a 〜 day を使います。'],
+      ['time','Our flight departs','on','Wednesday night.','私たちの便は水曜日の夜に出発します。',2,'曜日が含まれる特定の日時なので on を使います。'],
+      ['relation','We watched the game','on','TV.','私たちはテレビでその試合を見ました。',1,'テレビやスマホの画面（スクリーンという面）に映る情報は on です。'],
+      ['relation','I talked with her','on','the phone.','私は彼女と電話で話しました。',1,'電話回線というラインに接続している状態は on the phone です。'],
+      ['relation','I found this recipe','on','the internet.','インターネット上でこのレシピを見つけました。',1,'ネットワーク・画面上に公開されている情報は on the internet です。'],
+      ['relation','He is','on','a business trip to Osaka.','彼は大阪へ出張中です。',0,'出張という業務プログラムのレールに乗っている状態は on です。'],
+      ['relation','The building is','on','fire!','その建物が燃えています！',0,'炎に包まれて接触している進行状態は on fire です。'],
+      ['relation','She is','on','a diet right now.','彼女は今ダイエット中です。',0,'食事制限の計画に乗っている継続状態は on a diet です。'],
+      ['relation','We went there','on','foot.','私たちはそこへ徒歩で行きました。',0,'自分の足の裏を地面に接触させて移動するので on foot です。'],
+      ['relation','He got','on','the crowded train.','彼は満員電車に乗りました。',0,'電車の床面に乗り込む動きは get on を使います。'],
+      ['relation','The drinks are','on','the house.','お飲み物は店のおごりです。',0,'店の勘定に乗せるという意味から on the house と言います。'],
+      ['relation','I listened to the news','on','the radio.','私はラジオでそのニュースを聞きました。',1,'放送波という電波のラインに乗っているメディアは on the radio です。'],
+      ['relation','Please turn','on','the light.','明かりをつけてください。',0,'スイッチの接点をピタッとつなぐイメージが turn on です。'],
+      ['relation','She relies','on','her parents.','彼女は両親を頼りにしています。',0,'相手の上に体重を預けて支えてもらう接触のイメージが rely on です。'],
+      ['relation','Let us focus','on','the main problem.','主要な問題に集中しましょう。',0,'意識の焦点を1つの対象にピタッと当てるイメージが focus on です。'],
+
+      // --- 3. AT (50) ---
+      ['space','Wait for me','at','the station.','駅で待っていてください。',0,'地図上のピンポイントの一点（待ち合わせ地点）を示すので at です。'],
+      ['space','Turn left','at','the traffic light.','その信号で左に曲がってください。',0,'交差点や信号という地図上の一点を指すので at です。'],
+      ['space','Someone is standing','at','the door.','誰かがドアのところに立っています。',0,'玄関・ドアというピンポイントの地点なので at the door です。'],
+      ['space','Let us meet','at','the bus stop.','バス停で会いましょう。',0,'バス停は路線上の小さな点として捉えるので at です。'],
+      ['space','He is waiting','at','the entrance.','彼は入口のところで待っています。',0,'建物の出入り口という特定の1地点は at を使います。'],
+      ['space','Sign your name','at','the bottom of the page.','ページの一番下に署名してください。',0,'ページ内の最下部という一点を指すので at です。'],
+      ['space','She is sitting','at','her desk.','彼女は机に向かって座っています。',0,'机の上に乗るのではなく机という作業地点にいるので at です。'],
+      ['space','We arrived','at','the airport early.','私たちは早く空港に到着しました。',0,'路線図や地図上のポイントとして捉える空港には at を使います。'],
+      ['space','Write the title','at','the top of the sheet.','用紙の一番上にタイトルを書きなさい。',0,'用紙の最上部というピンポイントの位置は at the top です。'],
+      ['space','He is','at','work right now.','彼は今職場にいます。',0,'職場という活動拠点のピンポイントを示すときは at work です。'],
+      ['space','My parents are','at','home today.','今日、両親は家にいます。',0,'自宅という拠点の点を表すときは at home とします。'],
+      ['space','The children are','at','school now.','子どもたちは今学校にいます。',0,'勉強する拠点としての学校は at school です。'],
+      ['space','Stop','at','the corner of the street.','通りの角で止まりなさい。',0,'角（コーナー）という地図上の1点は at the corner です。'],
+      ['space','We had lunch','at','a small cafe.','私たちは小さなカフェで昼食をとりました。',0,'立ち寄る地点としてのカフェには at a cafe を使います。'],
+      ['space','There were many fans','at','the stadium.','スタジアムにはたくさんのファンがいました。',0,'イベント会場という地図上の拠点は at the stadium です。'],
+      ['space','She sat','at','the back of the classroom.','彼女は教室の一番後ろの席に座りました。',0,'空間内の最後尾という一点を指すので at the back です。'],
+      ['space','Please check in','at','the front desk.','フロントデスクでチェックインしてください。',0,'ホテルの受付カウンターという1地点は at the front desk です。'],
+      ['space','He parked his car','at','the gate.','彼は門のところに車を停めました。',0,'門というピンポイントの場所なので at the gate です。'],
+      ['space','We met','at','a party last week.','私たちは先週パーティーで出会いました。',0,'集まりの場・イベントという地点も at a party で表します。'],
+      ['space','Look','at','the blackboard.','黒板を見なさい。',0,'視線を一点にピタッと集中させるターゲットは look at です。'],
+      ['time','I usually get up','at','7:00.','私は普段7時に起きます。',1,'7:00 は時間軸上のピンポイントの一点なので at を使います。'],
+      ['time','The train leaves','at','noon.','電車は正午に出発します。',1,'正午（12:00）も時間の一点なので at noon です。'],
+      ['time','The movie starts','at','6:30 pm.','映画は午後6時半に始まります。',1,'具体的な時刻はすべて「点」の at を使います。'],
+      ['time','The stars shine brightly','at','night.','夜には星が明るく輝きます。',1,'night は夜という1つの時間帯の点として at night とします。'],
+      ['time','Our school lunch begins','at','12:15.','学校の昼食は12時15分に始まります。',1,'時計の針が指すピンポイント時刻なので at です。'],
+      ['time','The shop closes','at','midnight.','その店は真夜中に閉まります。',1,'midnight（真夜中の12時）も時間の一点なので at です。'],
+      ['time','We arrived there','at','sunset.','私たちは日没の時刻にそこへ到着しました。',1,'日の出や日没という一瞬の時刻も at です。'],
+      ['time','He woke up','at','dawn.','彼は夜明けに目を覚ましました。',1,'夜明けという特定のタイミングの点は at dawn です。'],
+      ['time','She left the company','at','the age of thirty.','彼女は30歳のときに会社を退職しました。',1,'人生の時間軸における30歳という一点は at the age of 〜 です。'],
+      ['time','I am busy','at','the moment.','私は今のところ忙しいです。',1,'今この瞬間という時間の一点は at the moment です。'],
+      ['time','The bell rings','at','the end of each class.','各授業の終わりの瞬間にベルが鳴ります。',1,'終わりという時間軸の1点は at the end です。'],
+      ['time','We eat dinner','at','around 7 pm.','私たちは午後7時ごろに夕食を食べます。',1,'おおよその時刻であっても基準点は at です。'],
+      ['time','At','first, I did not understand it.','最初の時点では、それが分かりませんでした。',1,'最初の1点ではというスタート地点は at first です。'],
+      ['time','At','last, we reached the summit.','ついに私たちは山頂に到達しました。',1,'最後の1点に到達してという意味が at last です。'],
+      ['time','Please call me','at','lunchtime.','昼食の時間に電話してください。',1,'ランチタイムという特定の時間帯の点は at lunchtime です。'],
+      ['relation','Water boils','at','100 degrees Celsius.','水は摂氏100度で沸騰します。',1,'温度計の目盛りの100度という一点を指すので at です。'],
+      ['relation','The car was running','at','full speed.','その車は全速力で走っていました。',1,'スピードメーターの数値の一点を指すので at です。'],
+      ['relation','She is very good','at','playing the piano.','彼女はピアノを弾くのがとても上手です。',0,'特定の対象・分野に狙いを定めて得意とするので good at です。'],
+      ['relation','Everyone laughed','at','his joke.','みんな彼の冗談を聞いて笑いました。',0,'笑いの矛先（ターゲットの一点）を向けるので laugh at です。'],
+      ['relation','The boy threw a stone','at','the target.','少年は的に向かって石を投げました。',0,'的の1点を狙って投げる場合は throw at を使います。'],
+      ['relation','I bought this shirt','at','a low price.','私はこのシャツを安い価格で買いました。',1,'価格表のこの金額という一点で買うので at a 〜 price です。'],
+      ['relation','She was surprised','at','the sudden news.','彼女はその突然の知らせに驚きました。',0,'驚きの引き金となった一点の出来事を指すので surprised at です。'],
+      ['relation','Do not shout','at','me!','私に向かって怒鳴らないで！',0,'怒りの矛先を相手にピンポイントで向けるので shout at です。'],
+      ['relation','He smiled','at','the baby.','彼は赤ちゃんに微笑みかけました。',0,'視線と笑顔を赤ちゃんという一点に向けるので smile at です。'],
+      ['relation','We can buy tickets','at','a discount.','私たちは割引価格でチケットを買えます。',1,'割引という価格水準の一点を示す at a discount です。'],
+      ['relation','She is bad','at','remembering names.','彼女は名前を覚えるのが苦手です。',0,'特定の対象が不得意な場合も bad at です。'],
+      ['relation','He glanced','at','his watch.','彼は腕時計をちらっと見ました。',0,'視線を一瞬だけ一点に向ける動きは glance at です。'],
+      ['relation','The store sells apples','at','100 yen each.','その店はりんごを1個100円で売っています。',1,'単価という数値の一点を示すので at です。'],
+      ['relation','They aimed','at','winning the prize.','彼らは賞を取ることを目指しました。',0,'目標という一点に照準を合わせる動きは aim at です。'],
+      ['relation','I am','at','a loss for words.','私は言葉に詰まっています。',0,'迷いの地点に立ち止まっている状態を at a loss で表します。'],
+
+      // --- 4. TO (50) ---
+      ['relation','We walked','to','the park.','私たちは公園まで歩きました。',0,'ゴール（公園）に到達する矢印は to を使います。'],
+      ['relation','She goes','to','school by bus.','彼女はバスで学校へ行きます。',0,'目的地へ到着する移動の矢印は to です。'],
+      ['relation','He gave a nice watch','to','his father.','彼は父親に素敵な腕時計をあげました。',1,'モノが相手の手元まで届く矢印なので to を使います。'],
+      ['relation','Please send an email','to','me.','私にメールを送ってください。',1,'メッセージが相手に届く方向・到達点は to です。'],
+      ['relation','Can you show the photo','to','us?','私たちにその写真を見せてくれますか？',1,'視線や対象を相手へ届ける矢印は to です。'],
+      ['relation','She listened carefully','to','the teacher.','彼女は先生の話を注意深く聞きました。',1,'意識の矢印を相手へピタッと向けるので to です。'],
+      ['relation','Welcome','to','Japan!','日本へようこそ！',0,'日本という目的地へ到着したことを歓迎する to です。'],
+      ['relation','He threw the ball','to','his brother.','彼は弟にボールを投げました。',1,'ボールが相手の手元に届く矢印なので to です。'],
+      ['relation','We flew','to','New York yesterday.','私たちは昨日ニューヨークへ飛行機で行きました。',0,'目的地に到着する移動の矢印は to です。'],
+      ['relation','Please pass the salt','to','me.','私に塩を取ってください。',1,'塩が相手の手元に届く矢印なので pass A to B です。'],
+      ['relation','She spoke','to','the manager.','彼女は店長に話しかけました。',1,'言葉を相手に届ける矢印は speak to です。'],
+      ['relation','I wrote a long letter','to','my grandmother.','私は祖母に長い手紙を書きました。',1,'手紙が相手へ届く到達点を示すので to です。'],
+      ['relation','He lent his umbrella','to','a classmate.','彼はクラスメートに傘を貸しました。',1,'傘が相手へ渡る矢印なので lend A to B です。'],
+      ['relation','Turn','to','page 25.','25ページを開きなさい。',0,'到達すべきページ番号を示す矢印も to です。'],
+      ['relation','This road leads','to','the station.','この道は駅へ通じています。',0,'道の先が駅というゴールに到達する矢印は lead to です。'],
+      ['relation','She explained the plan','to','everyone.','彼女はみんなにその計画を説明しました。',1,'説明の内容を相手に届けるので explain A to B です。'],
+      ['relation','I returned the book','to','the library.','私は図書館にその本を返却しました。',0,'本を元の場所（到達点）へ戻す矢印は to です。'],
+      ['relation','He pointed','to','the distant mountain.','彼は遠くの山を指さしました。',0,'指先の矢印が対象に向かうので point to です。'],
+      ['relation','They moved','to','Sapporo last spring.','彼らは去年の春に札幌へ引っ越しました。',0,'新しい居住地へ到達する移動なので move to です。'],
+      ['relation','Translate this sentence','to','Japanese.','この文を日本語に翻訳しなさい。',0,'変換後の到達点（日本語）を示す矢印も to です。'],
+      ['relation','She introduced her friend','to','me.','彼女は私に友だちを紹介しました。',1,'相手に引き合わせる到達の矢印は introduce A to B です。'],
+      ['relation','The children ran','to','their mother.','子どもたちは母親のもとへ駆け寄りました。',1,'母親というゴールに到達する動きは run to です。'],
+      ['relation','I look forward','to','seeing you.','あなたに会うことを楽しみにしています。',1,'気持ちが未来の出来事へ向かって伸びる矢印なので to です。'],
+      ['relation','This key belongs','to','Ken.','この鍵はケンのものです。',1,'所有権の矢印がケンにピタッとつながるので belong to です。'],
+      ['relation','He apologized','to','his teacher.','彼は先生に謝罪しました。',1,'謝罪の言葉を届ける相手は apologize to 人 です。'],
+      ['relation','Add some salt','to','the soup.','スープに塩を少し加えなさい。',0,'加える先の到達点（スープ）を示すので add A to B です。'],
+      ['relation','Compare your answer','to','the model.','あなたの答えを模範解答と比べてみなさい。',0,'比較対象へ意識の矢印を向ける compare A to B です。'],
+      ['relation','The library is open from 9','to','6.','図書館は9時から6時まで開いています。',0,'終了時刻という時間軸の到達点も from A to B で表します。'],
+      ['relation','It is ten minutes','to','five.','5時10分前です。',0,'5時という到達点に向かってあと10分という意味の to です。'],
+      ['relation','She is always kind','to','animals.','彼女はいつも動物に優しいです。',1,'優しさの矢印が向かって届く相手を示すので kind to です。'],
+      ['relation','This song sounds familiar','to','me.','この曲は私には聞き覚えがあります。',1,'感覚が届く相手を示すので familiar to me です。'],
+      ['relation','Smoking is harmful','to','your health.','喫煙は健康に有害です。',0,'悪影響が及ぶ到達先を示すので harmful to です。'],
+      ['relation','He is married','to','a pianist.','彼はピアニストと結婚しています。',1,'相手と結びつく到達点を示すので married to です。'],
+      ['relation','Please reply','to','this message soon.','このメッセージにすぐに返信してください。',0,'返答の矢印を向ける先なので reply to です。'],
+      ['relation','We invited twenty guests','to','the party.','パーティーに20人のゲストを招待しました。',0,'招き入れる目的地への矢印は invite A to B です。'],
+      ['relation','She tied the dog','to','the pole.','彼女は犬を柱につなぎました。',0,'紐の先を柱という到達点に結びつけるので tie A to B です。'],
+      ['relation','The score was three','to','two.','スコアは3対2でした。',0,'2つの数値を突き合わせる対応の矢印も to です。'],
+      ['relation','He confessed his mistake','to','his boss.','彼は上司にミスを打ち明けました。',1,'告白する相手（到達点）は confess to です。'],
+      ['relation','We drove','to','the coast.','私たちは海岸までドライブしました。',0,'海岸というゴールへ到着する運転なので drive to です。'],
+      ['relation','She prefers tea','to','coffee.','彼女はコーヒーよりも紅茶を好みます。',0,'意識の矢印が紅茶のほうへ強く向かうので prefer A to B です。'],
+      ['relation','The answer is obvious','to','everyone.','その答えは誰にとっても明らかです。',1,'理解が届く相手を示すので obvious to です。'],
+      ['relation','He donated money','to','the hospital.','彼は病院にお金を寄付しました。',0,'寄付金が届く先（病院）は donate A to B です。'],
+      ['relation','Please stick','to','the schedule.','スケジュール通りに進めてください。',0,'予定のラインにピタッとくっついて離れない stick to です。'],
+      ['relation','She whispered a secret','to','her friend.','彼女は友だちに秘密をささやきました。',1,'ささやき声を届ける相手は whisper A to B です。'],
+      ['relation','The temperature dropped','to','zero.','気温が0度まで下がりました。',0,'到達した温度の目盛り（0度）を示す矢印は to です。'],
+      ['relation','He adapted quickly','to','the new school.','彼は新しい学校に素早く馴染みました。',0,'新しい環境へ自分を合わせていく矢印は adapt to です。'],
+      ['relation','I am used','to','getting up early.','私は早起きすることに慣れています。',0,'習慣という到達点に馴染んでいる状態が be used to です。'],
+      ['relation','This bridge connects the island','to','the city.','この橋は島と街をつないでいます。',0,'到達して結ぶ矢印は connect A to B です。'],
+      ['relation','She devoted her life','to','science.','彼女は科学に生涯を捧げました。',0,'エネルギーの矢印を科学へ注ぎ込むので devote A to B です。'],
+      ['relation','Let us get back','to','work.','仕事に戻りましょう。',0,'仕事という元の持ち場（到達点）へ帰るので get back to です。'],
+
+      // --- 5. FOR (50) ---
+      ['relation','This train is','for','Osaka.','この電車は大阪行きです。',0,'まだ到着しておらずそちらへ向かう向きを示すので for です。'],
+      ['relation','I bought a birthday gift','for','you.','あなたのために誕生日プレゼントを買いました。',1,'誰かの利益・目的に向ける気持ちは for を使います。'],
+      ['relation','Let us leave','for','London tomorrow.','明日ロンドンへ向けて出発しましょう。',0,'目的地へ向けて出発するときは向きを表す for です。'],
+      ['relation','Is this letter','for','me?','この手紙は私宛てですか？',1,'受け手・対象を示すときは for me です。'],
+      ['relation','Thank you very much','for','your help.','助けてくれて本当にありがとう。',1,'感謝の気持ちが向かう理由・対象を表すときは for を使います。'],
+      ['relation','Vegetables are good','for','your health.','野菜は健康に良いです。',1,'健康という目的に向けてプラスになるので good for 〜 です。'],
+      ['relation','She made a warm soup','for','her friend.','彼女は友だちのために温かいスープを作りました。',1,'誰かのために行動する受益者を表す for です。'],
+      ['time','I studied English','for','three hours.','私は3時間英語を勉強しました。',2,'3時間という長さ（区間）を表すときは for を使います。'],
+      ['time','They stayed in Kyoto','for','two weeks.','彼らは2週間京都に滞在しました。',2,'どれだけの期間続いたかの長さには for を使います。'],
+      ['time','We have lived here','for','ten years.','私たちはここに10年間住んでいます。',2,'10年間という時間の長さを測るものさしは for です。'],
+      ['time','She has been in bed','for','five days.','彼女は5日間寝込んでいます。',2,'5日間という長さを表すので for five days です。'],
+      ['time','Let us take a break','for','ten minutes.','10分間休憩をとりましょう。',2,'10分間という区間を示すので for です。'],
+      ['relation','He is looking','for','his lost keys.','彼は失くした鍵を探しています。',1,'鍵という目標に向かって意識を向けるので look for です。'],
+      ['relation','We are waiting','for','the bus.','私たちはバスを待っています。',1,'バスの到着という目的に向かって待つので wait for です。'],
+      ['relation','She studied hard','for','the exam.','彼女は試験のために一生懸命勉強しました。',1,'試験合格という目標に向かう努力なので for です。'],
+      ['relation','I paid 2,000 yen','for','this book.','私はこの本に対して2,000円を支払いました。',1,'お金と引き換えの対象を示すのも for です。'],
+      ['relation','Kyoto is famous','for','its old temples.','京都は古いお寺で有名です。',1,'有名である理由・根拠を示すときは famous for を使います。'],
+      ['relation','He apologized','for','being late.','彼は遅刻したことを謝罪しました。',1,'謝罪の理由・原因の方向を示すので apologize for です。'],
+      ['relation','Can you open the door','for','me?','私のためにドアを開けてくれますか？',1,'相手を助ける受益の気持ちを表す for me です。'],
+      ['relation','She prepared dinner','for','the family.','彼女は家族のために夕食を準備しました。',1,'家族という受け手のために準備するので for です。'],
+      ['relation','This tool is used','for','cutting wood.','この道具は木を切るために使われます。',1,'用途・目的を示すときは for 〜ing を使います。'],
+      ['relation','We voted','for','the new plan.','私たちは新しい計画に賛成票を投じました。',1,'支持・賛成の気持ちを向ける対象は vote for です。'],
+      ['relation','He applied','for','the job yesterday.','彼は昨日その仕事に応募しました。',1,'職という目標に向かって申し込むので apply for です。'],
+      ['relation','I ordered a steak','for','lunch.','私は昼食にステーキを注文しました。',1,'昼食という目的に向けて選ぶので for lunch です。'],
+      ['relation','She saved a seat','for','her friend.','彼女は友だちのために席を取っておきました。',1,'友だちという受益者のために確保する for です。'],
+      ['relation','What are you looking','for','?','あなたは何を探しているのですか？',1,'探している目標物を問う look for です。'],
+      ['relation','This medicine is good','for','a headache.','この薬は頭痛に効きます。',1,'効能が向かう対象を示すので good for です。'],
+      ['relation','He was punished','for','breaking the rule.','彼はルールを破ったことで罰せられました。',1,'罰を受ける理由・原因を示すので for です。'],
+      ['relation','She cares deeply','for','her grandmother.','彼女は祖母を深く大切に思っています。',1,'思いやりの気持ちが向かう相手なので care for です。'],
+      ['relation','Let us go','for','a walk in the park.','公園へ散歩に行きましょう。',1,'散歩という目的のために出かけるので go for a walk です。'],
+      ['relation','We booked a table','for','four people.','私たちは4人用のテーブルを予約しました。',1,'4人という対象に向けた予約なので for です。'],
+      ['relation','He is tall','for','his age.','彼は年齢のわりには背が高いです。',1,'年齢という基準に照らし合わせてという比較基準も for です。'],
+      ['relation','Thank you','for','inviting me.','招待してくれてありがとう。',1,'感謝の対象となる行為を示すので for 〜ing です。'],
+      ['relation','She bought flowers','for','Mother’s Day.','彼女は母の日のために花を買いました。',1,'母の日というイベントの目的に向けた買い物なので for です。'],
+      ['relation','The flight','for','Paris was delayed.','パリ行きの便は遅延しました。',0,'パリという目的地へ向かう路線を示すので for Paris です。'],
+      ['relation','I am sorry','for','troubling you.','お手数をおかけして申し訳ありません。',1,'申し訳ない気持ちの理由・対象は sorry for です。'],
+      ['relation','They searched the room','for','the ring.','彼らは指輪を求めて部屋を捜索しました。',1,'指輪という目標に向かって探すので search 〜 for です。'],
+      ['relation','He works','for','a global company.','彼はグローバル企業に勤めています。',1,'所属先・貢献先を示すときは work for です。'],
+      ['relation','Is it easy','for','you to get up early?','あなたにとって早起きは簡単ですか？',1,'判断の基準となる対象人物を示すときは for you です。'],
+      ['relation','She exchanged yen','for','dollars.','彼女は円をドルに両替しました。',1,'交換して手に入れる目標物の向きを示す for です。'],
+      ['relation','We cheered','for','our school team.','私たちは学校のチームを応援しました。',1,'声援の気持ちを向ける対象は cheer for です。'],
+      ['relation','This box is too heavy','for','a child to carry.','この箱は子どもが運ぶには重すぎます。',1,'動作の主体・対象を示す for 人 to 〜 の構文です。'],
+      ['relation','He asked his boss','for','a day off.','彼は上司に休暇を求めました。',1,'欲しいものに向かって頼むので ask 〜 for です。'],
+      ['relation','She is responsible','for','this project.','彼女はこのプロジェクトの責任者です。',1,'責任が向かう対象を示すので responsible for です。'],
+      ['time','We have been friends','for','twenty years.','私たちは20年間ずっと友だちです。',2,'20年間という期間の継続を表す for です。'],
+      ['relation','I will do it','for','free.','私はそれを無料でやります。',1,'対価ゼロという条件に向けた交換を表す for free です。'],
+      ['relation','They set out','for','the summit at dawn.','彼らは夜明けに山頂へ向けて出発しました。',0,'山頂という方向へ旅立つので set out for です。'],
+      ['relation','She knitted a scarf','for','her brother.','彼女は弟のためにマフラーを編みました。',1,'弟という受け手のために作る受益の for です。'],
+      ['relation','What do you want','for','your birthday?','誕生日に何が欲しいですか？',1,'誕生日という目的に対して欲しいものを尋ねる for です。'],
+      ['relation','Let us hope','for','the best.','最善の結果を願いましょう。',1,'最善という目標に向かって希望を抱くので hope for です。'],
+
+      // --- 6. BY (50) ---
+      ['space','He is sitting','by','the window.','彼は窓のそばに座っています。',0,'接触はせずすぐ隣に寄り添う距離感なので by です。'],
+      ['space','There is a small cafe','by','the river.','川のそばに小さなカフェがあります。',0,'川のすぐ隣（ほとり）にある位置関係は by で表します。'],
+      ['space','Come and sit','by','me.','こっちへ来て私のそばに座りなさい。',0,'人のすぐ隣に寄り添う位置は by です。'],
+      ['space','They live in a house','by','the sea.','彼らは海辺の家に住んでいます。',0,'海のすぐ近くという距離感は by the sea で表します。'],
+      ['space','A lamp stood','by','the bed.','ベッドのそばにランプが立っていました。',0,'ベッドのすぐ横に寄り添って置かれているので by です。'],
+      ['space','We walked','by','the old church.','私たちは古い教会のそばを通り過ぎました。',0,'対象物のすぐ横を通過する動きも walk by で表します。'],
+      ['space','There is a mailbox','by','the entrance.','入口のそばに郵便ポストがあります。',0,'入口のすぐ隣にある位置関係は by です。'],
+      ['space','She stood','by','the fireplace.','彼女は暖炉のそばに立ちました。',0,'暖炉のすぐ近くにいる距離感は by です。'],
+      ['time','Please finish this report','by','5 pm.','午後5時までにこのレポートを終えてください。',1,'期限ラインの手前で完了する「〜までに（期限）」は by です。'],
+      ['time','You must return the book','by','Friday.','金曜日までにその本を返却しなければなりません。',1,'デッドライン（期限）を示すときは by を使います。'],
+      ['time','Can you send the file','by','tomorrow morning?','明日の朝までにファイルを送ってもらえますか？',1,'明日の朝という期限までに完了を求めるので by です。'],
+      ['time','We must arrive there','by','8:30.','8時半までにそこへ到着しなければなりません。',1,'8時半というタイムリミットの手前までを表す by です。'],
+      ['time','I will be back','by','dinner time.','夕食の時間までには戻ります。',1,'夕食の時間という期限までに戻ることを示す by です。'],
+      ['time','Submit the form','by','the end of this month.','今月末までに申込書を提出してください。',1,'月末という締め切りを表すので by です。'],
+      ['time','The bridge will be done','by','next spring.','その橋は来春までには完成するでしょう。',1,'来春という期限までに完了する見込みを表す by です。'],
+      ['time','Lock the door','by','midnight.','真夜中までにドアに鍵をかけてください。',1,'午前0時のデッドラインの手前までに完了する by です。'],
+      ['relation','My father goes to work','by','train.','父は電車で通勤しています。',0,'交通・通信の手段を表すときは by を使います。'],
+      ['relation','We traveled there','by','airplane.','私たちは飛行機でそこへ旅行しました。',0,'乗り物などの移動手段は冠詞なしで by airplane とします。'],
+      ['relation','Please contact me','by','email.','メールで私に連絡してください。',0,'通信・連絡の手段を表すときも by email です。'],
+      ['relation','This song was written','by','a famous singer.','この歌は有名な歌手によって書かれました。',0,'動作の行為者（〜によって）を表すのも by の働きです。'],
+      ['relation','You can pay','by','credit card here.','ここではクレジットカードでお支払いいただけます。',0,'決済の手段を表すときも by credit card です。'],
+      ['relation','I learned the news','by','radio.','私はラジオでそのニュースを知りました。',0,'情報伝達の手段を表すときは by radio です。'],
+      ['relation','She goes to school','by','bicycle.','彼女は自転車で学校へ行きます。',0,'自転車という交通手段を使うので by bicycle です。'],
+      ['relation','The letter was delivered','by','hand.','その手紙は手渡しで届けられました。',0,'手段・方法を表す慣用表現も by hand です。'],
+      ['relation','He took the child','by','the hand.','彼はその子どもの手を取りました。',0,'身体の一部（そばの接点）をつかむときも by the hand とします。'],
+      ['relation','The novel was written','by','Soseki.','その小説は漱石によって書かれました。',0,'受動態で行為者を示す by です。'],
+      ['relation','We crossed the river','by','boat.','私たちはボートで川を渡りました。',0,'ボートという移動手段を使うので by boat です。'],
+      ['relation','Improve your English','by','reading books.','本を読むことによって英語を上達させなさい。',0,'「〜することによって」は by 〜ing で表します。'],
+      ['relation','I met him','by','chance at the station.','私は駅で偶然彼に会いました。',0,'偶然という巡り合わせによる出来事を by chance と呼びます。'],
+      ['relation','I took your umbrella','by','mistake.','間違えてあなたの傘を持っていってしまいました。',0,'間違いという経緯による行為は by mistake です。'],
+      ['relation','The room is heated','by','electricity.','その部屋は電気によって暖房されています。',0,'動力源の手段を表すときも by です。'],
+      ['relation','Apples are sold','by','weight here.','ここではりんごは量り売りで売られています。',0,'計量・販売の基準単位を示すときも by weight です。'],
+      ['relation','He is paid','by','the hour.','彼は時給制で給料をもらっています。',0,'時間単位の基準を示すときは by the hour を使います。'],
+      ['relation','Little','by','little, he got better.','少しずつ、彼は良くなりました。',0,'段階が隣り合って積み重なる様子を little by little で表します。'],
+      ['relation','They walked side','by','side.','彼らは横並びで歩きました。',0,'すぐ隣に寄り添うイメージから side by side と言います。'],
+      ['relation','She learned the poem','by','heart.','彼女はその詩を暗記しました。',0,'記憶という手段で覚える慣用表現が by heart です。'],
+      ['relation','Our team won','by','two points.','私たちのチームは2点差で勝ちました。',0,'数値の差を表すときも by two points です。'],
+      ['relation','He is taller than me','by','five centimeters.','彼は私より5センチ背が高いです。',0,'差の程度を表すときも by です。'],
+      ['relation','Send the package','by','airmail.','その小包を航空便で送ってください。',0,'郵送の手段を表すときは by airmail を使います。'],
+      ['relation','She lives all','by','herself.','彼女はたった一人で暮らしています。',0,'自分自身のそばだけにいる状態が by oneself です。'],
+      ['relation','The window was broken','by','the wind.','その窓は風によって割られました。',0,'原因となる自然現象を示す by です。'],
+      ['relation','We traveled','by','bus.','私たちはバスで旅行しました。',0,'バスという移動手段を使うので by bus です。'],
+      ['relation','Do not judge a book','by','its cover.','表紙によって本を判断してはいけません。',0,'判断の基準・手段を示すときは judge 〜 by です。'],
+      ['relation','The machine is run','by','a computer.','その機械はコンピューターによって動いています。',0,'制御する主体・手段を示す by です。'],
+      ['relation','I knew him','by','his voice.','私は声で彼だと分かりました。',0,'識別の手がかりを示すときは by his voice です。'],
+      ['relation','Step','by','step, you will learn it.','一歩ずつ進めば、それを習得できます。',0,'一歩の隣に次の一歩を並べるイメージが step by step です。'],
+      ['relation','The house was designed','by','a famous architect.','その家は有名な建築家によって設計されました。',0,'設計者を表す受動態の by です。'],
+      ['relation','Can I pay','by','cash?','現金で支払えますか？',0,'支払い手段を示すときは by cash です。'],
+      ['relation','He entered','by','the back door.','彼は裏口を通って入りました。',0,'経由する通路も by the back door で表します。'],
+      ['relation','She succeeded','by','working hard.','彼女は一生懸命働くことによって成功しました。',0,'成功の手段を示す by 〜ing です。'],
+
+      // --- 7. WITH (50) ---
+      ['relation','I went shopping','with','my sister.','私は姉と一緒に買い物に行きました。',0,'誰かと一緒に（同伴）は寄り添うイメージの with です。'],
+      ['relation','He wrote his name','with','a red pen.','彼は赤いペンで自分の名前を書きました。',1,'手に持って使う道具（〜を使って）には with を使います。'],
+      ['relation','Cut the paper','with','scissors.','ハサミでその紙を切りなさい。',1,'手で操作する道具を表すときは with を使います。'],
+      ['relation','Do you drink coffee','with','milk?','コーヒーにミルクを入れて飲みますか？',0,'コーヒーとミルクを一緒に合わせるイメージも with です。'],
+      ['relation','She lives','with','her grandparents.','彼女は祖父母と一緒に暮らしています。',0,'誰かと共に生活する（同伴）は with です。'],
+      ['relation','He opened the door','with','a silver key.','彼は銀色の鍵でドアを開けました。',1,'手に持って使う道具（鍵）なので with a key です。'],
+      ['relation','I eat pancakes','with','honey.','私はハチミツを添えてパンケーキを食べます。',0,'付け合わせ・一緒に楽しむものも with でつなぎます。'],
+      ['relation','We eat soup','with','a spoon.','私たちはスプーンを使ってスープを食べます。',1,'手に持って使う食事の道具なので with a spoon です。'],
+      ['relation','We eat rice','with','chopsticks.','私たちはお箸を使ってご飯を食べます。',1,'手に持って使う道具（お箸）は with chopsticks です。'],
+      ['relation','She took a picture','with','her new camera.','彼女は新しいカメラで写真を撮りました。',1,'カメラという道具を使って撮影するので with です。'],
+      ['relation','He painted the wall','with','a brush.','彼は刷毛で壁を塗りました。',1,'刷毛という道具を手に持って使うので with です。'],
+      ['relation','I played tennis','with','Tom yesterday.','私は昨日トムと一緒にテニスをしました。',0,'対戦・練習を共にする相手を表す同伴の with です。'],
+      ['relation','She came to the party','with','her husband.','彼女は夫と一緒にパーティーに来ました。',0,'一緒に同行するパートナーを表す with です。'],
+      ['relation','The girl','with','long hair is my cousin.','長い髪をした少女は私のいとこです。',0,'長い髪を伴っているという特徴を表す with です。'],
+      ['relation','I bought a house','with','a big garden.','私は大きな庭付きの家を買いました。',0,'大きな庭を伴っているという付属物を表す with です。'],
+      ['relation','He looked at me','with','a big smile.','彼は満面の笑みを浮かべて私を見ました。',0,'表情や態度を伴う様子を表すときも with a smile です。'],
+      ['relation','Fill the glass','with','cold water.','グラスを冷たい水でいっぱいにしなさい。',1,'〜で満たす（fill A with B）は中身を伴わせる with です。'],
+      ['relation','The mountain was covered','with','snow.','山は雪で覆われていました。',1,'雪という材料を伴って覆われるので covered with です。'],
+      ['relation','She wiped her hands','with','a towel.','彼女はタオルで手を拭きました。',1,'タオルという道具を使って拭くので with です。'],
+      ['relation','He dug a hole','with','a shovel.','彼はシャベルで穴を掘りました。',1,'シャベルという道具を手に持って使うので with です。'],
+      ['relation','I agree','with','your opinion.','私はあなたの意見に賛成です。',0,'相手と気持ちを一つにして寄り添うイメージが agree with です。'],
+      ['relation','What is wrong','with','this computer?','このコンピューターはどこか調子が悪いのですか？',0,'対象に何が起きているかを尋ねる with です。'],
+      ['relation','She listened','with','great interest.','彼女は非常に関心を持って聞きました。',0,'感情・態度を伴う働きをする with です。'],
+      ['relation','He fixed the chair','with','a hammer.','彼は金づちを使って椅子を修理しました。',1,'修理に使う道具を表すので with です。'],
+      ['relation','Do you have any money','with','you?','今お金を持ち合わせていますか？',0,'身につけて携帯している状態を表す with you です。'],
+      ['relation','The man','with','glasses is our teacher.','眼鏡をかけた男性は私たちの先生です。',0,'眼鏡という身につけている特徴を表す with です。'],
+      ['relation','We celebrated','with','juice.','私たちはジュースでお祝いをしました。',0,'飲み物を伴って祝うイメージなので with です。'],
+      ['relation','Handle this box','with','care.','この箱は注意して扱ってください。',0,'注意深くを表す慣用表現が with care です。'],
+      ['relation','She was shaking','with','cold.','彼女は寒さで震えていました。',0,'生理現象の直接的な原因を伴うときも with cold です。'],
+      ['relation','He jumped','with','joy.','彼は喜んで飛び上がりました。',0,'喜びという感情を伴って跳ねる様子を表す with joy です。'],
+      ['relation','I shared my lunch','with','my friend.','私は友だちと昼食を分け合いました。',0,'相手と一緒に共有する動きは share A with B です。'],
+      ['relation','Compare this picture','with','that one.','この絵とあの絵を比べてみてください。',0,'2つを横に並べて比較するイメージが compare A with B です。'],
+      ['relation','She is popular','with','young people.','彼女は若者たちの間で人気があります。',0,'若者たちと一緒にあって好まれている様子が popular with です。'],
+      ['relation','Be patient','with','beginners.','初心者に対しては辛抱強く接してください。',0,'相手に向き合って寄り添う態度は patient with です。'],
+      ['relation','He washed the car','with','a sponge.','彼はスポンジで車を洗いました。',1,'スポンジという道具を使って洗うので with です。'],
+      ['relation','The street was crowded','with','tourists.','その通りは観光客で混雑していました。',1,'人々で満たされている状態が crowded with です。'],
+      ['relation','She stirred the tea','with','a spoon.','彼女はスプーンで紅茶をかき混ぜました。',1,'スプーンという道具を使って混ぜるので with です。'],
+      ['relation','Can I help you','with','your bag?','カバンをお手伝いしましょうか？',0,'相手と一緒に荷物を持つイメージが help 人 with 物 です。'],
+      ['relation','He cut the steak','with','a sharp knife.','彼は鋭いナイフでステーキを切りました。',1,'ナイフという道具を使って切るので with です。'],
+      ['relation','We stayed','with','a host family.','私たちはホストファミリーと一緒に滞在しました。',0,'家族のもとで共に暮らすは stay with です。'],
+      ['relation','The sky was filled','with','stars.','空は星でいっぱいでした。',1,'星という要素で満たされている状態が filled with です。'],
+      ['relation','She greeted us','with','a warm smile.','彼女は温かい笑顔で私たちを迎えてくれました。',0,'笑顔を伴って迎える様子を表す with です。'],
+      ['relation','He tied the box','with','a rope.','彼はロープでその箱を縛りました。',1,'ロープという道具・材料を使って縛るので with です。'],
+      ['relation','I am satisfied','with','the result.','私はその結果に満足しています。',0,'結果と気持ちが一致して満たされる状態が satisfied with です。'],
+      ['relation','She walked','with','her dog.','彼女は犬を連れて散歩しました。',0,'ペットと一緒に行動する同伴の with です。'],
+      ['relation','He answered','with','confidence.','彼は自信を持って答えました。',0,'自信を伴って答える様子を表す with confidence です。'],
+      ['relation','Do not play','with','matches.','マッチで遊んではいけません。',1,'マッチという物を手にして遊ぶので play with です。'],
+      ['relation','She decorated the cake','with','strawberries.','彼女はイチゴでケーキを飾りました。',1,'イチゴを添えて飾るので decorate A with B です。'],
+      ['relation','I have no problem','with','that idea.','そのアイデアに何の問題もありません。',0,'その考えと一緒に行動することに支障がない意味の with です。'],
+      ['relation','He signed the paper','with','a pen.','彼はペンで書類に署名しました。',1,'ペンという道具を使って署名するので with です。'],
+
+      // --- 8. UNDER (50) ---
+      ['space','The cat is sleeping','under','the table.','猫はテーブルの下で眠っています。',0,'テーブルの真下（上から覆われる位置）なので under です。'],
+      ['space','We rested','under','a big tree.','私たちは大きな木の下で休みました。',0,'木の枝葉に上から覆われた真下の空間は under です。'],
+      ['space','My shoes are','under','the bed.','私の靴はベッドの下にあります。',0,'ベッドの真下に隠れる位置なので under です。'],
+      ['space','The dog hid','under','the blanket.','犬は毛布の下に隠れました。',0,'毛布に上から覆われている状態なので under です。'],
+      ['space','A small boat passed','under','the bridge.','小さな船が橋の下を通過しました。',0,'橋桁に上から覆われた水面の位置を通るので under です。'],
+      ['space','There is a toy','under','the sofa.','ソファの下におもちゃがあります。',0,'ソファの真下の隙間にある位置は under です。'],
+      ['space','Two friends walked','under','one umbrella.','二人の友だちが一つの傘の下を歩きました。',0,'傘に上から覆われた空間に一緒に入るイメージなので under です。'],
+      ['space','We camped','under','the starry sky.','私たちは満天の星空の下でキャンプをしました。',0,'夜空に上から包まれる真下の空間は under the sky です。'],
+      ['space','He put his bag','under','his desk.','彼は自分の机の下にカバンを置きました。',0,'机の天板の真下に置くので under his desk です。'],
+      ['space','Many fish swim','under','the ice in winter.','冬には多くの魚が氷の下で泳いでいます。',0,'氷の層の真下にいるので under the ice です。'],
+      ['space','She wore a sweater','under','her coat.','彼女はコートの下にセーターを着ていました。',0,'コートに上から覆われる内側の層も under her coat です。'],
+      ['space','The subway runs','under','the city.','地下鉄は街の地下を走っています。',0,'地面の下（地下）を通る位置関係も under です。'],
+      ['space','I found the coin','under','the carpet.','私はカーペットの下でコインを見つけました。',0,'カーペットに上から覆い隠された真下なので under です。'],
+      ['space','He held a book','under','his arm.','彼は脇の下に本を抱えていました。',0,'腕の真下に挟み込む位置なので under his arm です。'],
+      ['space','The box was buried','under','the ground.','その箱は地面の下に埋められていました。',0,'土の層の下に覆われているので under the ground です。'],
+      ['space','There is a tunnel','under','the sea.','海底にトンネルがあります。',0,'海面より下の空間なので under the sea です。'],
+      ['space','The ball rolled','under','the car.','ボールが車の下へ転がり込みました。',0,'車体の真下の空間へ入り込むので under the car です。'],
+      ['space','She sat','under','a beach parasol.','彼女はビーチパラソルの下に座りました。',0,'パラソルに上から日差しを遮られる真下なので under です。'],
+      ['space','Write your name','under','the picture.','その絵の下に名前を書きなさい。',0,'紙面上で絵の真下にある位置も under the picture です。'],
+      ['space','The roots grow','under','the soil.','根は土の下に伸びます。',0,'土壌の層より下にあるので under です。'],
+      ['space','He kept his key','under','his pillow.','彼は枕の下に鍵を入れていました。',0,'枕の真下に隠す位置なので under his pillow です。'],
+      ['space','Water flows','under','the wooden floor.','水が木の床の下を流れています。',0,'床板の真下を流れる位置関係は under です。'],
+      ['space','They took shelter','under','a cliff.','彼らは崖の下に避難しました。',0,'張り出した崖の真下に身を寄せるので under です。'],
+      ['space','There are dark circles','under','his eyes.','彼の目の下にはクマができています。',0,'目のすぐ下の位置を指すので under his eyes です。'],
+      ['space','The submarine moved','under','the surface.','潜水艦は水面下を移動しました。',0,'水面より下の水中なので under the surface です。'],
+      ['relation','Children','under','twelve enter for free.','12歳未満の子どもは無料で入場できます。',0,'基準となる年齢より下回る（〜未満）も under で表します。'],
+      ['relation','The building is','under','construction now.','その建物は現在工事中です。',0,'進行の影響下にある状態を表す under construction です。'],
+      ['relation','Everything is','under','control.','すべて順調（制御下）です。',0,'管理・支配の枠の下に収まっている状態が under control です。'],
+      ['relation','He works','under','a lot of pressure.','彼は大きなプレッシャーの下で働いています。',0,'重圧に上から押さえつけられるイメージが under pressure です。'],
+      ['relation','The bridge is','under','repair.','その橋は修理中です。',0,'修理という作業状態の下にあることを under repair で表します。'],
+      ['relation','She studied','under','a famous professor.','彼女は有名な教授の下で学びました。',0,'指導者の指導の下にある関係も under です。'],
+      ['relation','The temperature fell','under','zero last night.','昨夜、気温は氷点下に下がりました。',0,'0度という基準ラインより下回るので under zero です。'],
+      ['relation','The plan is still','under','discussion.','その計画はまだ議論中です。',0,'議論というプロセス進行中の状態を表す under discussion です。'],
+      ['relation','He ran the race','under','ten seconds.','彼は10秒未満で走り切りました。',0,'10秒という基準タイムを下回る記録なので under です。'],
+      ['relation','Fifty people work','under','him.','50人の部下が彼の下で働いています。',0,'組織の階層で彼の管理下にいることを under him で表します。'],
+      ['relation','The suspect is','under','arrest.','その容疑者は逮捕されています。',0,'法的な拘束状態の下にあることを under arrest と表現します。'],
+      ['relation','The road is','under','heavy traffic.','その道路は激しい渋滞下にあります。',0,'負荷や状況の影響を受けている状態を表す under です。'],
+      ['relation','We can do it','under','these conditions.','これらの条件の下でなら実行できます。',0,'前提条件の枠組みの下にあることを under 〜 conditions と言います。'],
+      ['relation','She writes','under','a pen name.','彼女はペンネームで執筆しています。',0,'ある名前の看板の下に隠れて活動するイメージも under です。'],
+      ['relation','The town was','under','water after the rain.','大雨の後、その町は水没していました。',0,'水に覆われて沈んでいる状態も under water です。'],
+      ['relation','The patient is','under','medical care.','その患者は治療を受けています。',0,'ケアや保護の下にある状態を under 〜 care で表します。'],
+      ['relation','It cost','under','1,000 yen.','それは1,000円未満でした。',0,'金額の基準ラインより下であることを示す under です。'],
+      ['relation','The new rule is','under','review.','その新しいルールは現在見直し中です。',0,'審査のプロセス下にあることを under review で表します。'],
+      ['relation','She acted','under','orders.','彼女は命令の下で行動しました。',0,'命令という指示の支配下にあるので under orders です。'],
+      ['relation','The forest is','under','protection.','その森は保護下にあります。',0,'保護の傘の下に守られているイメージが under protection です。'],
+      ['relation','The bag weighs','under','5 kilograms.','そのカバンは5キロ未満です。',0,'5キロという数値の基準を下回るので under です。'],
+      ['relation','The site is','under','maintenance.','そのサイトは現在メンテナンス中です。',0,'保守作業の進行下にある状態が under maintenance です。'],
+      ['relation','I was','under','the impression he knew.','私は彼が知っていると思い込んでいました。',0,'思い込みの影響下にあることを under the impression と呼びます。'],
+      ['relation','No one','under','eighteen can drive.','18歳未満の人は運転できません。',0,'18歳という年齢基準より下回る（〜未満）を表す under です。'],
+      ['relation','The castle was','under','attack.','その城は攻撃を受けていました。',0,'攻撃にさらされている状態を表す under attack です。'],
+
+      // --- 9. OVER (50) ---
+      ['space','The plane flew','over','the mountains.','飛行機が山々の上空を越えて飛びました。',0,'接触せずに離れた上方をアーチ状に越える動きは over です。'],
+      ['space','A white bird flew','over','our heads.','白い鳥が私たちの頭上を越えて飛びました。',0,'頭に触れずに上空を通過していくので over です。'],
+      ['space','The cat jumped','over','the fence.','猫はフェンスを飛び越えました。',0,'障害物に触れずに弧を描いて乗り越える動きは over です。'],
+      ['space','Put a warm blanket','over','the baby.','赤ちゃんの上に暖かい毛布を掛けてあげなさい。',0,'上から覆いかぶせるイメージも over のコアイメージです。'],
+      ['space','A bridge was built','over','the river.','その川に橋が架けられました。',0,'川の上を端から端へまたいで覆う位置関係は over です。'],
+      ['space','A helicopter is flying','over','the city.','ヘリコプターが街の上空を飛んでいます。',0,'街に触れずに上空を通過しているので over です。'],
+      ['space','Ken hit the ball','over','the net.','ケンはネットを越えてボールを打った。',0,'ネットに触れずに上を越える軌道は over the net です。'],
+      ['space','The boy climbed','over','the low wall.','その少年は低い壁を乗り越えました。',0,'壁の上を越えて向こう側へ移動する動きなので climb over です。'],
+      ['space','Dark clouds hung','over','the town.','暗い雲が町の上空を覆っていました。',0,'町の真上を広く覆い尽くす位置関係は over です。'],
+      ['space','She held an umbrella','over','her child.','彼女は子どもの上に傘を差しかけました。',0,'子どもの頭上を上から覆って守る位置なので over です。'],
+      ['space','A lamp hangs','over','the dining table.','テーブルの真上にランプが吊り下がっています。',0,'テーブルに触れず真上の空間にある位置関係は over です。'],
+      ['space','The rainbow appeared','over','the valley.','谷の上空に虹が現れました。',0,'谷をアーチ状にまたいで架かるイメージなので over です。'],
+      ['space','He pulled his hat','over','his eyes.','彼は目深に帽子をかぶりました。',0,'目の上を覆い隠す動きなので over his eyes です。'],
+      ['space','Water spilled','over','the edge of the cup.','水がカップの縁を越えてこぼれました。',0,'縁の境界線を乗り越えて外へあふれる動きは over です。'],
+      ['space','She spread a cloth','over','the table.','彼女はテーブルの上にクロスを広げました。',0,'テーブル全体を上から覆うように掛けるので over です。'],
+      ['space','The dog leaped','over','the small stream.','犬は小さな小川を飛び越えました。',0,'小川に触れずに弧を描いて越えるので over です。'],
+      ['space','Snow fell','over','the entire region.','その地域一帯を覆うように雪が降りました。',0,'地域全体に広く覆いかぶさるイメージの over です。'],
+      ['space','He wears a jacket','over','his shirt.','彼はシャツの上にジャケットを着ています。',0,'シャツを上から覆うように羽織るので over his shirt です。'],
+      ['space','A sign hung','over','the shop entrance.','店の入口の真上に看板が掛かっていました。',0,'入口の上方に位置して覆う看板は over です。'],
+      ['space','They sailed','over','the ocean.','彼らは海を越えて航海しました。',0,'広い海を渡り越える移動も over the ocean で表します。'],
+      ['time','We stayed in Paris','over','the weekend.','私たちは週末の間ずっとパリに滞在しました。',0,'週末の始まりから終わりまでをまたいで覆う期間は over です。'],
+      ['time','Let us discuss this','over','lunch.','昼食をとりながらこの件を話し合いましょう。',0,'昼食の時間全体をカバーしながら行うイメージが over lunch です。'],
+      ['time','The city changed','over','the past ten years.','その都市は過去10年間にわたって変化しました。',0,'10年間という時間の幅全体を覆う変化は over the past 〜 です。'],
+      ['time','We talked','over','a cup of coffee.','私たちはコーヒーを飲みながら語り合いました。',0,'テーブル上のコーヒーを挟んで向かい合うイメージも over です。'],
+      ['time','Many people travel','over','the holidays.','多くの人が休暇中に旅行をします。',0,'休暇期間全体にわたって行動するイメージは over です。'],
+      ['time','She fell asleep','over','her textbook.','彼女は教科書の上に突っ伏して眠ってしまいました。',0,'教科書を覆うように覆いかぶさる姿勢も over です。'],
+      ['time','The work took','over','six months.','その作業は6ヶ月以上かかりました。',0,'6ヶ月という基準ラインを越える期間も over six months です。'],
+      ['time','He stayed at our house','over','night.','彼は一晩中私たちの家に泊まりました。',0,'夜という時間帯をまたいで過ごすことを over night と言います。'],
+      ['relation','There were','over','a hundred people there.','そこには100人以上の人がいました。',0,'基準となる数値を上回る（〜を超えて）は over です。'],
+      ['relation','She is','over','twenty years old.','彼女は20歳を超えています。',0,'20歳という年齢の基準ラインを越えているので over です。'],
+      ['relation','The game is','over','now.','試合は今終了しました。',0,'物事のピークや期間を越えて終わった状態が be over です。'],
+      ['relation','He has control','over','the whole team.','彼はチーム全体に対する統率力を持っています。',0,'上から全体を覆って管理する力関係は control over です。'],
+      ['relation','They argued','over','who should pay.','彼らは誰が払うべきかをめぐって口論しました。',0,'問題のテーマを間に挟んで向き合うイメージが argue over です。'],
+      ['relation','Read the document','over','carefully.','その書類に最初から最後まで目を通してください。',0,'書類の端から端まで視線で覆うように読むのが read over です。'],
+      ['relation','She recovered','over','time.','彼女は時間の経過とともに回復しました。',0,'時間の流れ全体をまたいで徐々に変化する様子は over time です。'],
+      ['relation','The temperature is','over','35 degrees today.','今日の気温は35度を超えています。',0,'35度という目盛りを上回る数値は over 35 degrees です。'],
+      ['relation','He tripped','over','a stone on the path.','彼は小道の石につまずいて転びました。',0,'石の上を越えようとして引っかかる動きが trip over です。'],
+      ['relation','Think it','over','before you decide.','決断する前にそれをよく考え直しなさい。',0,'物事を反転させて全体を覆うように考えるのが think over です。'],
+      ['relation','The king ruled','over','a vast land.','その王は広大な土地を統治しました。',0,'国全体の上に立って覆い治めるイメージが rule over です。'],
+      ['relation','She cried','over','the sad ending.','彼女は悲しい結末をめぐって泣きました。',0,'出来事を対象として感情が覆いかぶさる様子も cry over です。'],
+      ['relation','We heard the news','over','the speaker.','私たちはスピーカーを通してその知らせを聞きました。',0,'音声が空間の上を広がって届くイメージも over です。'],
+      ['relation','The bag weighs','over','20 kilograms.','その荷物は20キロを超えています。',0,'20キロという制限ラインを上回る数値は over です。'],
+      ['relation','He knocked','over','the glass of water.','彼は水の入ったグラスを倒してしまいました。',0,'立っていたグラスが弧を描いて倒れる動きが knock over です。'],
+      ['relation','Our team won a victory','over','the rivals.','私たちのチームはライバルに勝利しました。',0,'相手の上に立つ位置関係は victory over です。'],
+      ['relation','People came from all','over','the world.','世界中から人々が集まりました。',0,'世界全体をくまなく覆う広がりを all over the world で表します。'],
+      ['relation','The meeting lasted','over','two hours.','会議は2時間以上続きました。',0,'2時間という基準を上回る長さなので over two hours です。'],
+      ['relation','She looked','over','her shoulder.','彼女は肩越しに後ろを振り返りました。',0,'自分の肩のラインを越えて後方を見る動きが look over です。'],
+      ['relation','He has an advantage','over','his rivals.','彼はライバルに対して優位性を持っています。',0,'ライバルより一段上の位置に立つ優位性は advantage over です。'],
+      ['relation','The car ran','over','a small branch.','車はその小さな枝の上を乗り越えて走りました。',0,'タイヤが対象の上を越えて通過する動きが run over です。'],
+      ['relation','Let us start','over','from the beginning.','最初からやり直しましょう。',0,'最初から全体を覆い直すようにやり直すのが start over です。']
+    ];
+
+    let activePrep = 'in';
+    let activeVarIdx = 0;
+    let prepSubmode = 'lab'; // 'lab' | 'quiz'
+
+    let quizState = {
+      list: [],
+      idx: 0,
+      score: 0,
+      streak: 0,
+      answered: false,
+      picked: null
+    };
+
+    function switchPrepSubmode(mode) {
+      prepSubmode = mode;
+      const isLab = mode === 'lab';
+      document.getElementById('submode-lab').classList.toggle('active', isLab);
+      document.getElementById('submode-quiz').classList.toggle('active', !isLab);
+      document.getElementById('lab-controls').classList.toggle('hidden', !isLab);
+      document.getElementById('quiz-container').classList.toggle('hidden', isLab);
+
+      if (isLab) {
+        selectPreposition(activePrep, activeVarIdx);
+      } else {
+        startQuizSession();
+      }
+    }
+
+    function initLabButtons() {
+      const grid = document.getElementById('prep-selector-grid');
+      grid.innerHTML = PREP_LIST.map(p => `
+        <button type="button" class="prep-btn" data-prep="${p}" onclick="selectPreposition('${p}', 0)">${p}</button>
+      `).join('');
+    }
+
+    function selectPreposition(prep, varIdx) {
+      activePrep = prep;
+      const data = PREPOSITIONS[prep];
+      const safeVar = Math.min(varIdx || 0, data.variants.length - 1);
+      activeVarIdx = safeVar;
+      const v = data.variants[safeVar];
+
+      document.querySelectorAll('#prep-selector-grid .prep-btn').forEach(b => {
+        b.classList.toggle('active', b.dataset.prep === prep);
+      });
+
+      const varBar = document.getElementById('prep-variation-bar');
+      if (data.variants.length > 1) {
+        varBar.innerHTML = `<span style="font-size:11px; font-weight:700; color:var(--muted);">イメージ展開:</span>` +
+          data.variants.map((item, i) => `
+            <button type="button" class="filter-chip ${i === safeVar ? 'active' : ''}" onclick="selectPreposition('${prep}', ${i})">${item.label}</button>
+          `).join('');
+      } else {
+        varBar.innerHTML = `<span style="font-size:11px; font-weight:700; color:var(--muted);">コアイメージ図解（空間）</span>`;
+      }
+
+      // Render SVG & Animate Ball
+      document.getElementById('prep-ref').innerHTML = v.svg;
+      const ball = document.getElementById('prep-ball');
+      ball.style.transition = 'none';
+      ball.style.transform = `translate(${v.from[0]}px, ${v.from[1]}px)`;
+      ball.getBoundingClientRect();
+      ball.style.transition = '';
+      ball.style.transform = `translate(${v.to[0]}px, ${v.to[1]}px)`;
+
+      // Render Detail Card
+      const re = new RegExp(`\\b${prep}\\b`, 'g');
+      document.getElementById('prep-detail-card').innerHTML = `
+        <div style="display:flex; align-items:flex-start; justify-content:space-between; gap:10px; padding-bottom:12px; border-bottom:1px solid #f1f5f9;">
+          <div>
+            <div style="font-size:30px; font-weight:900; color:var(--primary); line-height:1;">${prep}</div>
+            <div class="badge badge-amber" style="margin-top:8px; display:inline-block;">コアイメージ：${data.core}</div>
+          </div>
+          <button type="button" class="btn" style="padding:7px 12px; font-size:12px;" onclick="speakEnglish('${prep}')">
+            <span>🔊 単語発音</span>
+          </button>
+        </div>
+
+        <div>
+          <h3 style="font-size:15px; font-weight:800; color:var(--ink);">${v.title}</h3>
+          <p style="font-size:13px; color:var(--ink-sub); margin-top:4px;">${v.desc}</p>
+        </div>
+
+        <div style="display:flex; flex-direction:column; gap:8px;">
+          <div style="font-size:11px; font-weight:800; color:var(--muted);">EXAMPLES · 例文</div>
+          ${v.examples.map(([en, ja]) => {
+            const hl = en.replace(re, m => `<mark>${m}</mark>`);
+            return `
+              <div class="ex-item">
+                <div>
+                  <div style="font-size:13.5px; font-weight:800; color:var(--ink);">${hl}</div>
+                  <div style="font-size:12px; color:var(--muted);">${ja}</div>
+                </div>
+                <button type="button" class="btn btn-soft" style="padding:6px 10px; font-size:12px; shrink:0;" onclick="speakEnglish('${en.replace(/'/g, "\\'")}')">発音</button>
+              </div>
+            `;
+          }).join('')}
+        </div>
+      `;
+    }
+
+    function replayPrepAnimation() {
+      selectPreposition(activePrep, activeVarIdx);
+    }
+
+    // ========================================================
+    // 5. Quiz Mode Logic
+    // ========================================================
+    function shuffle(arr) {
+      const copy = [...arr];
+      for (let i = copy.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [copy[i], copy[j]] = [copy[j], copy[i]];
+      }
+      return copy;
+    }
+
+    function startQuizSession() {
+      const scope = document.getElementById('quiz-scope').value;
+      const limit = Number(document.getElementById('quiz-count').value);
+
+      let pool;
+      if (scope === 'all') {
+        pool = QUIZ_BANK;
+      } else if (scope.startsWith('prep:')) {
+        const target = scope.slice(5);
+        pool = QUIZ_BANK.filter(q => q[2] === target);
+      } else {
+        pool = QUIZ_BANK.filter(q => q[0] === scope);
+      }
+
+      quizState = {
+        list: shuffle(pool).slice(0, limit),
+        idx: 0,
+        score: 0,
+        streak: 0,
+        answered: false,
+        picked: null
+      };
+
+      prepareQuizQuestion();
+    }
+
+    function prepareQuizQuestion() {
+      quizState.answered = false;
+      quizState.picked = null;
+
+      // Reset stage to neutral question prompt
+      document.getElementById('prep-ref').innerHTML = svgTx(210, 118, '？ 全9前置詞の中から1つ選んでください ？');
+      const ball = document.getElementById('prep-ball');
+      ball.style.transition = 'none';
+      ball.style.transform = 'translate(210px, 165px)';
+
+      document.getElementById('prep-detail-card').innerHTML = `
+        <div style="padding:36px 12px; text-align:center; color:var(--muted);">
+          <div style="font-size:26px; margin-bottom:8px;">💡</div>
+          <p style="font-size:13px; font-weight:700; color:var(--ink-sub);">全9前置詞の中から解答すると、ここにコアイメージ図解と解説が表示されます</p>
+        </div>
+      `;
+
+      renderQuizBody();
+    }
+
+    function submitQuizAnswer(choice) {
+      if (quizState.answered) return;
+      const q = quizState.list[quizState.idx];
+      const answer = q[2];
+      const varIdx = q[5];
+
+      quizState.answered = true;
+      quizState.picked = choice;
+
+      if (choice === answer) {
+        quizState.score++;
+        quizState.streak++;
+      } else {
+        quizState.streak = 0;
+      }
+
+      // Animate matching SVG diagram & speak sentence
+      selectPreposition(answer, varIdx);
+      speakEnglish(`${q[1]} ${answer} ${q[3]}`);
+
+      renderQuizBody();
+    }
+
+    function nextQuizStep() {
+      if (quizState.idx + 1 < quizState.list.length) {
+        quizState.idx++;
+        prepareQuizQuestion();
+      } else {
+        renderQuizResult();
+      }
+    }
+
+    function renderQuizBody() {
+      const total = quizState.list.length;
+      const num = quizState.idx + 1;
+      document.getElementById('quiz-badge-progress').textContent = `第 ${num} / ${total} 問`;
+      document.getElementById('quiz-badge-score').textContent = `正解: ${quizState.score}`;
+      document.getElementById('quiz-badge-streak').textContent = `${quizState.streak}連続`;
+
+      const q = quizState.list[quizState.idx];
+      const [cat, before, answer, after, ja, , exp] = q;
+      const catLabel = { space: '空間・場所', time: '時間・期限', relation: '方向・相手・手段' }[cat] || '総合';
+
+      const blankSpan = quizState.answered
+        ? `<span style="display:inline-block; padding:1px 10px; margin:0 4px; border-radius:8px; background:${quizState.picked === answer ? 'var(--emerald-soft)' : 'var(--rose-soft)'}; color:${quizState.picked === answer ? 'var(--emerald)' : 'var(--rose)'}; text-decoration:underline;">${answer}</span>`
+        : `<span style="display:inline-block; min-width:54px; margin:0 4px; border-bottom:3.5px solid var(--primary); text-align:center; color:var(--primary);">___</span>`;
+
+      const body = document.getElementById('quiz-body');
+      body.innerHTML = `
+        <div style="display:flex; flex-direction:column; gap:14px;">
+          <div class="section-head">
+            <div style="display:flex; align-items:center; gap:8px;">
+              <span class="badge" style="background:var(--surface-sub); color:var(--ink-sub);">ジャンル: ${catLabel}</span>
+              <span style="font-size:11px; color:var(--muted);">※キーボードの 1〜9 キーでも解答できます</span>
+            </div>
+            ${!quizState.answered ? `<button type="button" class="btn" style="padding:5px 11px; font-size:12px;" onclick="submitQuizAnswer('__skip__')">分からない（答えを見る）</button>` : ''}
+          </div>
+
+          <div style="padding:16px; border-radius:14px; background:var(--bg); border:1px solid var(--line);">
+            <div style="font-size:19px; font-weight:900; color:var(--ink);">${before} ${blankSpan} ${after}</div>
+            <div style="font-size:13px; color:var(--muted); margin-top:4px; font-weight:600;">${ja}</div>
+          </div>
+
+          <div>
+            <div style="font-size:11px; font-weight:800; color:var(--muted); margin-bottom:6px;">全9前置詞パレットから1つ選択:</div>
+            <div class="quiz-palette">
+              ${PREP_LIST.map((p, i) => {
+                let cls = 'q-choice';
+                if (quizState.answered) {
+                  if (p === answer) cls += ' q-ok';
+                  else if (p === quizState.picked) cls += ' q-ng';
+                  else cls += ' q-dim';
+                }
+                return `<button type="button" class="${cls}" ${quizState.answered ? 'disabled' : ''} onclick="submitQuizAnswer('${p}')"><span class="key-num">${i + 1}</span><span>${p}</span></button>`;
+              }).join('')}
+            </div>
+          </div>
+
+          ${quizState.answered ? `
+            <div class="result-box ${quizState.picked === answer ? 'ok' : 'err'}" style="display:flex; flex-wrap:wrap; align-items:center; justify-content:space-between; gap:12px;">
+              <div style="flex:1; min-width:220px;">
+                <div style="font-size:14px; font-weight:900; color:${quizState.picked === answer ? 'var(--emerald)' : 'var(--rose)'};">
+                  ${quizState.picked === answer ? '✓ 正解です！' : quizState.picked === '__skip__' ? `正解は「${answer}」です` : `✕ 不正解（選択: ${quizState.picked} ➔ 正解: ${answer}）`}
+                </div>
+                <p style="font-size:12.5px; color:var(--ink-sub); margin-top:4px;">${exp}</p>
+              </div>
+              <button type="button" id="btn-quiz-next" class="btn btn-primary" onclick="nextQuizStep()">
+                <span>${num < total ? '次の問題へ ➔' : '結果を見る'}</span>
+              </button>
+            </div>
+          ` : ''}
+        </div>
+      `;
+    }
+
+    function renderQuizResult() {
+      const total = quizState.list.length;
+      const pct = Math.round((quizState.score / total) * 100);
+      const body = document.getElementById('quiz-body');
+      body.innerHTML = `
+        <div style="padding:24px 12px; text-align:center; display:flex; flex-direction:column; align-items:center; gap:10px;">
+          <div style="font-size:36px;">🏆</div>
+          <div class="badge">QUIZ COMPLETED</div>
+          <h3 style="font-size:22px; font-weight:900; color:var(--ink);">${quizState.score} / ${total} 問正解（正答率 ${pct}%）</h3>
+          <p style="font-size:13px; color:var(--ink-sub);">
+            ${pct === 100 ? 'パーフェクト！全9前置詞のコアイメージが完全に身についています！' : pct >= 80 ? '素晴らしい成績です！空間と時間のイメージで使い分けができています。' : '図解ラボでボールの動きを確かめながら再挑戦してみましょう！'}
+          </p>
+          <div style="display:flex; gap:10px; flex-wrap:wrap; margin-top:8px;">
+            <button type="button" class="btn btn-primary" onclick="startQuizSession()">同じ条件でもう一度挑戦</button>
+            <button type="button" class="btn" onclick="switchPrepSubmode('lab')">図解ラボへ戻る</button>
+          </div>
+        </div>
+      `;
+    }
+
+    // Keyboard support for Quiz
+    window.addEventListener('keydown', (e) => {
+      if (prepSubmode !== 'quiz') return;
+      if (document.getElementById('view-prepositions').classList.contains('hidden')) return;
+
+      if (['1', '2', '3', '4', '5', '6', '7', '8', '9'].includes(e.key) && !quizState.answered) {
+        const idx = Number(e.key) - 1;
+        if (PREP_LIST[idx]) submitQuizAnswer(PREP_LIST[idx]);
+      } else if ((e.key === 'Enter' || e.code === 'Space') && quizState.answered) {
+        const nextBtn = document.getElementById('btn-quiz-next');
+        if (nextBtn) {
+          e.preventDefault();
+          nextQuizStep();
+        }
+      }
+    });
+
+    // ========================================================
+    // 6. Initialize App
+    // ========================================================
+    window.addEventListener('DOMContentLoaded', () => {
+      updateBuilderProgressUI();
+      renderBuilderFilterChips();
+      applyBuilderFilter(true);
+
+      initLabButtons();
+      selectPreposition('in', 0);
+    });
+  </script>
+</body>
+</html>
