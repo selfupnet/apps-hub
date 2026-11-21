@@ -118,6 +118,7 @@ apps-hub/
 - **JMdict / EDICT** — [CC BY-SA 3.0](https://creativecommons.org/licenses/by-sa/3.0/)（`/nihongo/`）
 - **NGSL (New General Service List)** — [CC BY-SA 4.0](https://creativecommons.org/licenses/by-sa/4.0/)（`/vocab/`）
 - **国土数値情報（道の駅データ）** — 国土交通省（`/michinoeki/`）
+- **Hangul Hub 発音音声**: Google Cloud Text-to-Speech API（`ko-KR-Wavenet-A`）事前生成音源（ローカル同梱）
 
 ---
 
