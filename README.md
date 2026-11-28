@@ -26,9 +26,9 @@ apps-hub/
 
 ---
 
-## 📱 収録アプリ一覧 (45 Apps)
+## 📱 収録アプリ一覧 (47 Apps)
 
-### 1. 学習・教育・スキル (15 Apps)
+### 1. 学習・教育・スキル (17 Apps)
 
 | フォルダ | アプリ名 | 概要 | 本番URL |
 | :--- | :--- | :--- | :--- |
@@ -47,6 +47,8 @@ apps-hub/
 | `/ipcalc/` | **IPv4計算** | サブネット・IP計算 | https://selfup.net/ipcalc/ |
 | `/metronome/` | **メトロノーム** | テンポ・拍子キープ | https://selfup.net/metronome/ |
 | `/drum/` | **ドラムスタジオ** | ブラウザ演奏ドラム | https://selfup.net/drum/ |
+| `/planetarium/` | **星空プラネタリウム** | 全天ドーム＆地平線ビュー・7惑星・メシエ天体・赤色暗視モード | https://selfup.net/planetarium/ |
+| `/skyview/` | **目の前の星空ビューア** | 山並みパノラマ視界・電子コンパス連動・方角別見頃星座ガイド | https://selfup.net/skyview/ |
 
 ### 2. 日常・メンタル・健康 (11 Apps)
 
