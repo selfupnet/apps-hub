@@ -20,7 +20,7 @@ apps-hub/
 ├── README.md        # 本ドキュメント
 ├── korean/          # Korean Hub
 ├── algo/            # アルゴリズム可視化
-├── ...              # 全45アプリの単一HTMLソースコード
+├── ...              # ...
 └── solitaire/       # ソリティア
 ```
 
